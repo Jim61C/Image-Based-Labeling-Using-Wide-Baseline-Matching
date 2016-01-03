@@ -1,0 +1,286 @@
+testset7 64Bin HSV:
+
+matches found for test patch  0
+358 , 918 , 31
+355 , 913 , 27
+386 , 892 , 47
+397 , 892 , 39
+406 , 882 , 57
+
+matches found for test patch  1
+274 , 981 , 31
+277 , 979 , 27
+276 , 980 , 47
+280 , 982 , 39
+280 , 980 , 57
+
+matches found for test patch  2
+554 , 876 , 31
+553 , 877 , 27
+559 , 883 , 39
+560 , 882 , 57
+562 , 881 , 47
+
+matches found for test patch  3
+106 , 904 , 31
+103 , 901 , 27
+109 , 901 , 39
+111 , 903 , 47
+98 , 896 , 57
+
+matches found for test patch  4
+91 , 415 , 39
+89 , 419 , 47
+91 , 415 , 27
+98 , 392 , 57
+92 , 414 , 31
+
+matches found for test patch  5
+100 , 883 , 39
+99 , 883 , 31
+103 , 889 , 27
+100 , 881 , 47
+98 , 882 , 57
+
+matches found for test patch  6
+588 , 994 , 57
+595 , 991 , 47
+577 , 1009 , 27
+586 , 991 , 39
+575 , 988 , 31
+
+
+Testset7 1024 Bins (HSV):
+
+
+matches found for test patch  0
+378 , 896 , 57
+386 , 892 , 47
+379 , 901 , 39
+355 , 913 , 27
+379 , 897 , 31
+
+matches found for test patch  1
+281 , 981 , 31
+280 , 982 , 39
+277 , 985 , 27
+280 , 980 , 57
+276 , 980 , 47
+
+matches found for test patch  2
+559 , 883 , 39
+560 , 882 , 57
+559 , 883 , 27
+561 , 883 , 31
+562 , 881 , 47
+
+matches found for test patch  3
+727 , 565 , 27
+729 , 561 , 31
+738 , 562 , 47
+730 , 559 , 39
+728 , 560 , 57
+
+matches found for test patch  4
+462 , 518 , 57
+456 , 519 , 31
+460 , 523 , 39
+452 , 518 , 47
+457 , 523 , 27
+
+matches found for test patch  5
+100 , 883 , 39
+98 , 882 , 57
+99 , 883 , 31
+100 , 881 , 47
+103 , 889 , 27
+
+matches found for test patch  6
+145 , 658 , 39
+144 , 661 , 47
+141 , 652 , 31
+145 , 661 , 27
+140 , 658 , 57
+
+
+Testset7 (256 bin HS):
+
+matches found for test patch  0
+370 , 946 , 39
+372 , 946 , 31
+373 , 943 , 27
+378 , 882 , 57
+375 , 881 , 47
+
+matches found for test patch  1
+280 , 980 , 57
+274 , 981 , 31
+276 , 980 , 47
+280 , 982 , 39
+277 , 979 , 27
+
+matches found for test patch  2
+559 , 883 , 39
+103 , 817 , 27
+560 , 882 , 57
+561 , 883 , 31
+562 , 881 , 47
+
+matches found for test patch  3
+606 , 782 , 47
+604 , 784 , 39
+602 , 784 , 57
+603 , 785 , 31
+607 , 787 , 27
+
+matches found for test patch  4
+462 , 518 , 57
+463 , 518 , 47
+460 , 523 , 39
+463 , 519 , 31
+463 , 517 , 27
+
+matches found for test patch  5
+100 , 883 , 39
+99 , 883 , 31
+100 , 881 , 47
+98 , 882 , 57
+103 , 889 , 27
+
+matches found for test patch  6
+141 , 652 , 31
+145 , 658 , 39
+145 , 655 , 27
+144 , 661 , 47
+140 , 658 , 57
+
+
+
+Testset 7 1024Bin HSV_newTestPatch3:
+
+matches found for test patch  0
+378 ,  896 ,  57
+386 ,  892 ,  47
+379 ,  901 ,  39
+355 ,  913 ,  27
+379 ,  897 ,  31
+matches found for test patch  1
+281 ,  981 ,  31
+280 ,  982 ,  39
+277 ,  985 ,  27
+280 ,  980 ,  57
+276 ,  980 ,  47
+matches found for test patch  2
+559 ,  883 ,  39
+560 ,  882 ,  57
+559 ,  883 ,  27
+561 ,  883 ,  31
+562 ,  881 ,  47
+matches found for test patch  3
+733 ,  565 ,  27
+729 ,  561 ,  31
+738 ,  562 ,  47
+730 ,  559 ,  39
+728 ,  560 ,  57
+matches found for test patch  4
+462 ,  518 ,  57
+456 ,  519 ,  31
+460 ,  523 ,  39
+452 ,  518 ,  47
+457 ,  523 ,  27
+matches found for test patch  5
+100 ,  883 ,  39
+98 ,  882 ,  57
+99 ,  883 ,  31
+100 ,  881 ,  47
+103 ,  889 ,  27
+matches found for test patch  6
+145 ,  658 ,  39
+144 ,  661 ,  47
+141 ,  652 ,  31
+145 ,  661 ,  27
+140 ,  658 ,  57
+
+Testset7 256Bin HS_newTestPatch3:
+
+matches found for test patch  0
+370 ,  946 ,  39
+372 ,  946 ,  31
+373 ,  943 ,  27
+378 ,  882 ,  57
+375 ,  881 ,  47
+matches found for test patch  1
+280 ,  980 ,  57
+274 ,  981 ,  31
+276 ,  980 ,  47
+280 ,  982 ,  39
+277 ,  979 ,  27
+matches found for test patch  2
+559 ,  883 ,  39
+103 ,  817 ,  27
+560 ,  882 ,  57
+561 ,  883 ,  31
+562 ,  881 ,  47
+matches found for test patch  3
+610 ,  701 ,  31
+606 ,  782 ,  47
+604 ,  784 ,  39
+607 ,  781 ,  27
+602 ,  784 ,  57
+matches found for test patch  4
+462 ,  518 ,  57
+463 ,  518 ,  47
+460 ,  523 ,  39
+463 ,  519 ,  31
+463 ,  517 ,  27
+matches found for test patch  5
+100 ,  883 ,  39
+99 ,  883 ,  31
+100 ,  881 ,  47
+98 ,  882 ,  57
+103 ,  889 ,  27
+matches found for test patch  6
+141 ,  652 ,  31
+145 ,  658 ,  39
+145 ,  655 ,  27
+144 ,  661 ,  47
+140 ,  658 ,  57
+
+
+
+
+test_illuminance1:
+matches found for test patch  0
+601 , 217 , 27
+603 , 218 , 31
+487 , 514 , 39
+496 , 518 , 47
+490 , 518 , 57
+
+matches found for test patch  1
+478 , 550 , 39
+481 , 547 , 27
+474 , 551 , 47
+477 , 547 , 31
+476 , 546 , 57
+
+matches found for test patch  2
+568 , 199 , 39
+573 , 199 , 47
+574 , 196 , 57
+568 , 197 , 31
+565 , 205 , 27
+
+matches found for test patch  3
+358 , 561 , 31
+353 , 562 , 47
+361 , 559 , 39
+350 , 560 , 57
+571 , 193 , 27
+
+matches found for test patch  4
+331 , 319 , 27
+330 , 316 , 31
+334 , 316 , 39
+331 , 320 , 47
+336 , 322 , 57
