@@ -102,7 +102,11 @@ def plotHOGHistCmp(path, fname, testPatchesHOGHist,testPatchLabel, matchesFoundH
 	plt.clf()
 	return
 
-def plotHSVSeperateHistCmp(path, fname, testPatchHSVSeperateHists, testPatchLabel, matchesFoundHSVSeperateHists, matchFoundLabel, groundTruthHSVSepreateHists, groundTruthLabel, saveHist = True, displayHist =True ):
+def plotHSVSeperateHistCmp(path, fname, \
+	testPatchHSVSeperateHists, testPatchLabel, \
+	matchesFoundHSVSeperateHists, matchFoundLabel, \
+	groundTruthHSVSepreateHists, groundTruthLabel, \
+	saveHist = True, displayHist =True ):
 	f, ((test_patch_hue_ax, test_patch_saturation_ax, test_patch_value_ax),(match_found_hue_ax, match_found_saturation_ax, match_found_value_ax), (ground_truth_hue_ax, ground_truth_saturation_ax, ground_truth_value_ax)) = plt.subplots(3, 3, sharex='col', sharey='row')
 	f.set_figheight(10)
 	f.set_figwidth(15)
@@ -160,4 +164,19 @@ def plotHSVSeperateHistCmp(path, fname, testPatchHSVSeperateHists, testPatchLabe
 		plt.show()
 	plt.clf()
 	return
+
+def plotUniquenessDistribution(path, fname, patches, metric, displayHist = False, saveHist = True):
+	if(metric == "HSV"):
+		distribution = [patch.HSVScore for patch in patches]
+	elif(metric == "HOG"):
+		distribution = [patch.HOGScore for patch in patches]
+	plt.plot(distribution, label = fname)
+
+	if(saveHist):
+		plt.savefig(path+"/"+fname+".png")
+	if(displayHist):
+		plt.show()
+	plt.clf()
+
+
 	

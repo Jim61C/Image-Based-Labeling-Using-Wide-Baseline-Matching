@@ -78,6 +78,14 @@ def getHarrisCornerResponse(img, windowSize, _step = 1):
 
 	return maxResponse, response
 
+def filter_patches(patches, thresh_pass, responseMatrix, maxResponse):
+	thresh = thresh_pass * maxResponse
+	fitlered_patches = []
+	for i in range(0, len(patches)):
+		if(responseMatrix[patches[i].x][patches[i].y] >= thresh):
+			fitlered_patches.append(patches[i])
+	return fitlered_patches
+
 
 def main():
 	# x1 = np.arange(9.0).reshape((3, 3))
@@ -90,11 +98,12 @@ def main():
 	# print np.multiply(x1, x1)
 	# print np.multiply(x2, x2)
 	imgName = "test1.jpg"
-	# folderName = "testset4"
-	folderName = "testset_rotation1"
+	folderName = "testset4"
+	# folderName = "testset_rotation1"
 	filenames = ["images/{folder}/{name}".format(folder = folderName,  name = imgName)]
 	windowSize = 39
 	step = 1
+	thresh_pass = 0.001
 	for filenameIndex in range(0, len(filenames)):
 		filename = filenames[filenameIndex]
 		img = cv2.imread(filename,0)
@@ -104,7 +113,7 @@ def main():
 		print "responseMatrix.shape:", responseMatrix.shape
 		print "maxResponse:", maxResponse
 		print "most negative Response:", np.amin(responseMatrix)
-		thresh = 0.1 * maxResponse
+		thresh = thresh_pass * maxResponse
 		
 		imgColor = cv2.imread(filename, 1)
 		for i in np.arange(windowSize/2, responseMatrix.shape[0] - windowSize/2, windowSize/2 * step):
@@ -112,7 +121,7 @@ def main():
 				if(responseMatrix[i][j] >= thresh):
 					cv2.rectangle(imgColor,(j-windowSize/2,i-windowSize/2),(j+windowSize/2,i+windowSize/2),(0,0,255),2)
 		# cv2.imwrite("corners/{folder}_{filename}_HarrisEdges_windowSize{windowSize}.jpg".format(windowSize = windowSize, folder =folderName,  filename = imgName[0:imgName.find(".")]), imgColor)
-		cv2.imwrite("corners/{folder}_{filename}_HarrisCorners_windowSize{windowSize}.jpg".format(windowSize = windowSize, folder =folderName,  filename = imgName[0:imgName.find(".")]), imgColor)
+		cv2.imwrite("corners/{folder}_{filename}_HarrisCorners_windowSize{windowSize}_threshPass_{thresh_pass}.jpg".format(windowSize = windowSize, folder =folderName,  filename = imgName[0:imgName.find(".")], thresh_pass = thresh_pass), imgColor)
 		cv2.imshow("corners", imgColor)
 		cv2.waitKey(0)
 	return 

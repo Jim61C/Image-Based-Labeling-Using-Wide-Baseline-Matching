@@ -8,6 +8,7 @@ import math
 import cornerResponse
 import sys
 import drawMatches
+import plotStatistics
 
 HUE_16BIN_C = np.array(
 [[ 1,  2,  3,  4,  5,  6,  7,  8,  9,  8,  7,  6,  5,  4,  3,  2],
@@ -78,6 +79,12 @@ class Patch:
 
 		self.overallScore = None
 
+	def setX(self, _x):
+		self.x = _x
+
+	def setY(self, _y):
+		self.y = _y
+
 	def setSize(self,_size):
 		self.size = _size
 
@@ -99,13 +106,37 @@ class Patch:
 	def setHOGScore(self, score):
 		self.HOGScore = score
 
+	def clearHistograms(self):
+		self.RGBHistArr = [] 
+		self.RGBHist = None 
+		self.RGBScore = None
+		self.aggregateRGBScore = None
+
+		self.HSVHistArr = []
+		self.HSVHist = None
+		self.HSVScore = None
+
+		self.HueHist = None
+		self.HueHistArr = []
+		self.SaturationHist = None
+		self.SaturationHistArr = []
+		self.ValueHist = None
+		self.ValueHistArr = []
+
+		self.cornerResponseScore = None
+
+		self.HOGArr = []
+		self.HOG = None
+		self.HOGScore = None
+
+		self.overallScore = None
+
 	# img should be in gray scale
 	# instead of compute the 2*2 subpatch HOG, compute a 1) sub circle 2)super circle HOG
-	
 	def computeHOG(self, img, useGaussianSmoothing = True):
 		"""
 		HOG with orietation assignment and circular histogram
-		TODO: fine tune orientation, smooth the HOG hist + add more possible orietations (not just the mode, 0.8 of the mode as well) for considertaion in matching
+		TODO: fine tune orientation, smooth the HOG hist + add more possible orietations (not just the maximum, 0.8 of the maximum as well) for considertaion in matching
 		"""
 		# Check if HOGArr is already computed
 		if(len(self.HOGArr) > 0):
@@ -134,7 +165,7 @@ class Patch:
 		return
 	def computeSubCirclePatchHOG(self, img, gaussianWindow):
 		"""
-		From testing restult, sub circle HOG is having a similar performance to SubAndSuperHOG with a slightly poorer performance
+		From testing result, sub circle HOG is having a similar performance to SubAndSuperHOG with a slightly poorer performance
 		"""
 		# numberOfSubCircles = 2
 		numberOfSubCircles = 4
@@ -177,8 +208,11 @@ class Patch:
 	def computeSinglePatchHOG(self, img, gaussianWindow):
 		ref_x = self.x - self.size/2
 		ref_y = self.y - self.size/2
-		hist = np.zeros(HOG_HIST_LEN)
-		bin_adjust_scale = HOG_HIST_LEN/2.0
+
+		# Get Orientation Assignment
+		HOG_360_LEN = 360
+		hist = np.zeros(HOG_360_LEN)
+		bin_adjust_scale = HOG_360_LEN/2.0
 		for i in range(self.x - self.size/2 + 1, self.x + self.size/2):
 			for j in range(self.y - self.size/2 + 1, self.y + self.size/2):
 				gx = float(img[i][j+1] - img[i][j-1])
@@ -188,12 +222,23 @@ class Patch:
 				ori = math.atan2(gy, gx)
 
 				HOG_bin = int(math.floor(ori*bin_adjust_scale/math.pi + bin_adjust_scale))
-				HOG_bin = HOG_HIST_LEN - 1 if (HOG_bin == HOG_HIST_LEN) else HOG_bin
+				HOG_bin = HOG_360_LEN - 1 if (HOG_bin == HOG_360_LEN) else HOG_bin
 
 				hist[HOG_bin] += gaussianWindow[i - ref_x][j - ref_y] * mag
 
-		max_ori = np.argmax(hist) # use mode
+		max_ori = np.argmax(hist) # use maximum
 		hist =  list(hist[max_ori:len(hist)]) + list(hist[0:max_ori]) # rotate circular hist
+
+		return self.finalizeHOG(hist)
+
+	def finalizeHOG(self,hist_360_bin):
+		"""
+		Aggregate the 360 Bin HOG to specified number of bins
+		"""
+		hist = np.zeros(HOG_HIST_LEN)
+		scale = 360/HOG_HIST_LEN
+		for i in range(0, len(hist)):
+			hist[i] = np.sum(hist_360_bin[i*scale : i*scale + scale])
 		return np.array(hist)
 
 
@@ -327,7 +372,7 @@ class Patch:
 				s_bin = bin_number -1 if (S == 1) else int(math.floor(S/S_bin_size))
 				v_bin = bin_number -1 if (V == 1) else int(math.floor(V/V_bin_size))
 				# print "h_bin, s_bin,v_bin:", h_bin,s_bin,v_bin, "\n"
-				if(gaussianWindow == None):
+				if(gaussianWindow is None):
 					# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += 1
 					hist[h_bin * bin_number + s_bin ] += 1
 				else:
@@ -335,7 +380,7 @@ class Patch:
 					hist[h_bin * bin_number + s_bin ] += gaussianWindow[i - ref_x][j - ref_y]
 
 				if(computeSeperateHists):
-					if(gaussianWindow == None):
+					if(gaussianWindow is None):
 						HueHist[h_bin] += 1
 						SaturationHist[s_bin] += 1
 						ValueHist[v_bin] += 1
@@ -396,7 +441,7 @@ class Patch:
 
 		subHistArr = []
 		
-		if(gaussianWindow == None):
+		if(gaussianWindow is None):
 			top_left_gaussianWindow = None
 			top_right_gaussianWindow = None
 			bottom_left_gaussianWindow = None
@@ -473,10 +518,10 @@ class Patch:
 def getGaussianScale(originalScale, factor, level):
 	if(level < 0):
 		newScale = int(originalScale / (factor ** abs(level)))
-		newScale = newScale - 1 if (newScale % 2 == 0)  else newScale
+		newScale = newScale - 1 if (newScale % 2 == 0)  else newScale # make sure scale is odd
 	else:
 		newScale = int(originalScale * (factor ** abs(level)))
-		newScale = newScale + 1  if (newScale % 2 == 0) else newScale
+		newScale = newScale + 1  if (newScale % 2 == 0) else newScale # make sure scale is odd
 	return newScale
 
 def getDissimilairityHistArrl2(histArr1, histArr2, metricFunc):
@@ -588,7 +633,7 @@ def earthMoverHatDistanceForHOG(hist1, hist2):
 
 def earthMoverHatDistance(hist1,hist2, C = None):
 	# 1. pyemd EMD
-	if(C == None):
+	if(C is None):
 		C = np.ones(shape = (len(hist1), len(hist2)))
 		# for i in range(0, len(hist1)):
 		# 	for j in range(i, len(hist2)):
@@ -651,7 +696,7 @@ def chiSquareDistance(hist1, hist2):
 def dissimilarityMetricOnImagePosition(img, patches, dissimilarity):
 	response = np.zeros(shape = (img.shape[0], img.shape[1]))
 	for i in range(0, len(patches)):
-		if(patches[i].RGBScore == None):
+		if(patches[i].RGBScore is None):
 			score = distinguishabilityScore(dissimilarity[i])
 			patches[i].setRGBScore(score)
 		for row in range(patches[i].x - patches[i].size/2, patches[i].x + patches[i].size/2): # only top and left border count to the response, avoid over count at the borders
@@ -687,6 +732,127 @@ def sortedIndexOfDistinguishablePatches(patches, dissimilarity, metric = "RGB"):
 		elif(metric == "HSV"):
 			patches[i].setHSVScore(score)
 	return np.argsort(distinguishability)[::-1]
+
+def computeFullImageHSVHistogram(img):
+	img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	img_hue_hist = cv2.calcHist([img_hsv],[0], None, [16], [0, 180])
+	img_hue_hist = img_hue_hist[:,0]
+	img_hue_hist = img_hue_hist/np.sum(img_hue_hist)
+
+	img_saturation_hist = cv2.calcHist([img_hsv],[1], None, [16], [0,256])
+	img_saturation_hist = img_saturation_hist[:,0]
+	img_saturation_hist = img_saturation_hist/np.sum(img_saturation_hist)
+
+	img_value_hist = cv2.calcHist([img_hsv],[2], None, [16], [0,256])
+	img_value_hist = img_value_hist[:,0]
+	img_value_hist = img_value_hist/np.sum(img_value_hist)
+
+	return img_hue_hist, img_saturation_hist, img_value_hist
+
+def compareSeperateHSVHists(patch, target_HueHist, target_SaturationHist, target_ValueHist, distancefunction = Jensen_Shannon_Divergence):
+	hue_channel_distance = distancefunction(patch.HueHist, target_HueHist)
+	saturation_channel_distance = distancefunction(patch.SaturationHist, target_SaturationHist)
+	value_channel_distance = distancefunction(patch.ValueHist, target_ValueHist)
+	return np.linalg.norm([hue_channel_distance, saturation_channel_distance], 2)
+
+def HOGResponse(HOG):
+	high_response_thresh = 3.0
+	count = 0.0
+	for i in range(0, len(HOG)):
+		if(HOG[i] > high_response_thresh):
+			# count += 1
+			count += HOG[i]
+	return count
+
+def similarPatchAlreadySelected(patch, selected_patches, metric, distance_thresh, distancefunction = Jensen_Shannon_Divergence):
+	if(metric == "HOG"):
+		for i in range(0, len(selected_patches)):
+			if(distancefunction(selected_patches[i].HOG, patch.HOG) < distance_thresh):
+				return True
+		return False
+	elif(metric == "HSV"):
+		for i in range(0, len(selected_patches)):
+			if(compareSeperateHSVHists(patch, \
+				selected_patches[i].HueHist, selected_patches[i].SaturationHist, selected_patches[i].ValueHist, distancefunction) < distance_thresh):
+				return True
+		return False
+
+def removeDuplicates(sorted_patches, metric, distance_thresh, distancefunction = Jensen_Shannon_Divergence):
+	final_sorted_patches = []
+	print "total_length of sorted_patches:", len(sorted_patches)
+
+	final_sorted_patches.append(sorted_patches[0])
+	if(metric == "HOG"):
+		i = 1
+		while(i< len(sorted_patches)):
+			if(not similarPatchAlreadySelected(sorted_patches[i], final_sorted_patches, "HOG", distance_thresh)):
+				final_sorted_patches.append(sorted_patches[i])
+			i += 1
+	elif(metric == "HSV"):
+		i = 1
+		while(i< len(sorted_patches)):
+			if(not similarPatchAlreadySelected(sorted_patches[i], final_sorted_patches, "HSV", distance_thresh)):
+				final_sorted_patches.append(sorted_patches[i])
+			i += 1
+
+	return final_sorted_patches
+
+
+# def checkDistance(sorted_patches, metric, distancefunction = Jensen_Shannon_Divergence):
+# 	if(metric == "HSV"):
+# 		for i in range(0, len(sorted_patches) - 1):
+# 			HueDist = distancefunction(sorted_patches[i].HueHist, sorted_patches[i+1].HueHist)
+# 			SaturationDist = distancefunction(sorted_patches[i].SaturationHist, sorted_patches[i+1].SaturationHist)
+# 			print "distance between patch ", i ," and patch ", (i+1), " = ", np.linalg.norm([HueDist, SaturationDist], 2)
+
+def findDistinguishablePatchesAlgo2(img, sigma, HSVthresh, HOGthresh, thresh_pass = 0.005, step = 1):
+	"""
+	thresh_pass: low threshold used for Harris Corner Filtering
+	HSVthresh: used for removing similar patches for HSV unique patches
+	HOGthresh: used for removing similar patches for HOG unique patches
+	"""
+	patches = extractPatches(img, sigma,step)
+	"""
+	Low Pass using Harris Corner to get inital set of potential good patches
+	"""
+	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
+	filtered_patches = cornerResponse.filter_patches(patches, thresh_pass, cornerResponseMatrix, maxCornerResponse)
+	# drawPatchesOnImg(np.copy(img), filtered_patches)
+
+	"""
+	Hue Saturation response: Jensen_Shannon_Divergence of patches compared to full image
+	"""
+	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist = computeFullImageHSVHistogram(img)
+	gaussianWindow = gauss_kernels(sigma, sigma/6.0)
+	for i in range(0, len(filtered_patches)):
+		filtered_patches[i].computeSinglePatchHSVHistogram(img, gaussianWindow, True)
+		filtered_patches[i].HueHist = filtered_patches[i].HueHistArr[0]
+		filtered_patches[i].SaturationHist = filtered_patches[i].SaturationHistArr[0]
+		filtered_patches[i].ValueHist = filtered_patches[i].ValueHistArr[0]
+		filtered_patches[i].setHSVScore(compareSeperateHSVHists(filtered_patches[i], full_image_HueHist, full_image_SaturationHist, full_image_ValueHist))
+	
+	"""
+	HOG response
+	"""
+	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
+	for i in range(0, len(filtered_patches)):
+		filtered_patches[i].computeHOG(img_gray, True)
+		filtered_patches[i].setHOGScore(HOGResponse(filtered_patches[i].HOG))
+
+	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HSVScore, reverse=True)
+	img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HSV", HSVthresh)[0:10],False, None, (255,0,0)) # Blue for Uniqueness on HSV
+	
+	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HOGScore, reverse=True)
+	img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HOG", HOGthresh)[0:10],False, None, (0,0,255)) # Red for Uniqueness on HOG
+
+	print "check sorted patches score:"
+	for i in range(0, len(sorted_patches)):
+		# print sorted_patches[i].HSVScore
+		print sorted_patches[i].HOGScore
+	return removeDuplicates(sorted_patches, "HSV", HSVthresh) # return sorted_patches using HSV
+	# return removeDuplicates(sorted_patches, "HOG", HOGthresh) # return sorted_patches using HOG
+	# return filtered_patches
+
 
 
 def findDistinguishablePatches(img, sigma, step = 1):
@@ -765,17 +931,17 @@ def findDistinguishablePatches(img, sigma, step = 1):
 
 # patches can be 1. an instance of Patch class 2. A list of patches
 # Gradiant is to indiacte the goodness of the match patch, the ligher(redder) the better
-def drawPatchesOnImg(img, patches, show = True, gradiant = None): # gradiant is supposed to be  = 1.0/len(patches)
+def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255)): # gradiant is supposed to be  = 1.0/len(patches)
 	if(type(patches).__name__ == "instance"):
 		p = patches
-		cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(0,0,255),1) # np.random.randint(0,255,size = 3)
+		cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1) # np.random.randint(0,255,size = 3)
 	elif(type(patches) is list):	
 		for i in range(0, len(patches)):
 			p = patches[i]
-			if(gradiant == None):
-				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(0,0,255),1)
+			if(gradiant is None):
+				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1)
 			else:
-				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(0,0,255*(1 - gradiant * i)),1) # np.random.randint(0,255,size = 3)
+				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(color[0]*(1 - gradiant * i),color[1]*(1 - gradiant * i),color[2]*(1 - gradiant * i)),1) # np.random.randint(0,255,size = 3)
 	
 	if(show):	
 		cv2.imshow("draw Patches On Original Image",img)
@@ -800,6 +966,20 @@ def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True):
 		cv2.imshow("matched_img", matched_img)
 		cv2.waitKey(0)
 	return matched_img
+
+
+def populateTestFindDistinguishablePatchesAlgo2(folderName, imgName, sigma):
+	img = cv2.imread("images/{folder}/{name}".format(folder = folderName,  name = imgName), 1)
+	HSVthresh = 0.5
+	HOGthresh = 0.1
+	sorted_patches = findDistinguishablePatchesAlgo2(img, sigma, HSVthresh, HOGthresh)
+	# plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
+	# 	"HSV_distribution_{folderName}_{imgName}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")] ), \
+	# 	sorted_patches, "HSV")
+	# plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
+	# 	"HOG_distribution_{folderName}_{imgName}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")] ), \
+	# 	sorted_patches, "HOG")
+	# cv2.imwrite("testUniquePatches/UniquePatches_HSVthresh_{HSVthresh}_HOGthresh_{HOGthresh}_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")], HSVthresh = HSVthresh, HOGthresh = HOGthresh), img)
 
 def main():
 	
@@ -835,17 +1015,33 @@ def main():
 	# cv2.imshow("test1",temp)
 	# cv2.waitKey(0)
 
+	### Testing for opencv calcHist function###
 	# img = cv2.imread("images/{folder}/{name}".format(folder = "testset4",  name = "test1.jpg"), 1)
+	# H, S,V = computeFullImageHSVHistogram(img)
+
+	# img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	# img_hsv_hist = cv2.calcHist([img_hsv],[0,1], None, [16,16], [0, 180, 0,256 ])
+	# img_hsv_hist = cv2.calcHist([img_hsv],[1], None, [16], [0,256 ])
+	# img_hsv_hist = img_hsv_hist[:,0]
+	# img_hsv_hist = img_hsv_hist/np.sum(img_hsv_hist)
+	# print len(img_hsv_hist)
+	# print img_hsv_hist
+	# print np.sum(img_hsv_hist)
+
 	# img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
 	# print img.dtype
 	# print img.shape
-	# tempPatches = extractPatches(img, 39, 0.5)
+	# tempPatches = extractPatches(img, 39, 1)
 	# print "number of patches extracted:",len(tempPatches)
 	# for i in range(0, len(tempPatches)):
 	# 	print "computeHOG for tempPatches[{i}]".format(i =i )
 	# 	tempPatches[i].computeHOG(img, True)
+	
+	### Test HOG related ### 
 	# temp = Patch(19, 19, 39)
-	# temp.computeHOG(img)
+	# temp.computeHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int))
+	# print HOGResponse(temp.HOG)
+
 	# for i in range(0, len(temp.HOGArr)):
 		# print temp.HOGArr[i]
 		# print np.sum(temp.HOGArr[i])
@@ -860,7 +1056,12 @@ def main():
 	# max_ori =  np.argmax(arr)
 	# arr =  list(arr[max_ori:len(arr)]) + list(arr[0:max_ori])
 	# print np.array(arr)
-	# raise ValueError ("stop fopr test")
+
+	### Test Algo2 in finding distinguishable patches ###
+	folderNames = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset7"]
+	for i in range(0, len(folderNames)):
+		populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
+	raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
 	#---------------------------Extract Bright Patches------------------------
 	# img = cv2.imread("aggregateRGBResponseImageSize_sigma101.jpg", 0)
