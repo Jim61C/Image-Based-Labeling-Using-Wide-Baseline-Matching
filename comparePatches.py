@@ -9,6 +9,8 @@ import cornerResponse
 import sys
 import drawMatches
 import plotStatistics
+import operator
+from sklearn.preprocessing import normalize
 
 HUE_16BIN_C = np.array(
 [[ 1,  2,  3,  4,  5,  6,  7,  8,  9,  8,  7,  6,  5,  4,  3,  2],
@@ -601,7 +603,7 @@ def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expan
 			patches.append(thisPatch)
 	return patches
 
-# TODO: find a way to deal with the case where hist2[i] = 0 but hist1[i] != 0
+"""Note: There will be a runtime waring if sum(hist1) == 0 || sum(hist2) == 0 """
 def klDivergence(hist1, hist2):
 	return entropy(hist1,hist2)
 
@@ -797,6 +799,19 @@ def removeDuplicates(sorted_patches, metric, distance_thresh, distancefunction =
 
 	return final_sorted_patches
 
+def findFeatureAttributeToUse(patches):
+	feature_attribute_scores = {}
+	# HSVScore score
+	# print "In findFeatureAttributeToUse, normalized HSV distribution:\n", normalize([patch.HSVScore for patch in patches], norm='l1')
+	feature_attribute_scores['HSVScore'] = np.std(normalize([patch.HSVScore for patch in patches], norm='l1')[0]) # l1/l2/max, l2 is default
+	# HOGScore score
+	# print "In findFeatureAttributeToUse, normalized HOG distribution:\n", normalize([patch.HOGScore for patch in patches], norm='l1')
+	feature_attribute_scores['HOGScore'] = np.std(normalize([patch.HOGScore for patch in patches], norm='l1')[0])
+
+	print "In findFeatureAttributeToUse, feature_attribute_scores:", feature_attribute_scores
+
+	return max(feature_attribute_scores.iteritems(), key=operator.itemgetter(1))[0]
+
 
 # def checkDistance(sorted_patches, metric, distancefunction = Jensen_Shannon_Divergence):
 # 	if(metric == "HSV"):
@@ -805,12 +820,13 @@ def removeDuplicates(sorted_patches, metric, distance_thresh, distancefunction =
 # 			SaturationDist = distancefunction(sorted_patches[i].SaturationHist, sorted_patches[i+1].SaturationHist)
 # 			print "distance between patch ", i ," and patch ", (i+1), " = ", np.linalg.norm([HueDist, SaturationDist], 2)
 
-def findDistinguishablePatchesAlgo2(img, sigma, HSVthresh, HOGthresh, thresh_pass = 0.005, step = 1):
+def findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict, thresh_pass = 0.005, step = 1):
 	"""
 	thresh_pass: low threshold used for Harris Corner Filtering
 	HSVthresh: used for removing similar patches for HSV unique patches
 	HOGthresh: used for removing similar patches for HOG unique patches
 	"""
+
 	patches = extractPatches(img, sigma,step)
 	"""
 	Low Pass using Harris Corner to get inital set of potential good patches
@@ -839,17 +855,23 @@ def findDistinguishablePatchesAlgo2(img, sigma, HSVthresh, HOGthresh, thresh_pas
 		filtered_patches[i].computeHOG(img_gray, True)
 		filtered_patches[i].setHOGScore(HOGResponse(filtered_patches[i].HOG))
 
-	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HSVScore, reverse=True)
-	img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HSV", HSVthresh)[0:10],False, None, (255,0,0)) # Blue for Uniqueness on HSV
+	feature_attr_to_use = findFeatureAttributeToUse(filtered_patches)
+	# feature_attr_to_use = "HSVScore"
+	# sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HSVScore, reverse=True)
+	# img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HSV", HSVthresh)[0:10],False, None, (255,0,0)) # Blue for Uniqueness on HSV
 	
-	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HOGScore, reverse=True)
-	img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HOG", HOGthresh)[0:10],False, None, (0,0,255)) # Red for Uniqueness on HOG
+	# sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HOGScore, reverse=True)
+	# img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HOG", HOGthresh)[0:10],False, None, (0,0,255)) # Red for Uniqueness on HOG
 
+	sorted_patches = sorted(filtered_patches, key = lambda patch: getattr(patch, feature_attr_to_use), reverse=True)
 	print "check sorted patches score:"
 	for i in range(0, len(sorted_patches)):
 		# print sorted_patches[i].HSVScore
-		print sorted_patches[i].HOGScore
-	return removeDuplicates(sorted_patches, "HSV", HSVthresh) # return sorted_patches using HSV
+		print getattr(sorted_patches[i], feature_attr_to_use)
+
+	return removeDuplicates(sorted_patches, \
+	feature_attr_to_use[0:feature_attr_to_use.find('Score')], \
+	remove_duplicate_thresh_dict[feature_attr_to_use[0:feature_attr_to_use.find('Score')]]),  feature_attr_to_use[0:feature_attr_to_use.find('Score')], filtered_patches # return sorted_patches using the most distinguishable attributes
 	# return removeDuplicates(sorted_patches, "HOG", HOGthresh) # return sorted_patches using HOG
 	# return filtered_patches
 
@@ -972,13 +994,17 @@ def populateTestFindDistinguishablePatchesAlgo2(folderName, imgName, sigma):
 	img = cv2.imread("images/{folder}/{name}".format(folder = folderName,  name = imgName), 1)
 	HSVthresh = 0.5
 	HOGthresh = 0.1
-	sorted_patches = findDistinguishablePatchesAlgo2(img, sigma, HSVthresh, HOGthresh)
-	# plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
-	# 	"HSV_distribution_{folderName}_{imgName}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")] ), \
-	# 	sorted_patches, "HSV")
-	# plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
-	# 	"HOG_distribution_{folderName}_{imgName}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")] ), \
-	# 	sorted_patches, "HOG")
+	normalize_approach = "l1"
+	sorted_patches, feature_to_use, all_filtered_patches = findDistinguishablePatchesAlgo2(img, sigma, {'HSV': HSVthresh, 'HOG':HOGthresh})
+	print "End of Find distinguishable patches, feature_to_use:", feature_to_use
+	plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
+		"HSV_distribution_{folderName}_{imgName}{normalized}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")], normalized = "" if (normalize_approach == "") else "_normalized" + normalize_approach), \
+		all_filtered_patches, "HSV", normalize_approach)
+	plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
+		"HOG_distribution_{folderName}_{imgName}{normalized}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")], normalized = "" if (normalize_approach == "") else "_normalized" + normalize_approach), \
+		all_filtered_patches, "HOG", normalize_approach)
+	# cv2.imshow("after the process, img:", drawPatchesOnImg(img, sorted_patches,False, None))
+	# cv2.waitKey(0)
 	# cv2.imwrite("testUniquePatches/UniquePatches_HSVthresh_{HSVthresh}_HOGthresh_{HOGthresh}_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")], HSVthresh = HSVthresh, HOGthresh = HOGthresh), img)
 
 def main():
@@ -1056,6 +1082,7 @@ def main():
 	# max_ori =  np.argmax(arr)
 	# arr =  list(arr[max_ori:len(arr)]) + list(arr[0:max_ori])
 	# print np.array(arr)
+
 
 	### Test Algo2 in finding distinguishable patches ###
 	folderNames = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset7"]

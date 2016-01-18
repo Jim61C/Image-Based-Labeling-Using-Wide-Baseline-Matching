@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import comparePatches
+from sklearn.preprocessing import normalize
 
 def plotColorHistogram(patch, img, path, fname, save = True, show = True, histToUse = "HSV", useGaussian = True):
 	fig = None
@@ -165,11 +166,14 @@ def plotHSVSeperateHistCmp(path, fname, \
 	plt.clf()
 	return
 
-def plotUniquenessDistribution(path, fname, patches, metric, displayHist = False, saveHist = True):
+def plotUniquenessDistribution(path, fname, patches, metric, normalize_approach = "", displayHist = False, saveHist = True):
 	if(metric == "HSV"):
 		distribution = [patch.HSVScore for patch in patches]
 	elif(metric == "HOG"):
 		distribution = [patch.HOGScore for patch in patches]
+	if(normalize_approach != ""):
+		distribution = normalize(distribution, norm=normalize_approach)[0]
+	print "in plotUniquenessDistribution, distribution:", distribution
 	plt.plot(distribution, label = fname)
 
 	if(saveHist):

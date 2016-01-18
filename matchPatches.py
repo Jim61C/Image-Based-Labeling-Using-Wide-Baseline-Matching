@@ -11,8 +11,9 @@ import time
 import sys
 
 FEATURE_WEIGHTING = {
-	'HSV':1.0,
+	'HSV':0.0,
 	'HOG':0.0
+	# more features later
 }
 
 # the lower the score (distance), the better;
@@ -229,7 +230,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 
 				matchesFoundNextLevel.append(matchesFoundNextLevelOnePatch)
 
-			print "level ", i, ";Check, should be true: ", len(thisTestPatches) == len(matchesFoundNextLevel)
+			# print "level ", i, ";Check, should be true: ", len(thisTestPatches) == len(matchesFoundNextLevel)
 			# rematch
 			rematches = []
 			for j in range(0, len(thisTestPatches)):
@@ -246,9 +247,9 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			# draw the combined match view to check at this level
 			drawCombinedMatchView(thisImg, thisImgToMatch, thisTestPatches, matchesFound, True)
 
-	print "Final Check, should be true:", len(testPatches) == len(matchesFound)
-	for i in range(0, len(matchesFound)):
-		print "final length of matches for each test path == 5, should be true:", len(matchesFound[i]) == 5
+	print "testDescriptorPerformancePyramidWorker Final Check, should be true:", len(testPatches) == len(matchesFound)
+	# for i in range(0, len(matchesFound)):
+	# 	print "final length of matches for each test path == 5, should be true:", len(matchesFound[i]) == 5
 
 	return matchesFound # a list of list of good matches
 
@@ -310,7 +311,7 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgTo
 
 
 
-def testDescriptorPerformance(folderName,testPatches, imgName,imgToMatchName,folderToSave,useGaussianWindow, suffix = "", sigma = 39, upperPath = "testPatchHSV"):
+def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMatchName,folderToSave,useGaussianWindow, suffix = "", sigma = 39, upperPath = "testPatchHSV"):
 	"""
 	testDescriptorPerformance: given testPatches, run the descriptor matching process;
 	:number of gaussian: 5 (2 level down, 2 level up)
@@ -330,9 +331,9 @@ def testDescriptorPerformance(folderName,testPatches, imgName,imgToMatchName,fol
 			folderToSave = folderToSave, 
 			testFolder = folderName + suffix))
 
-	img = cv2.imread("images/{folder}/{name}".format(folder = folderName, name = imgName), 1)
+	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = folderName, name = imgName), 1)
 	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
-	imgToMatch = cv2.imread("images/{folder}/{name}".format(folder = folderName, name = imgToMatchName), 1)
+	imgToMatch = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = folderName, name = imgToMatchName), 1)
 	imgToMatch_gray = cv2.cvtColor(imgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int)
 
  	# Move the window by 1/4 
@@ -525,7 +526,7 @@ def populate_testset_illuminance1(folder_suffix = ""):
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_Jensen_Shannon_Divergence", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMover", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMoverHueSpecial", sigma)
-	testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	testDescriptorPerformance("images","testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
 	
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 	
@@ -573,7 +574,7 @@ def populate_testset_illuminance2(folder_suffix = ""):
 	# testDescriptorPerformance("testset_illuminance2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_Jensen_Shannon_Divergence", sigma)
 	# testDescriptorPerformance("testset_illuminance2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMover", sigma)
 	# testDescriptorPerformance("testset_illuminance2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMoverHueSpecial", sigma)
-	testDescriptorPerformance("testset_illuminance2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	testDescriptorPerformance("images", "testset_illuminance2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
 	
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance2"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 	return
@@ -620,8 +621,10 @@ def populate_testset_rotation1(folder_suffix = ""):
 
 
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/hists", saveHist = False, displayHist = True)
-	testDescriptorPerformance("testset_rotation1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
-	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
+	listOfMatches = testDescriptorPerformance("images", "testset_rotation1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	for i in range(0, len(listOfMatches)):
+		matchesFound.append(listOfMatches[i][0]) # just append the best match
+	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 	return
 
 def populate_testset_rotation2(folder_suffix = ""):
@@ -673,7 +676,7 @@ def populate_testset_rotation2(folder_suffix = ""):
 
 
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_rotation2"+folder_suffix+"/hists", saveHist = True, displayHist = False)
-	testDescriptorPerformance("testset_rotation2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	testDescriptorPerformance("images","testset_rotation2", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_rotation2"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 	return
 
@@ -721,7 +724,7 @@ def populate_testset4(folder_suffix = ""):
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset4"+folder_suffix+"/hists", saveHist = True, displayHist = False )
 	
 	# testDescriptorPerformance("testset4",testPatches, "test1.jpg","test2.jpg","noGaussianWindow",False, "", sigma)
-	testDescriptorPerformance("testset4", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True, folder_suffix, sigma)
+	testDescriptorPerformance("images", "testset4", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True, folder_suffix, sigma)
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset4"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 
 def populate_testset7(folder_suffix = ""):
@@ -801,7 +804,7 @@ def populate_testset7(folder_suffix = ""):
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/hists", True, False)
 	
 	
-	listOfBestMatches_1_2 = testDescriptorPerformance("testset7", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	listOfBestMatches_1_2 = testDescriptorPerformance("images", "testset7", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
 	for i in range(0, len(listOfBestMatches_1_2)):
 		matchesFound.append(listOfBestMatches_1_2[i][0]) # just append the best match
 	# testDescriptorPerformance("testset7", listOfBestMatches_1_2, "test2.jpg","test3.jpg","GaussianWindowOnAWhole",True, "_4096Bin", sigma)
@@ -809,37 +812,54 @@ def populate_testset7(folder_suffix = ""):
 	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/_combined_scene_match.jpg",\
 		comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 
-def findAndSaveDistinguishablePatches(test_folder_name, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
+def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
 	HSVthresh = 0.5
 	HOGthresh = 0.1
+	remove_duplicate_thresh_dict ={
+		'HSV': HSVthresh,
+		'HOG': HOGthresh
+	}
 	# read the img with proper name and folder
-	img = cv2.imread("images/{folder}/{image}".format(folder = test_folder_name, image = test_img_name), 1)
+	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test_img_name), 1)
 	# find unique patches
-	distinguishablePatches = comparePatches.findDistinguishablePatchesAlgo2(img, sigma, HSVthresh, HOGthresh)
+	distinguishablePatches, feature_to_use, all_filtered_patches= comparePatches.findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict)
+	# set the feature descriptor to use
+	FEATURE_WEIGHTING[feature_to_use] = 1.0
 	# imwrite/save the unique patches
 	imgToSave = comparePatches.drawPatchesOnImg(np.copy(img), distinguishablePatches, False)
 	path = createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)
-	cv2.imwrite("{path}/UniqueAlgo2_{folder}_{file}_simga{i}_HSVthresh{HSVthresh}_HOGthresh{HOGthresh}.jpg".format( \
+	cv2.imwrite("{path}/UniqueAlgo2_{folder}_{file}_simga{i}_HSVthresh{HSVthresh}_HOGthresh{HOGthresh}_feature_{feature_to_use}.jpg".format( \
 		path = path , \
 		folder = test_folder_name, \
 		file = test_img_name, \
 		i = sigma, \
 		HSVthresh = HSVthresh, \
-		HOGthresh = HOGthresh), imgToSave)
+		HOGthresh = HOGthresh, \
+		feature_to_use = feature_to_use), imgToSave)
+	cv2.imwrite("{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
+		path = path , \
+		folder = test_folder_name, \
+		file = test_img_name, \
+		i = sigma), imgToSave)
 	saveLoadPatch.savePatchMatches(distinguishablePatches, 1, \
-		"{path}/UniqueAlgo2_{folder}_{file}_simga{i}_HSVthresh{HSVthresh}_HOGthresh{HOGthresh}.csv".format( \
+		"{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
 			path = path , \
 			folder = test_folder_name, \
 			file = test_img_name, \
-			i = sigma, \
-			HSVthresh = HSVthresh, \
-			HOGthresh = HOGthresh))
+			i = sigma))
 	return distinguishablePatches
 
-def findDistinguishablePatchesAndExecuteMatching(test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
-	sigma = 39
-	testPatches = findAndSaveDistinguishablePatches(test_folder_name, test1_img_name, folder_suffix, sigma, upperPath)
+def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
+	"""Check if the test images exist, if not, return"""
+	if(not(os.path.exists("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name)) \
+		and os.path.exists("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test2_img_name)))):
+		print "Test Images does not exist in:", test_folder_name
+		return
+
+	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name)))
+	testPatches = findAndSaveDistinguishablePatches(image_db, test_folder_name, test1_img_name, folder_suffix, sigma, upperPath)
 	listOfMatches = testDescriptorPerformance(
+		image_db,
 		test_folder_name, 
 		testPatches, 
 		test1_img_name,
@@ -855,8 +875,8 @@ def findDistinguishablePatchesAndExecuteMatching(test_folder_name, test1_img_nam
 	# imwrite the combined match scene
 	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)+"/_combined_scene_match.jpg",\
 		comparePatches.drawMatchesOnImg(\
-			cv2.imread("images/{folder}/{image}".format(folder = test_folder_name, image = test1_img_name), 1), \
-			cv2.imread("images/{folder}/{image}".format(folder = test_folder_name, image = test2_img_name), 1), \
+			cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name), 1), \
+			cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test2_img_name), 1), \
 			testPatches, \
 			matchesFound, \
 			show = False))
@@ -864,34 +884,56 @@ def findDistinguishablePatchesAndExecuteMatching(test_folder_name, test1_img_nam
 """
 TODO: complete populateFeatureMatchingTest after the Image DB is found
 """
-def populateFeatureMatchingTest(test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testPatchHSV"):
+def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testPatchHSV"):
 	sigma = 39
 	level = 5
 	testPatches = []
 	groundTruth = []
 	matchesFound = []
-	# TODO: from test_folder_name, test1_img_name, test2_img_name, get the testPatches and groundTruth
-	listOfPatchMatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+	# read testPatches
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
 		upperPath = upperPath,
 		folderToSave = "GaussianWindowOnAWhole", 
 		testFolder = test_folder_name +folder_suffix, 
 		folder = test_folder_name, 
 		file = test1_img_name[:test1_img_name.find(".")], 
 		i = sigma))
-	for i in range(0, len(listOfPatchMatches)):
-		testPatches.append(listOfPatchMatches[i][0]) # just append the best match
-	
-	testPatchMatches = testDescriptorPerformance(test_folder_name, testPatches, test1_img_name,test2_img_name,"GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	for i in range(0, len(listOfTestPatches)):
+		testPatches.append(listOfTestPatches[i][0])
+	# read matchesFound
+	testPatchMatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix,  
+		folder = test_folder_name, 
+		file1 = "test1", 
+		file2 = "test2", 
+		i = sigma, 
+		step = 0.5, 
+		tf = True))
 	for i in range(0, len(testPatchMatches)):
-		if(i%level == 0):
-			matchesFound.append(testPatchMatches[i])
+		matchesFound.append(testPatchMatches[i][0])
+	
+	# TODO: read groundTruth
 
 	# read test1_img_name to img
+	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
 	# read test2_img_name to imgToMatch
+	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test2_img_name), 1)
+	# plot the statistics
+	checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, \
+		"./{upperPath}/{folderToSave}/{testFolder}/hists".format(\
+			upperPath = upperPath,\
+			folderToSave = "GaussianWindowOnAWhole", \
+			testFolder = test_folder_name +folder_suffix), True, True)
 
-	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./{path}/hists".format(path = test_folder_name), True, True)
+def compute_sigma(img):
+	sigma = img.shape[0]/20
+	sigma = sigma + 1 if (sigma % 2 == 0) else sigma # size of patch needs to be odd number
+	return sigma
 
 def main():
+	
 	# ---------------------------------TEST DESCRIPTOR -----------------------------------
 	# folder_suffix = "_HOG_Jensen_Shannon_Divergence"
 	# folder_suffix = "_HOG_Circular_subCircle_Jensen_Shannon_Divergence"
@@ -900,17 +942,20 @@ def main():
 	# folder_suffix = "_DistinguishablePatches_CornerResponse_Jensen_Shannon_Divergence"
 	# folder_suffix = "_DistinguishablePatches_HSV_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_DistinguishablePatches_HOG_Jensen_Shannon_Divergence"
-	folder_suffix = "_seperateHS_Jensen_Shannon_Divergence_pyramid"
+	# folder_suffix = "_seperateHS_Jensen_Shannon_Divergence_pyramid"
 	# folder_suffix = "_seperateHSV_earthMover"
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
+	folder_suffix = "_HOG_Ori_Assignment_Jensen_Shannon_Divergence_pyramid"
+	feature_to_use = 'HOG'
+	FEATURE_WEIGHTING[feature_to_use] = 1.0
 	start_time = time.time()
 	print 'start matching:', start_time
 	# populate_testset_illuminance1(folder_suffix)
 	# populate_testset_illuminance2(folder_suffix)
-	# populate_testset_rotation1(folder_suffix)
+	populate_testset_rotation1(folder_suffix)
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	populate_testset7(folder_suffix)
+	# populate_testset7(folder_suffix)
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingTest("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
 	print 'finish matching; time spent:', time.time() - start_time

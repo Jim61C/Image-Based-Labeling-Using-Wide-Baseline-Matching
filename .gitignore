@@ -6,3 +6,6 @@ images
 imageDB/
 testPatchHSV/
 testMatches/
+ALOI/
+PASCAL_VOC/
+testAlgo2/

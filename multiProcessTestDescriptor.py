@@ -1,5 +1,6 @@
 from multiprocessing import Pool, cpu_count
 import matchPatches
+import os
 import time
 
 def dispatch_match_test(testName):
@@ -24,40 +25,53 @@ def dispatch_match_test(testName):
 	    matchPatches.populate_testset7(folder_suffix)
 	print 'finish matching for ',testName,' ; time spent:', time.time() - start_time, " secs"
 
-def dispatch_full_algorithm(test_folder_name):
-	folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
-	matchPatches.findDistinguishablePatchesAndExecuteMatching(test_folder_name, "test1.jpg", "test2.jpg", folder_suffix)
+def dispatch_full_algorithm(args):
+	test_folder_name, image_db = args
+	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
+	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
+	folder_suffix = "_UniqueAlgo2_Jensen_Shannon_Divergence"
+	matchPatches.findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo2")
 
-def dispatch_feature_detection(test_folder_name):
+def dispatch_feature_detection(args):
+	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HS_0.3_Corner_0.4_HOG_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_DistinguishablePatches_HS_0.5_Corner_0.5_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_DistinguishablePatches_HS_0.7_Corner_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_DistinguishablePatches_HS_1.0_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_DistinguishablePatches_Corner_1.0_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	folder_suffix = "__DistinguishablePatches_HSFlattened_0.7_Corner_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
-	matchPatches.findAndSaveDistinguishablePatches(test_folder_name, "test1.jpg", folder_suffix, sigma = 39, upperPath = "testMatches")
+	matchPatches.findAndSaveDistinguishablePatches(image_db, test_folder_name, "test1.jpg", folder_suffix, sigma = 39, upperPath = "testMatches")
 
-def dispatch_feature_matching(test_folder_name):
-	# folder_suffix = "_DistinguishablePatches_HS_0.3_Corner_0.4_HOG_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
-	folder_suffix = "_UniqueAlgo2_HSV_Descriptor_seperateHS_Jensen_Shannon_Divergence"
-	# matchPatches.populateFeatureMatchingTest(test_folder_name, "test1.jpg", "test2.jpg",folder_suffix, upperPath = "testMatches")
-	matchPatches.findDistinguishablePatchesAndExecuteMatching(test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testMatches")
+def dispatch_feature_matching(args):
+	test_folder_name, image_db = args
+	folder_suffix = "_DistinguishablePatches_HS_0.3_Corner_0.4_HOG_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
+	matchPatches.populateFeatureMatchingStatistics(image_db, test_folder_name, "test1.jpg", "test2.jpg",folder_suffix, upperPath = "testMatches")
+	
+def extract_all_testfoldernames(image_db):
+	folders = [(name, image_db) for name in os.listdir(image_db) \
+	if os.path.isdir(os.path.join(image_db, name))]
+	return folders
 
 def main():
 	print "cpu_count():",cpu_count()
+	image_db = "images"
+	test_folder_args = extract_all_testfoldernames(image_db)
 	# testNames = ["populate_testset_illuminance1", "populate_testset_illuminance2", "populate_testset_rotation1","populate_testset_rotation2","populate_testset4","populate_testset7"]
 	# testNames = ["populate_testset_rotation1","populate_testset_rotation2"]
-	test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
+	# test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
 	# test_folder_names = ["testset2", "testset3", "testset5"]
+	# test_folder_args = [("testset4", image_db)]
 
 	pool = Pool(cpu_count())
 	# pool.map(dispatch_match_test, testNames)
-	# pool.map(dispatch_full_algorithm, test_folder_names)
-	# pool.map(dispatch_feature_detection, test_folder_names)
-	pool.map(dispatch_feature_matching, test_folder_names)
+	# pool.map(dispatch_feature_detection, test_folder_args)
+	# pool.map(dispatch_feature_matching, test_folder_args)
+	pool.map(dispatch_full_algorithm, test_folder_args)
 
 	pool.close()
 	pool.join()
+
+	print "End Of Multiprocessing"
 	# for partition in partition_list(data_files, 4):
 		# res = pool.map(process_file_callable, partition)
 		# print res
