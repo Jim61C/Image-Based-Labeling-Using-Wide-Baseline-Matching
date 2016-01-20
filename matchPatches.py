@@ -499,53 +499,18 @@ def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"
 	# plt.imshow(np.dstack((img[:,:,2], img[:,:,1], img[:,:,0])))
 	# plt.show()
 
-	## For verification ###
-	# load testPatches
-	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
-		upperPath = "testAlgo2",
-		folderToSave = "GaussianWindowOnAWhole", 
-		testFolder = "testset_illuminance1" +folder_suffix, 
-		folder = "testset_illuminance1", 
-		file = "test1", 
-		i = sigma))
-	for i in range(0, len(listOfTestPatches)):
-		testPatches.append(listOfTestPatches[i][0])
 
-	# load matchesFound
-	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{test_folder_name}_test1_test2_simga39_shiftBy0.5_useGaussianWindow_True_5levels.csv".format(
-		upperPath = "testAlgo2",
-		folderToSave = "GaussianWindowOnAWhole", 
-		testFolder = "testset_illuminance1" +folder_suffix,
-		test_folder_name =  "testset_illuminance1"
-		))
-	for i in range(0, len(listOfTestPatches)):
-		matchesFound.append(listOfTestPatches[i][0])
+	testPatches.append(comparePatches.Patch(149, 826, sigma)) # test0
+	testPatches.append(comparePatches.Patch(478, 721, sigma)) # test1
+	testPatches.append(comparePatches.Patch(351, 822, sigma)) # test2
+	testPatches.append(comparePatches.Patch(328, 943, sigma)) # test3
+	testPatches.append(comparePatches.Patch(342, 145, sigma)) # test4
 
-	# load groudTruth
-	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GroundTruth_{test_folder_name}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format(
-		upperPath = "testAlgo2",
-		folderToSave = "GaussianWindowOnAWhole", 
-		testFolder = "testset_illuminance1" +folder_suffix,
-		test_folder_name = "testset_illuminance1",
-		file1 = "test1",
-		file2 = "test2",
-		i = sigma
-		))
-	for i in range(0, len(listOfTestPatches)):
-		groundTruth.append(listOfTestPatches[i][0])
-
-
-	# testPatches.append(comparePatches.Patch(149, 826, sigma)) # test0
-	# testPatches.append(comparePatches.Patch(478, 721, sigma)) # test1
-	# testPatches.append(comparePatches.Patch(351, 822, sigma)) # test2
-	# testPatches.append(comparePatches.Patch(328, 943, sigma)) # test3
-	# testPatches.append(comparePatches.Patch(342, 145, sigma)) # test4
-
-	# groundTruth.append(comparePatches.Patch(179, 830, sigma)) # test0
-	# groundTruth.append(comparePatches.Patch(501, 728, sigma)) # test1
-	# groundTruth.append(comparePatches.Patch(377, 826, sigma)) # test2
-	# groundTruth.append(comparePatches.Patch(358, 943, sigma)) # test3
-	# groundTruth.append(comparePatches.Patch(360, 165, sigma)) # test4
+	groundTruth.append(comparePatches.Patch(179, 830, sigma)) # test0
+	groundTruth.append(comparePatches.Patch(501, 728, sigma)) # test1
+	groundTruth.append(comparePatches.Patch(377, 826, sigma)) # test2
+	groundTruth.append(comparePatches.Patch(358, 943, sigma)) # test3
+	groundTruth.append(comparePatches.Patch(360, 165, sigma)) # test4
 
 
 	# listOfPatchMatches = saveLoadPatch.loadPatchMatches("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_illuminance1_256Bin_HS", folderToSave = "GaussianWindowOnAWhole", folder = "testset_illuminance1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
@@ -562,14 +527,14 @@ def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_256Bin_HS/hists", saveHist = False, displayHist = False)
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_256Bin_HS_earthMover/hists", saveHist = False, displayHist = False)
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_seperateHS_Jensen_Shannon_Divergence/hists", saveHist = True, displayHist = False)
-	checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./{upperPath}/GaussianWindowOnAWhole/testset_illuminance1{folder_suffix}/hists".format(upperPath = upperPath, folder_suffix = folder_suffix), saveHist = True, displayHist = False)
+	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./{upperPath}/GaussianWindowOnAWhole/testset_illuminance1{folder_suffix}/hists".format(upperPath = upperPath, folder_suffix = folder_suffix), saveHist = True, displayHist = False)
 	
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_256Bin_HS_earthMover", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_256Bin_HS_earthMover_pyemd", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_Jensen_Shannon_Divergence", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMover", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMoverHueSpecial", sigma)
-	# testDescriptorPerformance("images","testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	testDescriptorPerformance("images","testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
 	
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 	
@@ -855,6 +820,69 @@ def populate_testset7(folder_suffix = ""):
 	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/_combined_scene_match.jpg",\
 		comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 
+def loadPatchesMatchesGroundtruth(upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
+	"""
+	upperPath: root folder for the detection and matching results; sub-root folder: 'GaussianWindowOnAWhole'(Default)
+	test_folder_name: name of test folder
+	folder_suffix: suffix to the test folder specifying what kind of feature algorithm used;
+	"""
+	testPatches = []
+	matchesFound = []
+	groundTruth = []
+
+	# load testPatches
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix, 
+		folder = test_folder_name, 
+		file = file1, 
+		i = sigma))
+	for i in range(0, len(listOfTestPatches)):
+		testPatches.append(listOfTestPatches[i][0])
+
+	# load matchesFound
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{test_folder_name}_test1_test2_simga39_shiftBy0.5_useGaussianWindow_True_5levels.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix,
+		test_folder_name =  test_folder_name
+		))
+	for i in range(0, len(listOfTestPatches)):
+		matchesFound.append(listOfTestPatches[i][0])
+
+	# load groudTruth
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GroundTruth_{test_folder_name}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix,
+		test_folder_name = test_folder_name,
+		file1 = file1,
+		file2 = file2,
+		i = sigma
+		))
+	for i in range(0, len(listOfTestPatches)):
+		groundTruth.append(listOfTestPatches[i][0])
+
+	return testPatches, matchesFound, groundTruth
+
+"""TODO: generateStatistics will return the recall, precision and # matches for one pair of image"""
+def generateStatistics(image_db, upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
+	return
+
+def generateHists(image_db, upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
+	img_extension = ".jpg"
+	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = file1+img_extension), 1)
+	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = file2+img_extension), 1)
+
+	testPatches, matchesFound, groundTruth = loadPatchesMatchesGroundtruth(upperPath, test_folder_name, folder_suffix, file1, file2, sigma)
+	checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, \
+		"./{upperPath}/GaussianWindowOnAWhole/{test_folder_name}{folder_suffix}/hists".format(\
+			upperPath = upperPath, \
+			test_folder_name = test_folder_name, \
+			folder_suffix = folder_suffix), saveHist = True, displayHist = False)
+	return
+
 def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
 	"""
 	test_img_name: 'test1.jpg'(Default)
@@ -901,8 +929,8 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
 	"""
 	image_db: image database folder to read source images from;
-	test_folder_name: name of the test folder containing images of different view points;
 	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
+	test_folder_name: name of the test folder containing images of different view points;
 	folder_suffix: suffix to the folder to save specifying what kind of feature algorithm used;
 	test1_img_name: 'test1.jpg'(Default)
 	test2_img_name: 'test2.jpg'(Default)
@@ -1008,17 +1036,18 @@ def main():
 	FEATURE_WEIGHTING[feature_to_use] = 1.0
 	start_time = time.time()
 	print 'start matching:', start_time
-	populate_testset_illuminance1(folder_suffix, "testAlgo2")
+	# populate_testset_illuminance1(folder_suffix, "testAlgo2")
 	# populate_testset_illuminance2(folder_suffix)
 	# populate_testset_rotation1(folder_suffix)
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
 	# populate_testset7(folder_suffix)
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
-	# populateFeatureMatchingTest("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
+	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
+	generateHists("images", "testAlgo2", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
 
-	raise ValueError("testDescriptorPerformance")
+	raise ValueError("Purpose stop for testDescriptorPerformance")
 
 	# -------------------------FULL ALGORITHEM: Extract Distinguishable points + Match ---------------------
 	folderName = "testset7"
