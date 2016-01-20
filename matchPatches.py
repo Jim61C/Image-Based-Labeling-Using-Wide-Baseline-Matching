@@ -866,11 +866,17 @@ def loadPatchesMatchesGroundtruth(upperPath, test_folder_name, folder_suffix, fi
 
 	return testPatches, matchesFound, groundTruth
 
-"""TODO: generateStatistics will return the recall, precision and # matches for one pair of image"""
+
 def generateStatistics(image_db, upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
+	"""
+	TODO: generateStatistics will return the recall, precision and # matches for one pair of image
+	"""
 	return
 
 def generateHists(image_db, upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
+	"""
+	Generates the histogram comparison of different features and store in 'hists/' folder under 'test_folder_name+folder_suffix'
+	"""
 	img_extension = ".jpg"
 	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = file1+img_extension), 1)
 	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = file2+img_extension), 1)
