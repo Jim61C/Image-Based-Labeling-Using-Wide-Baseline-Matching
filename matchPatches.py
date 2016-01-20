@@ -138,6 +138,12 @@ def testFindOnePatchMatch(patchToMatch, patchesArr, k = 1, metricFunc = compareP
 	# return findBestMatches(patchToMatch, overAllGoodMatches, k, "HSV", metricFunc = comparePatches.Jensen_Shannon_Divergence)
 
 def createFolder(upperPath, folderToSave, folderName, suffix):
+	"""
+	upperPath: root folder,
+	folderToSave: "GaussianWindowOnAWhole",
+	folderName:test_folder_name,
+	suffix: suffix to append to test_folder_name
+	"""
 	if(not os.path.isdir("./{path}/{folderToSave}/{testFolder}".format(
 		path = upperPath, 
 		folderToSave = folderToSave, 
@@ -387,6 +393,7 @@ def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMat
 	return testPatchMatches
 
 def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, path, saveHist = False, displayHist = True):
+	print "path:", path
 	if(not os.path.isdir(path)):
 		os.makedirs(path)
 
@@ -474,14 +481,14 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 		groundTruthDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HOG, groundTruth[i].HOG)
 		print "Gound Truth Distance:", groundTruthDistance
 		print "Ground Truth Seperate HSV Hist avg l2 distance:", getHSVSeperateHistAvgl2Distance(testPatches[i], groundTruth[i], comparePatches.Jensen_Shannon_Divergence)
-		print "fullpatch Match Found is Better than Groud Truth? :", groundTruthDistance > matchDistance 
+		# print "fullpatch Match Found is Better than Groud Truth? :", groundTruthDistance > matchDistance 
 		# print "overall Match Found better than Ground Truth? : ", getHSVHistOverAllDistance(testPatches[i], groundTruth[i]) > getHSVHistOverAllDistance(testPatches[i], matchesFound[i])
-		# print "overall Match Found better than Ground Truth Seperate HSV? : ",  getHSVSeperateHistAvgl2Distance(testPatches[i], groundTruth[i], comparePatches.Jensen_Shannon_Divergence) > getHSVSeperateHistAvgl2Distance(testPatches[i], matchesFound[i], comparePatches.Jensen_Shannon_Divergence)
-		print "overall Match Found better than Ground Truth? : ",  getHistArrl2Distance(testPatches[i].HOGArr, groundTruth[i].HOGArr, comparePatches.Jensen_Shannon_Divergence) > getHistArrl2Distance(testPatches[i].HOGArr, matchesFound[i].HOGArr, comparePatches.Jensen_Shannon_Divergence)
+		print "overall Match Found better than Ground Truth (Seperate HSV)? : ",  getHSVSeperateHistAvgl2Distance(testPatches[i], groundTruth[i], comparePatches.Jensen_Shannon_Divergence) > getHSVSeperateHistAvgl2Distance(testPatches[i], matchesFound[i], comparePatches.Jensen_Shannon_Divergence)
+		print "overall Match Found better than Ground Truth (HOG)? : ",  getHistArrl2Distance(testPatches[i].HOGArr, groundTruth[i].HOGArr, comparePatches.Jensen_Shannon_Divergence) > getHistArrl2Distance(testPatches[i].HOGArr, matchesFound[i].HOGArr, comparePatches.Jensen_Shannon_Divergence)
 		
 	return
 
-def populate_testset_illuminance1(folder_suffix = ""):
+def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"):
 	sigma = 39
 	testPatches = []
 	groundTruth = []
@@ -492,17 +499,53 @@ def populate_testset_illuminance1(folder_suffix = ""):
 	# plt.imshow(np.dstack((img[:,:,2], img[:,:,1], img[:,:,0])))
 	# plt.show()
 
-	testPatches.append(comparePatches.Patch(149, 826, sigma)) # test0
-	testPatches.append(comparePatches.Patch(478, 721, sigma)) # test1
-	testPatches.append(comparePatches.Patch(351, 822, sigma)) # test2
-	testPatches.append(comparePatches.Patch(328, 943, sigma)) # test3
-	testPatches.append(comparePatches.Patch(342, 145, sigma)) # test4
+	## For verification ###
+	# load testPatches
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = "testAlgo2",
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = "testset_illuminance1" +folder_suffix, 
+		folder = "testset_illuminance1", 
+		file = "test1", 
+		i = sigma))
+	for i in range(0, len(listOfTestPatches)):
+		testPatches.append(listOfTestPatches[i][0])
 
-	groundTruth.append(comparePatches.Patch(179, 830, sigma)) # test0
-	groundTruth.append(comparePatches.Patch(501, 728, sigma)) # test1
-	groundTruth.append(comparePatches.Patch(377, 826, sigma)) # test2
-	groundTruth.append(comparePatches.Patch(358, 943, sigma)) # test3
-	groundTruth.append(comparePatches.Patch(360, 165, sigma)) # test4
+	# load matchesFound
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{test_folder_name}_test1_test2_simga39_shiftBy0.5_useGaussianWindow_True_5levels.csv".format(
+		upperPath = "testAlgo2",
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = "testset_illuminance1" +folder_suffix,
+		test_folder_name =  "testset_illuminance1"
+		))
+	for i in range(0, len(listOfTestPatches)):
+		matchesFound.append(listOfTestPatches[i][0])
+
+	# load groudTruth
+	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GroundTruth_{test_folder_name}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = "testAlgo2",
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = "testset_illuminance1" +folder_suffix,
+		test_folder_name = "testset_illuminance1",
+		file1 = "test1",
+		file2 = "test2",
+		i = sigma
+		))
+	for i in range(0, len(listOfTestPatches)):
+		groundTruth.append(listOfTestPatches[i][0])
+
+
+	# testPatches.append(comparePatches.Patch(149, 826, sigma)) # test0
+	# testPatches.append(comparePatches.Patch(478, 721, sigma)) # test1
+	# testPatches.append(comparePatches.Patch(351, 822, sigma)) # test2
+	# testPatches.append(comparePatches.Patch(328, 943, sigma)) # test3
+	# testPatches.append(comparePatches.Patch(342, 145, sigma)) # test4
+
+	# groundTruth.append(comparePatches.Patch(179, 830, sigma)) # test0
+	# groundTruth.append(comparePatches.Patch(501, 728, sigma)) # test1
+	# groundTruth.append(comparePatches.Patch(377, 826, sigma)) # test2
+	# groundTruth.append(comparePatches.Patch(358, 943, sigma)) # test3
+	# groundTruth.append(comparePatches.Patch(360, 165, sigma)) # test4
 
 
 	# listOfPatchMatches = saveLoadPatch.loadPatchMatches("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_illuminance1_256Bin_HS", folderToSave = "GaussianWindowOnAWhole", folder = "testset_illuminance1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
@@ -519,14 +562,14 @@ def populate_testset_illuminance1(folder_suffix = ""):
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_256Bin_HS/hists", saveHist = False, displayHist = False)
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_256Bin_HS_earthMover/hists", saveHist = False, displayHist = False)
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_seperateHS_Jensen_Shannon_Divergence/hists", saveHist = True, displayHist = False)
-	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/hists", saveHist = True, displayHist = False)
+	checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./{upperPath}/GaussianWindowOnAWhole/testset_illuminance1{folder_suffix}/hists".format(upperPath = upperPath, folder_suffix = folder_suffix), saveHist = True, displayHist = False)
 	
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_256Bin_HS_earthMover", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_256Bin_HS_earthMover_pyemd", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_Jensen_Shannon_Divergence", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMover", sigma)
 	# testDescriptorPerformance("testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  "_seperateHS_earthMoverHueSpecial", sigma)
-	testDescriptorPerformance("images","testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	# testDescriptorPerformance("images","testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
 	
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 	
@@ -813,6 +856,9 @@ def populate_testset7(folder_suffix = ""):
 		comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 
 def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
+	"""
+	test_img_name: 'test1.jpg'(Default)
+	"""
 	HSVthresh = 0.5
 	HOGthresh = 0.1
 	remove_duplicate_thresh_dict ={
@@ -828,29 +874,40 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 	# imwrite/save the unique patches
 	imgToSave = comparePatches.drawPatchesOnImg(np.copy(img), distinguishablePatches, False)
 	path = createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)
+	# imwrite the image with unique patches, including the parameters
 	cv2.imwrite("{path}/UniqueAlgo2_{folder}_{file}_simga{i}_HSVthresh{HSVthresh}_HOGthresh{HOGthresh}_feature_{feature_to_use}.jpg".format( \
 		path = path , \
 		folder = test_folder_name, \
-		file = test_img_name, \
+		file = test_img_name[:test_img_name.find(".")], \
 		i = sigma, \
 		HSVthresh = HSVthresh, \
 		HOGthresh = HOGthresh, \
 		feature_to_use = feature_to_use), imgToSave)
+	# imwrite the image with unique patches, standard name
 	cv2.imwrite("{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
 		path = path , \
 		folder = test_folder_name, \
-		file = test_img_name, \
+		file = test_img_name[:test_img_name.find(".")], \
 		i = sigma), imgToSave)
+	# save the unique patches coordinates, standard name
 	saveLoadPatch.savePatchMatches(distinguishablePatches, 1, \
 		"{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
 			path = path , \
 			folder = test_folder_name, \
-			file = test_img_name, \
+			file = test_img_name[:test_img_name.find(".")], \
 			i = sigma))
 	return distinguishablePatches
 
 def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
-	"""Check if the test images exist, if not, return"""
+	"""
+	image_db: image database folder to read source images from;
+	test_folder_name: name of the test folder containing images of different view points;
+	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
+	folder_suffix: suffix to the folder to save specifying what kind of feature algorithm used;
+	test1_img_name: 'test1.jpg'(Default)
+	test2_img_name: 'test2.jpg'(Default)
+	"""
+	# Check if the test images exist, if not, return
 	if(not(os.path.exists("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name)) \
 		and os.path.exists("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test2_img_name)))):
 		print "Test Images does not exist in:", test_folder_name
@@ -945,14 +1002,15 @@ def main():
 	# folder_suffix = "_seperateHS_Jensen_Shannon_Divergence_pyramid"
 	# folder_suffix = "_seperateHSV_earthMover"
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
-	folder_suffix = "_HOG_Ori_Assignment_Jensen_Shannon_Divergence_pyramid"
-	feature_to_use = 'HOG'
+	# folder_suffix = "_HOG_Ori_Assignment_Jensen_Shannon_Divergence_pyramid"
+	folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
+	feature_to_use = 'HSV'
 	FEATURE_WEIGHTING[feature_to_use] = 1.0
 	start_time = time.time()
 	print 'start matching:', start_time
-	# populate_testset_illuminance1(folder_suffix)
+	populate_testset_illuminance1(folder_suffix, "testAlgo2")
 	# populate_testset_illuminance2(folder_suffix)
-	populate_testset_rotation1(folder_suffix)
+	# populate_testset_rotation1(folder_suffix)
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
 	# populate_testset7(folder_suffix)

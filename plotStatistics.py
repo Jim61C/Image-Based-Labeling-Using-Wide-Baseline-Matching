@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import comparePatches
 from sklearn.preprocessing import normalize
+import os
 
 def plotColorHistogram(patch, img, path, fname, save = True, show = True, histToUse = "HSV", useGaussian = True):
 	fig = None
@@ -182,5 +183,27 @@ def plotUniquenessDistribution(path, fname, patches, metric, normalize_approach 
 		plt.show()
 	plt.clf()
 
+def plotResponseDistribution(path, this_feature_set, testPatchIndex, test_patch_response, random_patches_response, displayHist = False, saveHist = True):
+	# file path
+	if(not os.path.isdir(path)):
+		os.makedirs(path)
+	# file name
+	fname = "LDA_Distribution_testPatch[{i}]".format(i = testPatchIndex)
+	for i in range(0, len(this_feature_set)):
+		fname += "_{feature}".format(feature = this_feature_set[i])
+
+	# print random_patches_response
+	# print [test_patch_response]
+	bin = 50.0
+	# plot histogram for test_patch_response and random_patches_response
+	plt.hist(random_patches_response, bin, normed=1, facecolor='green', alpha=0.75)
+	# plt.hist([test_patch_response], 1, normed=1, facecolor='red', alpha=0.75)
+	plt.bar([test_patch_response],[1], width = (np.max(random_patches_response) - np.min(random_patches_response))/bin, color = 'r')
+
+	if(saveHist):
+		plt.savefig(path+"/"+fname+".png")
+	if(displayHist):
+		plt.show()
+	plt.clf()
 
 	

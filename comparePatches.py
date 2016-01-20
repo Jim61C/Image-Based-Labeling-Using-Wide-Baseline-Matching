@@ -11,6 +11,9 @@ import drawMatches
 import plotStatistics
 import operator
 from sklearn.preprocessing import normalize
+import saveLoadPatch
+import itertools
+import random
 
 HUE_16BIN_C = np.array(
 [[ 1,  2,  3,  4,  5,  6,  7,  8,  9,  8,  7,  6,  5,  4,  3,  2],
@@ -60,8 +63,8 @@ class Patch:
 		self.RGBScore = None # individual RGB histogram distinguishability Score
 		self.aggregateRGBScore = None # RGB histogram distinguishability Score over its aggregated neighbourhood
 
-		self.HSVHistArr = []
-		self.HSVHist = None
+		self.HSVHistArr = [] # full patch + sub patches flattened HSV histogram
+		self.HSVHist = None # full patch flattened HSV histogram
 		self.HSVScore = None
 
 		self.HueHist = None
@@ -80,6 +83,12 @@ class Patch:
 		self.HOGScore = None
 
 		self.overallScore = None
+
+	def equals(self, another_patch):
+		if(self.x == another_patch.x and self.y == another_patch.y and self.size == another_patch.size):
+			return True
+		else:
+			return False
 
 	def setX(self, _x):
 		self.x = _x
@@ -584,7 +593,34 @@ def computePatchesHSVHistogram(img,patches):
 	for i in range(0, len(patches)):
 		patches[i].computeHSVHistogram(img)
 		print "compute patch HSV:", i
-	return 
+	return
+
+def extractOneRandomPatch(img, sigma):
+	x = random.randint(sigma/2, img.shape[0] - sigma/2 - 1) # since randint is inclusive of [a,b]
+	y = random.randint(sigma/2, img.shape[1] - sigma/2 - 1)
+	return Patch(x, y, sigma)
+
+def alreadyInPatches(rand_patch, patches):
+	"""
+	return: True if rand_patch is already in patches; False Otherwise
+	"""
+	for i in range(0, len(patches)):
+		if(rand_patch.equals(patches[i])):
+			return True
+	return False
+
+def extractRandomPatches(img, sigma, num):
+	"""
+	img: image to extract patch on,
+	sigma: patch window size,
+	num: number of random patches generated
+	"""
+	patches = []
+	while(len(patches)< num):
+		rand_patch = extractOneRandomPatch(img, sigma)
+		if(not alreadyInPatches(rand_patch, patches)):
+			patches.append(rand_patch)
+	return patches
 
 # step 1 means shift by half of the window size, step 2 means shift by one window size, and so on, (circular_expand_level = 2 for SubAndSuperHOG)
 def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expand_level = 0):
@@ -722,7 +758,6 @@ def distinguishabilityScore(row):
 
 # dissimilarity is n*n array
 # return a sorted array of indexes of patches based on the metirc: sum/average of dissimilarity with all rest patches
-# TODO: Research for how to compute distinguishability for each element out of a dissimilarity matrix
 def sortedIndexOfDistinguishablePatches(patches, dissimilarity, metric = "RGB"):
 	normalizer = float(dissimilarity.shape[0]) * np.amax(dissimilarity)
 	distinguishability = np.zeros(dissimilarity.shape[0])
@@ -951,6 +986,97 @@ def findDistinguishablePatches(img, sigma, step = 1):
 	# return sorted(patches, key = lambda patch: patch.HOGScore, reverse=True)
 	# return sorted(patches, key = lambda patch: patch.cornerResponseScore, reverse=True)
 
+def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_patches, path, testPatchIndex):
+	"""
+	this_feature_set: feature sets to consider
+	this_feature_weights: weights of features in the set
+	return: weighed LDA statistics of this testPatch and random_patches wrt the feature sets
+	"""
+	test_patch_response = 0
+	for i in range(0, len(this_feature_set)):
+		cur_feature_attr = this_feature_set[i] + "Score"
+		cur_feature_weight = this_feature_weights[i]
+		test_patch_response  += getattr(testPatch, cur_feature_attr) * cur_feature_weight
+
+	random_patches_response = []
+	for j in range(0, len(random_patches)):
+		one_response = 0
+		for i in range(0, len(this_feature_set)):
+			cur_feature_attr = this_feature_set[i] + "Score"
+			cur_feature_weight = this_feature_weights[i]
+			one_response += getattr(random_patches[j], cur_feature_attr) * cur_feature_weight
+		random_patches_response.append(one_response)
+		
+	# make the distribution to be np array
+	random_patches_response = np.asarray(random_patches_response)
+
+	# plot the distribution and the testPatch response
+	plotStatistics.plotResponseDistribution(path+"/hists", this_feature_set, testPatchIndex, test_patch_response, random_patches_response)
+
+	return (np.mean(random_patches_response) - test_patch_response)**2 / np.var(random_patches_response)
+
+def generateAllFeatureSets(features):
+	"""
+	return: all subsets of a list of string
+	"""
+	all_sets = []
+	for i in range(1, len(features)+1):
+		sets_same_size = list(itertools.combinations(features, i))
+		for j in range(0,len(sets_same_size)):
+			all_sets.append(list(sets_same_size[j]))
+	return all_sets
+
+
+def setOnePatchScore_All_Features(patch, img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist):
+	# HSV Feature
+	patch.computeSinglePatchHSVHistogram(img, gaussianWindow, True)
+	patch.HueHist = patch.HueHistArr[0]
+	patch.SaturationHist = patch.SaturationHistArr[0]
+	patch.ValueHist = patch.ValueHistArr[0]
+	patch.setHSVScore(compareSeperateHSVHists(patch, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist))
+
+	# HOG Feature
+	patch.computeHOG(img_gray, True)
+	patch.setHOGScore(HOGResponse(patch.HOG))
+
+
+def findCombinatorialFeatureScore(img, testPatches, sigma, path):
+	"""
+	img: the base image,
+	testPatches: the set of unique patches;
+	return: the score of different combination of features in LDA statistics 
+	"""
+	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
+	gaussianWindow = gauss_kernels(sigma, sigma/6.0)
+	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist = computeFullImageHSVHistogram(img)
+	
+	random_patches = extractRandomPatches(img, sigma, 200)
+
+	for i in range(0, len(testPatches)):
+		setOnePatchScore_All_Features(testPatches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
+	for i in range(0, len(random_patches)):
+		setOnePatchScore_All_Features(random_patches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
+
+	features = ["HSV", "HOG"]
+	all_feature_sets = generateAllFeatureSets(features)
+	feature_sets_score = np.zeros(shape = (len(all_feature_sets), len(testPatches)))
+	
+	for i in range(0, len(all_feature_sets)):
+		this_feature_set = all_feature_sets[i]
+		this_feature_weights = np.ones(len(this_feature_set))
+		print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
+		for j in range(0, len(testPatches)):
+			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches, path, j)
+
+	# Log out the feature_sets_score for each testPatch
+	print "------------ Logging feature_sets_score for each testPatch ------------"
+	for i in range(0, len(testPatches)):
+		for j in range(0, len(all_feature_sets)):
+			print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " Score: ", feature_sets_score[j][i]
+		print ""
+	return feature_sets_score
+
+
 # patches can be 1. an instance of Patch class 2. A list of patches
 # Gradiant is to indiacte the goodness of the match patch, the ligher(redder) the better
 def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255)): # gradiant is supposed to be  = 1.0/len(patches)
@@ -1006,6 +1132,20 @@ def populateTestFindDistinguishablePatchesAlgo2(folderName, imgName, sigma):
 	# cv2.imshow("after the process, img:", drawPatchesOnImg(img, sorted_patches,False, None))
 	# cv2.waitKey(0)
 	# cv2.imwrite("testUniquePatches/UniquePatches_HSVthresh_{HSVthresh}_HOGthresh_{HOGthresh}_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")], HSVthresh = HSVthresh, HOGthresh = HOGthresh), img)
+
+def populateTestCombinatorialFeatureScore(test_folder_name, img_name, sigma = 39, upperPath = "testAlgo2", folder_suffix = "_eyeballed_unique_patches", image_db = "images"):
+	path = upperPath + "/GaussianWindowOnAWhole/" + test_folder_name + folder_suffix
+	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name), 1)
+	testPatches = []
+	listOfPatches = saveLoadPatch.loadPatchMatches("{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+			path = path , \
+			folder = test_folder_name, \
+			file = "test1", \
+			i = sigma))
+	for i in range(0, len(listOfPatches)):
+		testPatches.append(listOfPatches[i][0]) # just append the best match
+	feature_set_scores = findCombinatorialFeatureScore(img, testPatches, sigma, path)
+	print feature_set_scores
 
 def main():
 	
@@ -1083,12 +1223,16 @@ def main():
 	# arr =  list(arr[max_ori:len(arr)]) + list(arr[0:max_ori])
 	# print np.array(arr)
 
-
+	folderNames = ["testset_illuminance1"]
 	### Test Algo2 in finding distinguishable patches ###
-	folderNames = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset7"]
+	# for i in range(0, len(folderNames)):
+	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
+	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
+
+	### Test combinatorial feature scores on a set of eyeballed patches
 	for i in range(0, len(folderNames)):
-		populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
-	raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
+		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39)
+	raise ValueError ("purpose stop for TestCombinatorialFeatureScore")
 
 	#---------------------------Extract Bright Patches------------------------
 	# img = cv2.imread("aggregateRGBResponseImageSize_sigma101.jpg", 0)
