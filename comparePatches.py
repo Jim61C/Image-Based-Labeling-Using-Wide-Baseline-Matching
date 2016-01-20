@@ -660,11 +660,17 @@ def CforHue(histLen):
 	return C
 
 def earthMoverHatDistanceForHue(hist1, hist2):
+	"""
+	HUE_16BIN_C only
+	"""
 	if(len(hist1) != 16 or len(hist2) != 16):
 		raise ValueError("Length of histogram does not match Hue's Requirement")
 	return pyemd.emd(hist1, hist2, HUE_16BIN_C)
 
 def earthMoverHatDistanceForHOG(hist1, hist2):
+	"""
+	HOG_8BIN_C only
+	"""
 	if(len(hist1) != 8 or len(hist2) != 8):
 		raise ValueError("Length of histogram does not match HOG Hist's Requirement")
 	return pyemd.emd(hist1, hist2, HOG_8BIN_C)

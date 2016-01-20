@@ -95,7 +95,7 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 	if(FEATURE_WEIGHTING['HOG'] != 0):
 		# hog_distances = np.zeros(len(matchPatches))
 		for i in range(0, len(hog_distances)):
-			# TODO: if use earthMover for HOG, then we should use comparePatches.earthMoverHatDistanceForHOG
+			# TODO: if use earthMover for HOG, then we should use comparePatches.earthMoverHatDistanceForHOG with the correct C matrix
 			hog_distances[i] = getHistArrl2Distance(patchToMatch.HOGArr, matchPatches[i].HOGArr, metricFunc) 
 	
 	overall_distances = np.sqrt(FEATURE_WEIGHTING['HSV'] * color_distances**2 + FEATURE_WEIGHTING['HOG'] * hog_distances**2)
@@ -889,6 +889,11 @@ def generateHists(image_db, upperPath, test_folder_name, folder_suffix, file1 = 
 			folder_suffix = folder_suffix), saveHist = True, displayHist = False)
 	return
 
+def compute_sigma(img):
+	sigma = img.shape[0]/20
+	sigma = sigma + 1 if (sigma % 2 == 0) else sigma # size of patch needs to be odd number
+	return sigma
+
 def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
 	"""
 	test_img_name: 'test1.jpg'(Default)
@@ -973,7 +978,7 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 			show = False))
 
 """
-TODO: complete populateFeatureMatchingTest after the Image DB is found
+TODO: complete populateFeatureMatchingStatistics after the Image DB is found
 """
 def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testPatchHSV"):
 	sigma = 39
@@ -1005,7 +1010,7 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 	for i in range(0, len(testPatchMatches)):
 		matchesFound.append(testPatchMatches[i][0])
 	
-	# TODO: read groundTruth
+	# read groundTruth
 
 	# read test1_img_name to img
 	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
@@ -1017,11 +1022,6 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 			upperPath = upperPath,\
 			folderToSave = "GaussianWindowOnAWhole", \
 			testFolder = test_folder_name +folder_suffix), True, True)
-
-def compute_sigma(img):
-	sigma = img.shape[0]/20
-	sigma = sigma + 1 if (sigma % 2 == 0) else sigma # size of patch needs to be odd number
-	return sigma
 
 def main():
 	
