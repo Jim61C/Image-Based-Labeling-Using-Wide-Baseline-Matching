@@ -755,6 +755,9 @@ def dissimilarityMetricOnImagePosition(img, patches, dissimilarity):
 	return response
 
 def distinguishabilityScore(row):
+	"""
+	For Jensen_Shannon_Divergence
+	"""
 	thresh = 0.5 # threshhold for indicatig large distinguishability for Jensen_Shannon_Divergence
 	count = 0.0
 	for i in range(0, len(row)):
@@ -775,6 +778,27 @@ def sortedIndexOfDistinguishablePatches(patches, dissimilarity, metric = "RGB"):
 		elif(metric == "HSV"):
 			patches[i].setHSVScore(score)
 	return np.argsort(distinguishability)[::-1]
+
+### Start of Algo3 for feature detection: 1. Low pass filter of Harris Corner score. 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations###
+def findDistinguishablePatchesAlgo3(img, sigma, harris_thresh_pass = 0.005, step = 1):
+	"""
+	sigma, step: used for patch extraction
+	harris_thresh_pass: threshhold for filtering the initial set of good patches
+	"""
+
+	patches = extractPatches(img, sigma,step)
+	"""
+	1. Low Pass using Harris Corner to get inital set of potential good patches
+	"""
+	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
+	filtered_patches = cornerResponse.filter_patches(patches, thresh_pass, cornerResponseMatrix, maxCornerResponse)
+	"""
+	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
+	"""
+
+	return
+
+### Start of Algo2 for feature detection: Find one feature that makes the distribution of the low pass filtered patches to be of shape of spikes###
 
 def computeFullImageHSVHistogram(img):
 	img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -992,7 +1016,7 @@ def findDistinguishablePatches(img, sigma, step = 1):
 	# return sorted(patches, key = lambda patch: patch.HOGScore, reverse=True)
 	# return sorted(patches, key = lambda patch: patch.cornerResponseScore, reverse=True)
 
-def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_patches, path, testPatchIndex):
+def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_patches, plotHist = False,  path = "", testPatchIndex = 0):
 	"""
 	this_feature_set: feature sets to consider
 	this_feature_weights: weights of features in the set
@@ -1017,7 +1041,8 @@ def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_pa
 	random_patches_response = np.asarray(random_patches_response)
 
 	# plot the distribution and the testPatch response
-	plotStatistics.plotResponseDistribution(path+"/hists", this_feature_set, testPatchIndex, test_patch_response, random_patches_response)
+	if(plotHist):
+		plotStatistics.plotResponseDistribution(path+"/hists", this_feature_set, testPatchIndex, test_patch_response, random_patches_response)
 
 	return (np.mean(random_patches_response) - test_patch_response)**2 / np.var(random_patches_response)
 
@@ -1033,7 +1058,7 @@ def generateAllFeatureSets(features):
 	return all_sets
 
 
-def setOnePatchScore_All_Features(patch, img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist):
+def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist):
 	# HSV Feature
 	patch.computeSinglePatchHSVHistogram(img, gaussianWindow, True)
 	patch.HueHist = patch.HueHistArr[0]
@@ -1059,9 +1084,9 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path):
 	random_patches = extractRandomPatches(img, sigma, 200)
 
 	for i in range(0, len(testPatches)):
-		setOnePatchScore_All_Features(testPatches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
+		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
 	for i in range(0, len(random_patches)):
-		setOnePatchScore_All_Features(random_patches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
+		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
 
 	features = ["HSV", "HOG"]
 	all_feature_sets = generateAllFeatureSets(features)
@@ -1072,7 +1097,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path):
 		this_feature_weights = np.ones(len(this_feature_set))
 		print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
 		for j in range(0, len(testPatches)):
-			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches, path, j)
+			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches, True, path, j)
 
 	# Log out the feature_sets_score for each testPatch
 	print "------------ Logging feature_sets_score for each testPatch ------------"
