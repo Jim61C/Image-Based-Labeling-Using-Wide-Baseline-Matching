@@ -19,8 +19,12 @@ def save_data(data, filename):
 # Input: patches is a flattened list of matchPatches
 # store as a csv file with ['x', 'y', 'size', 'correspondingPatchIndex']
 def savePatchMatches(patches, level, filename):
+	"""
+	patches: a flattened list of patches;
+	level: number of patches corresponding to the same testPatch (Default is 5)
+	"""
 	with open(filename, 'w') as csvfile:
-		fieldnames = ['x', 'y', 'size', 'correspondingPatchIndex']
+		fieldnames = ['x', 'y', 'size', 'correspondingPatchIndex', 'featureSet']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		
 		writer.writeheader()
@@ -29,7 +33,7 @@ def savePatchMatches(patches, level, filename):
 		for i in range (0, n_test):
 			for j in range(0, level):
 				#Save information on patches[i*level + j]
-				writer.writerow({'x': patches[i*level + j].x , 'y':patches[i*level + j].y , 'size':patches[i*level + j].size, 'correspondingPatchIndex':i})				
+				writer.writerow({'x': patches[i*level + j].x , 'y':patches[i*level + j].y , 'size':patches[i*level + j].size, 'correspondingPatchIndex':i, 'featureSet': patches[i*level + j].feature_to_use})				
 	return
 
 

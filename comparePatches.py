@@ -74,8 +74,6 @@ class Patch:
 		self.ValueHist = None
 		self.ValueHistArr = [] # including the 2*2 sub patches
 
-
-
 		self.cornerResponseScore = None # patch corner response score, TODO: check how to even it, currently, this score is distributed very uneven
 
 		self.HOGArr = [] # includes HOG on full patch and HOGs on 4 subPatches
@@ -83,6 +81,21 @@ class Patch:
 		self.HOGScore = None
 
 		self.overallScore = None
+
+		###For Algo3, a set of features to use for matching###
+		self.feature_to_use = []
+		self.feature_weights = None
+		self.LDAFeatureScore = None
+
+	def setFeatureWeights(self, weights_np_array):
+		self.feature_weights = weights_np_array
+
+	def setLDAFeatureScore(self, score):
+		self.LDAFeatureScore = score
+
+	def setFeatureToUse(self, features):
+		del self.feature_to_use[:]
+		self.feature_to_use.extend(features)
 
 	def equals(self, another_patch):
 		if(self.x == another_patch.x and self.y == another_patch.y and self.size == another_patch.size):
@@ -251,8 +264,6 @@ class Patch:
 		for i in range(0, len(hist)):
 			hist[i] = np.sum(hist_360_bin[i*scale : i*scale + scale])
 		return np.array(hist)
-
-
 
 	# TODO: refactor, make a computeColorHistogram as interface to outside, so that we can change the implementation inside willfully
 	def computeHSVHistogram(self, img, useGaussianSmoothing = True, computeSeperateHists = False):
@@ -780,7 +791,7 @@ def sortedIndexOfDistinguishablePatches(patches, dissimilarity, metric = "RGB"):
 	return np.argsort(distinguishability)[::-1]
 
 ### Start of Algo3 for feature detection: 1. Low pass filter of Harris Corner score. 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations###
-def findDistinguishablePatchesAlgo3(img, sigma, harris_thresh_pass = 0.005, step = 1):
+def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.005, LDA_thresh = 1.0, step = 1):
 	"""
 	sigma, step: used for patch extraction
 	harris_thresh_pass: threshhold for filtering the initial set of good patches
@@ -791,12 +802,27 @@ def findDistinguishablePatchesAlgo3(img, sigma, harris_thresh_pass = 0.005, step
 	1. Low Pass using Harris Corner to get inital set of potential good patches
 	"""
 	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
-	filtered_patches = cornerResponse.filter_patches(patches, thresh_pass, cornerResponseMatrix, maxCornerResponse)
+	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
 	"""
 	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
 	"""
+	findCombinatorialFeatureScore(img, filtered_patches, sigma)
+	# plt.hist([this_patch.LDAFeatureScore for this_patch in filtered_patches], 50, label = "LDAFeatureScore Distribution for filtered_patches")
+	# plt.legend()
+	# plt.show()
+	i = 0
+	while(i < len(filtered_patches)):
+		if(filtered_patches[i].LDAFeatureScore < LDA_thresh):
+			filtered_patches.pop(i)
+		else:
+			i += 1
+	"""
+	3. remove duplicated patches that are very similar
+	"""
+	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.LDAFeatureScore, reverse = True)
 
-	return
+	# return removeDuplicates(sorted_patches,remove_duplicate_thresh_dict)
+	return sorted_patches[0:10]
 
 ### Start of Algo2 for feature detection: Find one feature that makes the distribution of the low pass filtered patches to be of shape of spikes###
 
@@ -831,36 +857,36 @@ def HOGResponse(HOG):
 			count += HOG[i]
 	return count
 
-def similarPatchAlreadySelected(patch, selected_patches, metric, distance_thresh, distancefunction = Jensen_Shannon_Divergence):
-	if(metric == "HOG"):
-		for i in range(0, len(selected_patches)):
-			if(distancefunction(selected_patches[i].HOG, patch.HOG) < distance_thresh):
-				return True
-		return False
-	elif(metric == "HSV"):
-		for i in range(0, len(selected_patches)):
-			if(compareSeperateHSVHists(patch, \
-				selected_patches[i].HueHist, selected_patches[i].SaturationHist, selected_patches[i].ValueHist, distancefunction) < distance_thresh):
-				return True
-		return False
 
-def removeDuplicates(sorted_patches, metric, distance_thresh, distancefunction = Jensen_Shannon_Divergence):
+def similarPatchAlreadySelected(patch, selected_patches, distance_thresh_dict, distancefunction = Jensen_Shannon_Divergence):
+	"""
+	need to be modified to coordinate with new features
+	"""
+	for i in range(0, len(selected_patches)):
+		if(patch.feature_to_use == selected_patches[i].feature_to_use): # TODO: tackle the case where one set is the other's true subset, then, check score for both sets
+			this_dist_score = 0
+			dist_thresh = 0
+			for j in range(0, len(patch.feature_to_use)):
+				dist_thresh += distance_thresh_dict[patch.feature_to_use[j]]**2
+				if(patch.feature_to_use[j] == 'HOG'):
+					this_dist_score += distancefunction(selected_patches[i].HOG, patch.HOG)**2
+				elif(patch.feature_to_use[j] == 'HSV'):
+					this_dist_score += compareSeperateHSVHists(patch, \
+						selected_patches[i].HueHist, selected_patches[i].SaturationHist, selected_patches[i].ValueHist, distancefunction)**2
+			if(math.sqrt(this_dist_score) < math.sqrt(dist_thresh)):
+				return True
+	return False
+
+def removeDuplicates(sorted_patches, distance_thresh_dict, distancefunction = Jensen_Shannon_Divergence):
 	final_sorted_patches = []
 	print "total_length of sorted_patches:", len(sorted_patches)
 
 	final_sorted_patches.append(sorted_patches[0])
-	if(metric == "HOG"):
-		i = 1
-		while(i< len(sorted_patches)):
-			if(not similarPatchAlreadySelected(sorted_patches[i], final_sorted_patches, "HOG", distance_thresh)):
-				final_sorted_patches.append(sorted_patches[i])
-			i += 1
-	elif(metric == "HSV"):
-		i = 1
-		while(i< len(sorted_patches)):
-			if(not similarPatchAlreadySelected(sorted_patches[i], final_sorted_patches, "HSV", distance_thresh)):
-				final_sorted_patches.append(sorted_patches[i])
-			i += 1
+	i = 1
+	while(i< len(sorted_patches)):
+		if(not similarPatchAlreadySelected(sorted_patches[i], final_sorted_patches, distance_thresh_dict, distancefunction)):
+			final_sorted_patches.append(sorted_patches[i])
+		i += 1
 
 	return final_sorted_patches
 
@@ -932,11 +958,11 @@ def findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict, th
 	print "check sorted patches score:"
 	for i in range(0, len(sorted_patches)):
 		# print sorted_patches[i].HSVScore
+		sorted_patches[i].setFeatureToUse([feature_attr_to_use[0:feature_attr_to_use.find('Score')]])
 		print getattr(sorted_patches[i], feature_attr_to_use)
 
-	return removeDuplicates(sorted_patches, \
-	feature_attr_to_use[0:feature_attr_to_use.find('Score')], \
-	remove_duplicate_thresh_dict[feature_attr_to_use[0:feature_attr_to_use.find('Score')]]),  feature_attr_to_use[0:feature_attr_to_use.find('Score')], filtered_patches # return sorted_patches using the most distinguishable attributes
+	return removeDuplicates(sorted_patches,\
+	remove_duplicate_thresh_dict),  feature_attr_to_use[0:feature_attr_to_use.find('Score')], filtered_patches # return sorted_patches using the most distinguishable attributes
 	# return removeDuplicates(sorted_patches, "HOG", HOGthresh) # return sorted_patches using HOG
 	# return filtered_patches
 
@@ -1071,7 +1097,7 @@ def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, full_im
 	patch.setHOGScore(HOGResponse(patch.HOG))
 
 
-def findCombinatorialFeatureScore(img, testPatches, sigma, path):
+def findCombinatorialFeatureScore(img, testPatches, sigma, path = ""):
 	"""
 	img: the base image,
 	testPatches: the set of unique patches;
@@ -1081,7 +1107,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path):
 	gaussianWindow = gauss_kernels(sigma, sigma/6.0)
 	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist = computeFullImageHSVHistogram(img)
 	
-	random_patches = extractRandomPatches(img, sigma, 200)
+	random_patches = extractRandomPatches(img, sigma, 500)
 
 	for i in range(0, len(testPatches)):
 		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist)
@@ -1090,14 +1116,24 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path):
 
 	features = ["HSV", "HOG"]
 	all_feature_sets = generateAllFeatureSets(features)
+	all_feature_set_weights = []
 	feature_sets_score = np.zeros(shape = (len(all_feature_sets), len(testPatches)))
 	
 	for i in range(0, len(all_feature_sets)):
 		this_feature_set = all_feature_sets[i]
-		this_feature_weights = np.ones(len(this_feature_set))
+		this_feature_weights = np.ones(len(this_feature_set)) # TODO: may need to adjust the weight based what features there are in the set
+		all_feature_set_weights.append(this_feature_weights)
 		print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
 		for j in range(0, len(testPatches)):
-			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches, True, path, j)
+			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches, path != "", path, j) # only save hist if path is there
+
+	# set patch feature_to_use and LDAFeatureScore
+	for i in range(0, len(testPatches)):
+		this_patch_scores = feature_sets_score[:,i]
+		this_patch_max_score_index = np.where(this_patch_scores == max(this_patch_scores))[0][0]
+		testPatches[i].setLDAFeatureScore(this_patch_scores[this_patch_max_score_index])
+		testPatches[i].setFeatureToUse(all_feature_sets[this_patch_max_score_index])
+		testPatches[i].setFeatureWeights(all_feature_set_weights[this_patch_max_score_index])
 
 	# Log out the feature_sets_score for each testPatch
 	print "------------ Logging feature_sets_score for each testPatch ------------"
@@ -1110,13 +1146,15 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path):
 
 # patches can be 1. an instance of Patch class 2. A list of patches
 # Gradiant is to indiacte the goodness of the match patch, the ligher(redder) the better
-def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255)): # gradiant is supposed to be  = 1.0/len(patches)
+def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255), mark_sequence = False): # gradiant is supposed to be  = 1.0/len(patches)
 	if(type(patches).__name__ == "instance"):
 		p = patches
 		cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1) # np.random.randint(0,255,size = 3)
 	elif(type(patches) is list):	
 		for i in range(0, len(patches)):
 			p = patches[i]
+			if(mark_sequence):
+				cv2.putText(img, "{i}".format(i =i), (patches[i].y, patches[i].x), cv2.FONT_HERSHEY_SIMPLEX, 0.5 ,(0,0,255),1)
 			if(gradiant is None):
 				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1)
 			else:
@@ -1177,6 +1215,20 @@ def populateTestCombinatorialFeatureScore(test_folder_name, img_name, sigma = 39
 		testPatches.append(listOfPatches[i][0]) # just append the best match
 	feature_set_scores = findCombinatorialFeatureScore(img, testPatches, sigma, path)
 	print feature_set_scores
+
+def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images"):
+	HSVthresh = 0.5
+	HOGthresh = 0.1
+	remove_duplicate_thresh_dict ={
+		'HSV': HSVthresh,
+		'HOG': HOGthresh
+	}
+	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name), 1)
+	sorted_patches = findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict)
+	for i in range(0, len(sorted_patches)):
+		print "feature_to_use for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_to_use
+		print "feature_weights for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_weights
+	drawPatchesOnImg(np.copy(img), sorted_patches, True, None, (0,0,255), True)
 
 def main():
 	
@@ -1261,8 +1313,12 @@ def main():
 	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
 	### Test combinatorial feature scores on a set of eyeballed patches
+	# for i in range(0, len(folderNames)):
+	# 	populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39)
+
+	### Test Algo3 in finding distinguishable patches ###
 	for i in range(0, len(folderNames)):
-		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39)
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 	raise ValueError ("purpose stop for TestCombinatorialFeatureScore")
 
 	#---------------------------Extract Bright Patches------------------------

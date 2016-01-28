@@ -8,8 +8,8 @@ def dispatch_match_test(testName):
 	print 'start matching for ', testName ,": ",  start_time
 	# folder_suffix = "_HOG_subCircle_Jensen_Shannon_Divergence"
 	# folder_suffix = "_HOG_16Bin_subAndSuperCircle_Jensen_Shannon_Divergence"
-	# folder_suffix = "_seperateHS_Jensen_Shannon_Divergence"
-	folder_suffix = "_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
+	folder_suffix = "_seperateHS_Jensen_Shannon_Divergence_pyramid"
+	# folder_suffix = "_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	print testName
 	if(testName == "populate_testset_illuminance1"):
 	    matchPatches.populate_testset_illuminance1(folder_suffix)
@@ -29,8 +29,8 @@ def dispatch_full_algorithm(args):
 	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
-	folder_suffix = "_UniqueAlgo2_Jensen_Shannon_Divergence"
-	matchPatches.findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo2")
+	folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
+	matchPatches.findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 
 def dispatch_feature_detection(args):
 	test_folder_name, image_db = args
@@ -54,13 +54,16 @@ def extract_all_testfoldernames(image_db):
 
 def main():
 	print "cpu_count():",cpu_count()
+	start_time = time.time()
+
 	image_db = "images"
-	test_folder_args = extract_all_testfoldernames(image_db)
-	# testNames = ["populate_testset_illuminance1", "populate_testset_illuminance2", "populate_testset_rotation1","populate_testset_rotation2","populate_testset4","populate_testset7"]
-	# testNames = ["populate_testset_rotation1","populate_testset_rotation2"]
+	# test_folder_args = extract_all_testfoldernames(image_db)
+	# testNames = ["populate_testset_illuminance1", "populate_testset_illuminance2", "populate_testset_rotation1","populate_testset_rotation2","populate_testset4"]
+	# testNames = ["populate_testset_rotation1","populate_testset_rotation2", "populate_testset7"]
 	# test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
 	# test_folder_names = ["testset2", "testset3", "testset5"]
-	# test_folder_args = [("testset4", image_db)]
+	test_folder_args = [("testset_illuminance1", image_db), ("testset_illuminance2", image_db), ("testset_rotation1", image_db), ("testset_rotation2", image_db), \
+	("testset4", image_db), ("testset7", image_db)]
 
 	pool = Pool(cpu_count())
 	# pool.map(dispatch_match_test, testNames)
@@ -71,10 +74,7 @@ def main():
 	pool.close()
 	pool.join()
 
-	print "End Of Multiprocessing"
-	# for partition in partition_list(data_files, 4):
-		# res = pool.map(process_file_callable, partition)
-		# print res
+	print "End Of Multiprocessing; time spent: ", time.time() - start_time
 	return
 
 

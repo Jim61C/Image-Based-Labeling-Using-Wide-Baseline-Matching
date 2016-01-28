@@ -133,8 +133,8 @@ class clickRecorder(object):
 def main():
 	"""For clicking on target image for groundTruth"""
 	test_folder_name = raw_input("Please input the testset name: ")
-	folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
-	upperPath = "testAlgo2"
+	folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
+	upperPath = "testAlgo3"
 	image_db = "images"
 	my_click_recorder = clickRecorder()
 	# set path
