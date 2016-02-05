@@ -25,7 +25,7 @@ def gauss_kernels(size,sigma=1.0):
 def convoleImg(img, ConvMatrix, _step = 1):
 	response = np.zeros((img.shape[0], img.shape[1]))
 	convsize = ConvMatrix.shape[0]
-	step = convsize/2 * _step
+	step = int(convsize/2 * _step)
 	print "convolve step:", step
 	for i in np.arange (0+convsize/2, response.shape[0]-convsize/2, step):
 		for j in np.arange(0+convsize/2, response.shape[1]-convsize/2, step):
@@ -64,8 +64,8 @@ def getHarrisCornerResponse(img, windowSize, _step = 1):
 
 	k = 0.06
 	maxResponse = 0
-	for i in np.arange(windowSize/2, response.shape[0] - windowSize/2, windowSize/2 * _step):
-		for j in np.arange(windowSize/2, response.shape[1] - windowSize/2, windowSize/2 * _step):
+	for i in np.arange(windowSize/2, response.shape[0] - windowSize/2, int(windowSize/2 * _step)):
+		for j in np.arange(windowSize/2, response.shape[1] - windowSize/2, int(windowSize/2 * _step)):
 			W = np.array([[Wxx[i][j], Wxy[i][j]], [Wxy[i][j], Wyy[i][j]]])
 			detW = np.linalg.det(W)
 			# print "detW:", detW, "< 0?:", detW < 0

@@ -5,6 +5,9 @@ from sklearn.preprocessing import normalize
 import os
 
 def plotColorHistogram(patch, img, path, fname, save = True, show = True, histToUse = "HSV", useGaussian = True):
+	"""
+	path: Exmaple: '/.../hists'
+	"""
 	fig = None
 	if(histToUse == "HSV"):
 		if(len(patch.HSVHistArr) == 0): 
@@ -16,22 +19,47 @@ def plotColorHistogram(patch, img, path, fname, save = True, show = True, histTo
 		# if(show):
 		# 	plt.show(fig)
 		# plt.clf()
-		plt.figure(1)
-		plt.subplot(311)
-		plt.bar(np.arange(len(patch.HueHist)),patch.HueHist, width = 1.0,color = 'r', label = fname+"_Hue")
-		plt.xlim(0, len(patch.HueHist))
-		plt.legend()
+		fig = plt.figure(1)
+		# plt.subplot(351)
+		# plt.bar(np.arange(len(patch.HueHist)),patch.HueHist, width = 1.0,color = 'r', label = fname+"_Hue")
+		# plt.xlim(0, len(patch.HueHist))
+		# plt.legend()
+		ax = fig.add_subplot(3,5,1)
+		ax.bar(np.arange(len(patch.HueHist)),patch.HueHist, width = 1.0,color = 'r', label = fname+"_Hue")
+		ax.set_xlim(0, len(patch.HueHist))
+		ax.legend()
 
-		plt.subplot(312)
-		plt.bar(np.arange(len(patch.SaturationHist)),patch.SaturationHist, width = 1.0, color = 'g', label = fname+"_Saturation")
-		plt.xlim(0, len(patch.SaturationHist))
-		plt.legend()
+		# plt.subplot(356)
+		# plt.bar(np.arange(len(patch.SaturationHist)),patch.SaturationHist, width = 1.0, color = 'g', label = fname+"_Saturation")
+		# plt.xlim(0, len(patch.SaturationHist))
+		# plt.legend()
+		ax = fig.add_subplot(3,5,6)
+		ax.bar(np.arange(len(patch.SaturationHist)),patch.SaturationHist, width = 1.0, color = 'g', label = fname+"_Saturation")
+		ax.set_xlim(0, len(patch.SaturationHist))
+		ax.legend()
 
-		plt.subplot(313)
-		plt.bar(np.arange(len(patch.ValueHist)),patch.ValueHist, width = 1.0, color = 'b',label = fname + "_Value")
-		plt.legend()
-		plt.xlim(0, len(patch.ValueHist))
-		plt.xlabel(fname+"_HSVSeperate")
+		ax = fig.add_subplot(3,5,11)
+		ax.bar(np.arange(len(patch.ValueHist)),patch.ValueHist, width = 1.0, color = 'b',label = fname + "_Value")
+		ax.legend()
+		ax.set_xlim(0, len(patch.ValueHist))
+		ax.set_xlabel(fname+"_HSVSeperate")
+
+		for i in range(1, 5):
+			ax = fig.add_subplot(3,5,i+1)
+			ax.bar(np.arange(len(patch.HueHistArr[i])),patch.HueHistArr[i], width = 1.0, color = 'r',label = fname + "_SubPatch[{i}]_Hue".format(i = i))
+			ax.legend()
+			ax.set_xlim(0, len(patch.HueHistArr[i]))
+
+			ax = fig.add_subplot(3,5,(i+1)+5)
+			ax.bar(np.arange(len(patch.SaturationHistArr[i])),patch.SaturationHistArr[i], width = 1.0, color = 'g',label = fname + "_SubPatch[{i}]_Saturation".format(i = i))
+			ax.legend()
+			ax.set_xlim(0, len(patch.SaturationHistArr[i]))
+
+			ax = fig.add_subplot(3,5,(i+1)+10)
+			ax.bar(np.arange(len(patch.ValueHistArr[i])),patch.ValueHistArr[i], width = 1.0, color = 'b',label = fname + "_SubPatch[{i}]_Value".format(i = i))
+			ax.legend()
+			ax.set_xlim(0, len(patch.ValueHistArr[i]))
+			ax.set_xlabel(fname+"_HSVSeperate_subpatch_{i}".format(i = i))
 		
 		if(save):
 			plt.savefig(path+"/"+fname+"_HSVSeperate.png")
@@ -57,6 +85,44 @@ def plotColorHistogram(patch, img, path, fname, save = True, show = True, histTo
 		# 	plt.savefig(path+"/"+fname+"_Value.png")
 		# plt.clf()
 	return
+
+def plotGivenHSVHists(path, fname, HueHist, SaturationHist, ValueHist, save = True, show = True):
+	fig = plt.figure(1)
+	plt.subplot(311)
+	plt.bar(np.arange(len(HueHist)),HueHist, width = 1.0,color = 'r', label = fname+"_Hue")
+	plt.xlim(0, len(HueHist))
+	plt.legend()
+
+	plt.subplot(312)
+	plt.bar(np.arange(len(SaturationHist)),SaturationHist, width = 1.0, color = 'g', label = fname+"_Saturation")
+	plt.xlim(0, len(SaturationHist))
+	plt.legend()
+
+	plt.subplot(313)
+	plt.bar(np.arange(len(ValueHist)),ValueHist, width = 1.0, color = 'b', label = fname+"_Value")
+	plt.xlim(0, len(ValueHist))
+	plt.legend()
+
+	if(save):
+		plt.savefig(path+"/"+fname+"_HSVSeperate.png")
+	if(show):
+		plt.show()
+	plt.clf()
+
+def plotOneGivenHist(path,fname, Hist, save = True, show = True):
+	plt.figure(1)
+	plt.bar(np.arange(len(Hist)),Hist, width = 1.0,color = 'r', label = fname+"_Hist")
+	plt.xlim(0, len(Hist))
+	plt.legend()
+	plt.xlabel(fname+"_Hist")
+
+	if(save):
+		plt.savefig(path+"/"+fname+"_Hist.png")
+	if(show):
+		plt.show()
+	plt.clf()
+
+
 def plotHSVHistCmp(path, fname, testPatchesHSVHist,testPatchLabel, matchesFoundHSVHist, matchFoundLabel, groundTruthHSVHist, groundTruthLabel, saveHist = True, displayHist = True):
 	plt.figure(1)
 	plt.subplot(311)
@@ -196,7 +262,8 @@ def plotResponseDistribution(path, this_feature_set, testPatchIndex, test_patch_
 	# print [test_patch_response]
 	bin = 50.0
 	# plot histogram for test_patch_response and random_patches_response
-	plt.hist(random_patches_response, bin, normed=1, facecolor='green', alpha=0.75)
+	# plt.hist(random_patches_response, bin, normed=1, facecolor='green', alpha=0.75)
+	plt.hist(random_patches_response, bin, facecolor='green', alpha=0.75)
 	# plt.hist([test_patch_response], 1, normed=1, facecolor='red', alpha=0.75)
 	plt.bar([test_patch_response],[1], width = (np.max(random_patches_response) - np.min(random_patches_response))/bin, color = 'r')
 
