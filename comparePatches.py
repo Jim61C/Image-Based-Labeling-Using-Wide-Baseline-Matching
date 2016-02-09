@@ -14,6 +14,7 @@ from sklearn.preprocessing import normalize
 import saveLoadPatch
 import itertools
 import random
+import FeatureBottomRightGreen
 
 HUE_16BIN_C = np.array(
 [[ 1,  2,  3,  4,  5,  6,  7,  8,  9,  8,  7,  6,  5,  4,  3,  2],
@@ -56,11 +57,11 @@ FEATURES = ["BOTTOM_RIGHT_GREEN"]
 # FEATURES = ["HSV", "HOG_BIN1","HOG_BIN2", "HOG_BIN3", "HOG_BIN4", "BOTTOM_RIGHT_GREEN"]
 """
 Routine to add a feature: 
-1. Add feature hist + feature score attributes in 'Patch' class
-2. Add methods of feature hist computer + feature score setter in 'Patch' class
-3. Add calls to feature hist computer and feature score setter in 'setOnePatchScoreForAllFeatures'
+1. Add feature object + feature score attributes in 'Patch' class
+2. Add methods of feature hist computer + feature score computer && setter in 'featureObject' class
+3. Add calls to feature object's hist computer and feature score setter in 'setOnePatchScoreForAllFeatures'
 4. Add feature to FEATURES array
-Eg: feature: 'HSV', feature score attribute: 'HSVScore'
+Eg: feature: 'BOTTOM_RIGHT_GREEN', feature score attribute: 'BOTTOM_RIGHT_GREENScore', feature object class: 'FeatureBottomRightGreen'
 """
 
 class Patch:
@@ -107,7 +108,7 @@ class Patch:
 		### BOTTOM_RIGHT_GREEN: Feature length: 6 bins
 		### bottom right subpatch :Hue[90-112.5 degree](bin 4-5), Saturation[0.5-0.625](bin 8-10)
 		### rest of patches: Saturation[0.0625-0.125](bin 1-2)
-		self.BOTTOM_RIGHT_GREENHist = None
+		self.BOTTOM_RIGHT_GREENFeature = FeatureBottomRightGreen.FeatureBottomRightGreen(self)
 		self.BOTTOM_RIGHT_GREENScore = None
 
 		###For Algo3, a set of features to use for matching###
@@ -118,9 +119,6 @@ class Patch:
 		
 	# def setHOG_BINScores(self, i, score):
 	# 	setattr(self, "HOG_BIN{i}Score".format(i = i), score)
-
-	def setBOTTOM_RIGHT_GREENScore(self, score):
-		self.BOTTOM_RIGHT_GREENScore = score
 
 	def setFeatureWeights(self, weights_np_array):
 		self.feature_weights = weights_np_array
@@ -170,18 +168,6 @@ class Patch:
 	# 	if(self.HOG_Uncirculated is None):
 	# 		self.computeHOG(img, useGaussianSmoothing)
 	# 	setattr(self, "HOG_BIN{i}".format(i = i), self.HOG_Uncirculated[(i-1)*9:i*9])
-
-	### BOTTOM_RIGHT_GREEN ###
-	def computeBOTTOM_RIGHT_GREEN(self, img, useGaussianSmoothing = True):
-		if(not (len(self.HueHistArr) == 5 and len(self.SaturationHistArr) == 5)):
-			self.HueHistArr = []
-			self.SaturationHistArr = []
-			self.ValueHistArr = []
-			self.computeSeperateHSVHistogram(img, useGaussianSmoothing)
-		self.BOTTOM_RIGHT_GREENHist = np.concatenate((self.HueHistArr[4][4:5], self.SaturationHistArr[4][8:10]), axis = 1)
-		for i in range(1,4):
-			self.BOTTOM_RIGHT_GREENHist = np.concatenate((self.BOTTOM_RIGHT_GREENHist, self.SaturationHistArr[i][1:2]), axis = 1) 
-		print "final length of self.BOTTOM_RIGHT_GREENHist:", len(self.BOTTOM_RIGHT_GREENHist)
 
 	def computeHOG(self, img, useGaussianSmoothing = True):
 		"""
@@ -740,15 +726,6 @@ def HOGResponse(HOG):
 			count += HOG[i]
 	return count
 
-def BOTTOM_RIGHT_GREENResponse(Hist):
-	high_response_thresh = 0.05
-	count = 0.0
-	for i in range(0, len(Hist)):
-		if(Hist[i] > high_response_thresh):
-			# count += 1
-			count += Hist[i]
-	return count
-
 def similarPatchAlreadySelected(patch, selected_patches, distance_thresh_dict, distancefunction = Jensen_Shannon_Divergence):
 	"""
 	need to be modified to coordinate with new features
@@ -943,8 +920,9 @@ def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, full_im
 	patch.setHOGScore(HOGResponse(patch.HOG))
 
 	# BOTTOM_RIGHT_GREEN Feature
-	patch.computeBOTTOM_RIGHT_GREEN(img)
-	patch.setBOTTOM_RIGHT_GREENScore(BOTTOM_RIGHT_GREENResponse(patch.BOTTOM_RIGHT_GREENHist))
+	patch.BOTTOM_RIGHT_GREENFeature.computeFeature(img) # compute the feature
+	patch.BOTTOM_RIGHT_GREENFeature.computeScore() # compute feature score
+	patch.BOTTOM_RIGHT_GREENFeature.setScore() # set score in both the patch and the feature object
 
 	# # HOG Bins Features
 	# for i in range(1, 5):
@@ -998,9 +976,13 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = ""):
 	return feature_sets_score
 
 
-# patches can be 1. an instance of Patch class 2. A list of patches
-# Gradiant is to indiacte the goodness of the match patch, the ligher(redder) the better
-def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255), mark_sequence = False): # gradiant is supposed to be  = 1.0/len(patches)
+
+def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255), mark_sequence = False): 
+	"""
+	patches can be 1. an instance of Patch class 2. A list of patches
+	Gradiant is to indiacte the goodness of the match patch, the ligher(redder) the better
+	Gradiant is supposed to be  = 1.0/len(patches)
+	"""
 	if(type(patches).__name__ == "instance"):
 		p = patches
 		cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1) # np.random.randint(0,255,size = 3)
@@ -1071,7 +1053,7 @@ def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigm
 		print "feature_weights for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_weights
 		print "LDAFeatureScore:", sorted_patches[i].LDAFeatureScore
 		print "" # spacing
-	result = drawPatchesOnImg(np.copy(img), sorted_patches, False, None, (0,0,255), True)
+	result = drawPatchesOnImg(np.copy(img), sorted_patches, True, None, (0,0,255), True)
 	cv2.imwrite("testUniquePatches/algo3/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format(\
 		features = "_".join(FEATURES), \
 		folder = test_folder_name, \
@@ -1084,6 +1066,19 @@ def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigm
 			folder = test_folder_name, \
 			file = img_name[:img_name.find(".")], \
 			i = sigma))
+
+def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images"):
+	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name), 1)
+	unique_patches = []
+	list_of_patches = saveLoadPatch.loadPatchMatches("{path}/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+		features = "_".join(FEATURES), \
+		path = "testUniquePatches/algo3" , \
+		folder = test_folder_name, \
+		file = img_name[:img_name.find(".")], \
+		i = sigma))
+	for i in range(0, 1):
+		unique_patches.append(list_of_patches[i][0]) # just append the best match
+	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 
 def populateTestCombinatorialFeatureScore(test_folder_name, img_name, sigma = 39, upperPath = "testAlgo3", folder_suffix = "_eyeballed_unique_patches", image_db = "images"):
 	path = upperPath + "/GaussianWindowOnAWhole/" + test_folder_name + folder_suffix
@@ -1099,8 +1094,8 @@ def populateTestCombinatorialFeatureScore(test_folder_name, img_name, sigma = 39
 
 	drawPatchesOnImg(np.copy(img), testPatches, True, None, (0,0,255), True)
 	for i in range(0, len(testPatches)):
-		testPatches[i].computeBOTTOM_RIGHT_GREEN(img)
-		plotStatistics.plotOneGivenHist(path,"BOTTOM_RIGHT_GREEN_testPatches[{i}]".format(i = i), testPatches[i].BOTTOM_RIGHT_GREENHist, save = False, show = True)
+		testPatches[i].BOTTOM_RIGHT_GREENFeature.computeFeature(img)
+		plotStatistics.plotOneGivenHist(path,"BOTTOM_RIGHT_GREEN_testPatches[{i}]".format(i = i), testPatches[i].BOTTOM_RIGHT_GREENFeature.hist, save = False, show = True)
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
 	feature_set_scores = findCombinatorialFeatureScore(img, testPatches, sigma, path)
 	print feature_set_scores
@@ -1112,15 +1107,15 @@ def main():
 	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
 	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
-	### Test combinatorial feature scores on a set of eyeballed patches
-	# for i in range(0, len(folderNames)):
-	# 	populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39)
-	# raise ValueError("purpose stop for testing populating combinatorial score")
+	## Test combinatorial feature scores on a set of eyeballed patches
+	for i in range(0, len(folderNames)):
+		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39)
+	raise ValueError("purpose stop for testing populating combinatorial score")
 
 	### Test Algo3 in finding distinguishable patches ###
 	for i in range(0, len(folderNames)):
 		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-
+		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 	return
 
 
