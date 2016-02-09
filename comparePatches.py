@@ -52,10 +52,8 @@ WEIGHTS_DICT = {
 'HOG':0.0
 }
 
-# FEATURES = ["BOTTOM_RIGHT_GREEN"]
+FEATURES = ["BOTTOM_RIGHT_GREEN"]
 # FEATURES = ["HSV", "HOG_BIN1","HOG_BIN2", "HOG_BIN3", "HOG_BIN4", "BOTTOM_RIGHT_GREEN"]
-# FEATURES = ["HOG_BIN1", "HOG_BIN2", "HOG_BIN3", "HOG_BIN4", "BOTTOM_RIGHT_GREEN"]
-FEATURES = ["HOG_BIN1", "BOTTOM_RIGHT_GREEN"]
 """
 Routine to add a feature: 
 1. Add feature hist + feature score attributes in 'Patch' class
@@ -94,30 +92,32 @@ class Patch:
 		self.HOG_Uncirculated = None
 		self.HOGScore = None
 
-		### HOG Different Bin Features ###
-		self.HOG_BIN1 = None
-		self.HOG_BIN1Score = None
-		self.HOG_BIN2 = None
-		self.HOG_BIN2Score = None
-		self.HOG_BIN3 = None
-		self.HOG_BIN3Score = None
-		self.HOG_BIN4 = None
-		self.HOG_BIN4Score = None
-
 		self.overallScore = None
 
-		### BOTTOM_RIGHT_GREEN ###
+		# ### HOG Different Bin Features ###
+		# self.HOG_BIN1 = None
+		# self.HOG_BIN1Score = None
+		# self.HOG_BIN2 = None
+		# self.HOG_BIN2Score = None
+		# self.HOG_BIN3 = None
+		# self.HOG_BIN3Score = None
+		# self.HOG_BIN4 = None
+		# self.HOG_BIN4Score = None
+
+		### BOTTOM_RIGHT_GREEN: Feature length: 6 bins
+		### bottom right subpatch :Hue[90-112.5 degree](bin 4-5), Saturation[0.5-0.625](bin 8-10)
+		### rest of patches: Saturation[0.0625-0.125](bin 1-2)
 		self.BOTTOM_RIGHT_GREENHist = None
 		self.BOTTOM_RIGHT_GREENScore = None
 
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
 		self.feature_weights = None
-		self.LDAFeatureScore = None
+		self.LDAFeatureScore = None # measure for the uniqueness of the feature sets
 
 		
-	def setHOG_BINScores(self, i, score):
-		setattr(self, "HOG_BIN{i}Score".format(i = i), score)
+	# def setHOG_BINScores(self, i, score):
+	# 	setattr(self, "HOG_BIN{i}Score".format(i = i), score)
 
 	def setBOTTOM_RIGHT_GREENScore(self, score):
 		self.BOTTOM_RIGHT_GREENScore = score
@@ -165,36 +165,11 @@ class Patch:
 	def setHOGScore(self, score):
 		self.HOGScore = score
 
-	# def clearHistograms(self):
-	# 	self.RGBHistArr = [] 
-	# 	self.RGBHist = None 
-	# 	self.RGBScore = None
-	# 	self.aggregateRGBScore = None
-
-	# 	self.HSVHistArr = []
-	# 	self.HSVHist = None
-	# 	self.HSVScore = None
-
-	# 	self.HueHist = None
-	# 	self.HueHistArr = []
-	# 	self.SaturationHist = None
-	# 	self.SaturationHistArr = []
-	# 	self.ValueHist = None
-	# 	self.ValueHistArr = []
-
-	# 	self.cornerResponseScore = None
-
-	# 	self.HOGArr = []
-	# 	self.HOG = None
-	# 	self.HOGScore = None
-
-	# 	self.overallScore = None
-
-	### HOG_BINs feaures ###
-	def computeHOG_BINs(self, img, i, useGaussianSmoothing = True):
-		if(self.HOG_Uncirculated is None):
-			self.computeHOG(img, useGaussianSmoothing)
-		setattr(self, "HOG_BIN{i}".format(i = i), self.HOG_Uncirculated[(i-1)*9:i*9])
+	# ### HOG_BINs feaures ###
+	# def computeHOG_BINs(self, img, i, useGaussianSmoothing = True):
+	# 	if(self.HOG_Uncirculated is None):
+	# 		self.computeHOG(img, useGaussianSmoothing)
+	# 	setattr(self, "HOG_BIN{i}".format(i = i), self.HOG_Uncirculated[(i-1)*9:i*9])
 
 	### BOTTOM_RIGHT_GREEN ###
 	def computeBOTTOM_RIGHT_GREEN(self, img, useGaussianSmoothing = True):
@@ -208,11 +183,11 @@ class Patch:
 			self.BOTTOM_RIGHT_GREENHist = np.concatenate((self.BOTTOM_RIGHT_GREENHist, self.SaturationHistArr[i][1:2]), axis = 1) 
 		print "final length of self.BOTTOM_RIGHT_GREENHist:", len(self.BOTTOM_RIGHT_GREENHist)
 
-	# img should be in gray scale
-	# instead of compute the 2*2 subpatch HOG, compute a 1) sub circle 2)super circle HOG
 	def computeHOG(self, img, useGaussianSmoothing = True):
 		"""
 		HOG with orietation assignment and circular histogram
+		img: gray scale
+		Instead of compute the 2*2 subpatch HOG, compute a 1) sub circle 2) super circle HOG
 		TODO: fine tune orientation, smooth the HOG hist + add more possible orietations (not just the maximum, 0.8 of the maximum as well) for considertaion in matching
 		"""
 		# Check if HOGArr is already computed
@@ -232,13 +207,8 @@ class Patch:
 
 		# self.computeSubPatchHOG(img, gaussianWindow)
 		# self.HOGArr.append(fullPatchHOG)
-
 		self.computeSubCirclePatchHOG(img, gaussianWindow) # computes the 4 sub circle's HOG, from small to big
 		self.HOGArr.append(fullPatchHOG) # append the full patch HOG
-
-		# print "self.HOG:", self.HOG
-		# print "self.HOGArr len:", len(self.HOGArr)
-		# print "self.HOGArr:", self.HOGArr
 		return
 	def computeSubCirclePatchHOG(self, img, gaussianWindow):
 		"""
@@ -348,13 +318,6 @@ class Patch:
 		self.HueHist = self.HueHistArr[0]
 		self.SaturationHist = self.SaturationHistArr[0]
 		self.ValueHist = self.ValueHistArr[0]
-		# print "len(self.HueHistArr):", len(self.HueHistArr)
-		# print "len(self.SaturationHistArr):", len(self.SaturationHistArr)
-		# print "len(self.ValueHistArr):", len(self.ValueHistArr)
-
-		# print "self.HueHist:", self.HueHist
-		# print "self.SaturationHist:", self.SaturationHist
-		# print "self.ValueHist:", self.ValueHist
 		return
 
 	def computeFlattenedHSVHistogram(self, img, useGaussianSmoothing, computeSeperateHists):
@@ -546,10 +509,6 @@ class Patch:
 
 		return top_left_sub_patch, top_right_sub_patch, bottom_left_sub_patch, bottom_right_sub_patch, subHistArr
 		
-
-
-
-	# TODO: Try Gaussian Smoothing on Response on this patch of width 'size'
 	def computeAggregateRGBScore(self, response):
 		thresh = 200
 		score = 0;
@@ -625,29 +584,6 @@ def gauss_kernels(size,sigma=1.0):
 		kernel = kernel/kernel_sum 
 	return kernel
 
-def computeDissimilarityMatrix(img, patches, distancefunction, metric = "RGB"):
-	dissimilarity = np.zeros(shape = (len(patches),len(patches)))
-	for i in range(0, len(patches)):
-		dissimilarity[i][i] = 0
-		for j in range(i+1, len(patches)):
-			if(metric == "RGB"):
-				dissimilarity[i][j] = distancefunction(patches[i].RGBHist, patches[j].RGBHist)
-			elif(metric == "HSV"):
-				# dissimilarity[i][j] = distancefunction(patches[i].HSVHist, patches[j].HSVHist)
-
-				# check if use flattened HSV Histogram Arr 
-				if(len(patches[i].HSVHistArr) > 0 and len(patches[j].HSVHistArr) > 0):
-					dissimilarity[i][j] = getDissimilairityHistArrl2(patches[i].HSVHistArr, patches[j].HSVHistArr, distancefunction)
-				else:
-					hue_channel_distance = getDissimilairityHistArrl2(patches[i].HueHistArr, patches[j].HueHistArr,distancefunction)
-					saturation_channel_distance = getDissimilairityHistArrl2(patches[i].SaturationHistArr, patches[j].SaturationHistArr,distancefunction)
-					# value_channel_distance = getDissimilairityHistArrl2(patches[i].ValueHistArr, patches[j].ValueHistArr,distancefunction)
-					dissimilarity[i][j] = np.linalg.norm([hue_channel_distance, saturation_channel_distance], 2)
-			elif(metric == "HOG"):
-				dissimilarity[i][j] = getDissimilairityHistArrl2(patches[i].HOGArr, patches[j].HOGArr, distancefunction)
-			dissimilarity[j][i] = dissimilarity[i][j]
-	return dissimilarity
-
 def computePatchesRGBHistogram(img,patches):
 	for i in range(0, len(patches)):
 		patches[i].computeRGBHistogram(img)
@@ -704,8 +640,10 @@ def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expan
 			patches.append(thisPatch)
 	return patches
 
-"""Note: There will be a runtime waring if sum(hist1) == 0 || sum(hist2) == 0 """
 def klDivergence(hist1, hist2):
+	"""
+	Note: There will be a runtime waring if sum(hist1) == 0 || sum(hist2) == 0, but does not affect result since it will return 'inf'
+	"""
 	return entropy(hist1,hist2)
 
 def Jensen_Shannon_Divergence(hist1,hist2):
@@ -756,70 +694,8 @@ def earthMoverHatDistance(hist1,hist2, C = None):
 		C = C + abs(rows - cols)
 	# print C
 	return pyemd.emd(hist1, hist2, C) # distance matrix needs C needs to be symmetric and float type; extra_mass_penalty used  = np.amax(C)
-	
-	# 2. opencv EMD
-	# sig1 = cv.CreateMat(len(hist1), 2, cv.CV_32FC1)
-	# sig2 = cv.CreateMat(len(hist2), 2, cv.CV_32FC1) 
-	# for i in range(0, len(hist1)):
-	# 	cv.Set2D(sig1, i, 0, cv.Scalar(hist1[i]))
-	# 	cv.Set2D(sig1, i, 1, cv.Scalar(i))
 
-	# 	cv.Set2D(sig2, i, 0, cv.Scalar(hist2[i]))
-	# 	cv.Set2D(sig2, i, 1, cv.Scalar(i))		
-
-	# # mat1 = cv.fromarray(np.reshape(hist1, (len(hist1),1)).astype(np.float32))
-	# # mat2 = cv.fromarray(np.reshape(hist2, (len(hist2),1)).astype(np.float32))
-	# # print "mat1.type:", mat1.type
-	# # print "cv.fromarray(C).type:", cv.fromarray(C.astype(np.float32)).type
-	# # return cv.CalcEMD2(mat1,mat2,cv.CV_DIST_USER, distance_func = None, cost_matrix = cv.fromarray(C.astype(np.float32)))
-	# return cv.CalcEMD2(sig1,sig2,cv.CV_DIST_L1)
-
-	# # 3. opencv EMD 2D for H, S case
-	# sig1 = cv.CreateMat(len(hist1), 3, cv.CV_32FC1)
-	# sig2 = cv.CreateMat(len(hist2), 3, cv.CV_32FC1) 
-	# for h in range(0, int(math.sqrt(len(hist1)))):
-	# 	for s in range(0, int(math.sqrt(len(hist1)))):
-	# 		row_index = int(h * math.sqrt(len(hist1)) + s)
-	# 		cv.Set2D(sig1, row_index, 0,  cv.Scalar(hist1[row_index]))
-	# 		cv.Set2D(sig1, row_index, 1,  cv.Scalar(h))
-	# 		cv.Set2D(sig1, row_index, 2,  cv.Scalar(s))
-
-	# 		cv.Set2D(sig2, row_index, 0,  cv.Scalar(hist2[row_index]))
-	# 		cv.Set2D(sig2, row_index, 1,  cv.Scalar(h))
-	# 		cv.Set2D(sig2, row_index, 2,  cv.Scalar(s))
-
-
-	# # mat1 = cv.fromarray(np.reshape(hist1, (len(hist1),1)).astype(np.float32))
-	# # mat2 = cv.fromarray(np.reshape(hist2, (len(hist2),1)).astype(np.float32))
-	# # print "mat1.type:", mat1.type
-	# # print "cv.fromarray(C).type:", cv.fromarray(C.astype(np.float32)).type
-	# # return cv.CalcEMD2(mat1,mat2,cv.CV_DIST_USER, distance_func = None, cost_matrix = cv.fromarray(C.astype(np.float32)))
-	# return cv.CalcEMD2(sig1,sig2,cv.CV_DIST_L1)
-
-# Does not work well for Histograms here, Discard!!!
-def chiSquareDistance(hist1, hist2):
-	# mat1 = cv.fromarray(np.reshape(hist1, (len(hist1),1)).astype(np.float32))
-	# mat2 = cv.fromarray(np.reshape(hist2, (len(hist2),1)).astype(np.float32))
-	return cv2.compareHist(hist1.astype(np.float32), hist2.astype(np.float32), cv.CV_COMP_CHISQR)
-
-def dissimilarityMetricOnImagePosition(img, patches, dissimilarity):
-	response = np.zeros(shape = (img.shape[0], img.shape[1]))
-	for i in range(0, len(patches)):
-		if(patches[i].RGBScore is None):
-			score = distinguishabilityScore(dissimilarity[i])
-			patches[i].setRGBScore(score)
-		for row in range(patches[i].x - patches[i].size/2, patches[i].x + patches[i].size/2): # only top and left border count to the response, avoid over count at the borders
-			for col in range(patches[i].y - patches[i].size/2, patches[i].y + patches[i].size/2):
-				response[row][col] += patches[i].RGBScore
-
-	# plt.pcolor(np.arange(0,response.shape[1],1), np.arange(0, response.shape[0],1), response, cmap = plt.get_cmap('gray')) # for the scale from [0:255], use: plt.imshow(image_matrix[0][0], cmap = plt.get_cmap('gray'), vmin = 0, vmax = 255)
-	# plt.gca().invert_yaxis()
-	# plt.colorbar()
-	# plt.show()
-	# plt.clf()
-	return response
-
-def distinguishabilityScore(row):
+def Jensen_Shannon_Divergence_Score(row):
 	"""
 	For Jensen_Shannon_Divergence
 	"""
@@ -829,57 +705,6 @@ def distinguishabilityScore(row):
 		count += 0 if (row[i]<thresh) else row[i]
 		# count += row[i]
 	return count
-
-# dissimilarity is n*n array
-# return a sorted array of indexes of patches based on the metirc: sum/average of dissimilarity with all rest patches
-def sortedIndexOfDistinguishablePatches(patches, dissimilarity, metric = "RGB"):
-	normalizer = float(dissimilarity.shape[0]) * np.amax(dissimilarity)
-	distinguishability = np.zeros(dissimilarity.shape[0])
-	for i in range(0, len(distinguishability)):
-		score = distinguishabilityScore(dissimilarity[i])
-		distinguishability[i] = score/normalizer
-		if(metric == "RGB"):
-			patches[i].setRGBScore(score)
-		elif(metric == "HSV"):
-			patches[i].setHSVScore(score)
-	return np.argsort(distinguishability)[::-1]
-
-### Start of Algo3 for feature detection: 1. Low pass filter of Harris Corner score. 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations###
-def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.0001, LDA_thresh = 1.0, step = 0.5):
-	"""
-	sigma, step: used for patch extraction
-	harris_thresh_pass: threshhold for filtering the initial set of good patches
-	"""
-
-	patches = extractPatches(img, sigma,step)
-	"""
-	1. Low Pass using Harris Corner to get inital set of potential good patches
-	"""
-	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
-	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
-	# drawPatchesOnImg(np.copy(img), filtered_patches)
-	"""
-	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
-	"""
-	findCombinatorialFeatureScore(img, filtered_patches, sigma)
-	# plt.hist([this_patch.LDAFeatureScore for this_patch in filtered_patches], 50, label = "LDAFeatureScore Distribution for filtered_patches")
-	# plt.legend()
-	# plt.show()
-	i = 0
-	while(i < len(filtered_patches)):
-		if(filtered_patches[i].LDAFeatureScore < LDA_thresh):
-			filtered_patches.pop(i)
-		else:
-			i += 1
-	"""
-	3. remove duplicated patches that are very similar
-	"""
-	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.LDAFeatureScore, reverse = True)
-
-	# return removeDuplicates(sorted_patches,remove_duplicate_thresh_dict)
-	return sorted_patches[0:50]
-
-### Start of Algo2 for feature detection: Find one feature that makes the distribution of the low pass filtered patches to be of shape of spikes###
 
 def computeFullImageHSVHistogram(img):
 	"""
@@ -923,7 +748,6 @@ def BOTTOM_RIGHT_GREENResponse(Hist):
 			# count += 1
 			count += Hist[i]
 	return count
-
 
 def similarPatchAlreadySelected(patch, selected_patches, distance_thresh_dict, distancefunction = Jensen_Shannon_Divergence):
 	"""
@@ -970,14 +794,7 @@ def findFeatureAttributeToUse(patches):
 
 	return max(feature_attribute_scores.iteritems(), key=operator.itemgetter(1))[0]
 
-
-# def checkDistance(sorted_patches, metric, distancefunction = Jensen_Shannon_Divergence):
-# 	if(metric == "HSV"):
-# 		for i in range(0, len(sorted_patches) - 1):
-# 			HueDist = distancefunction(sorted_patches[i].HueHist, sorted_patches[i+1].HueHist)
-# 			SaturationDist = distancefunction(sorted_patches[i].SaturationHist, sorted_patches[i+1].SaturationHist)
-# 			print "distance between patch ", i ," and patch ", (i+1), " = ", np.linalg.norm([HueDist, SaturationDist], 2)
-
+### Start of Algo2 for feature detection: Find one feature that makes the distribution of the low pass filtered patches to be of shape of spikes ###
 def findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict, thresh_pass = 0.005, step = 1):
 	"""
 	thresh_pass: low threshold used for Harris Corner Filtering
@@ -1033,81 +850,42 @@ def findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict, th
 	# return removeDuplicates(sorted_patches, "HOG", HOGthresh) # return sorted_patches using HOG
 	# return filtered_patches
 
+### Start of Algo3 for feature detection:
+### 1. Low pass filter of Harris Corner score.
+### 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations
+def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.0001, LDA_thresh = 1.0, step = 0.5):
+	"""
+	sigma, step: used for patch extraction
+	harris_thresh_pass: threshhold for filtering the initial set of good patches
+	"""
 
-
-def findDistinguishablePatches(img, sigma, step = 1):
 	patches = extractPatches(img, sigma,step)
-	print "number of patches:", len(patches)
+	"""
+	1. Low Pass using Harris Corner to get inital set of potential good patches
+	"""
+	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
+	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
+	# drawPatchesOnImg(np.copy(img), filtered_patches)
+	"""
+	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
+	"""
+	findCombinatorialFeatureScore(img, filtered_patches, sigma)
+	# plt.hist([this_patch.LDAFeatureScore for this_patch in filtered_patches], 50, label = "LDAFeatureScore Distribution for filtered_patches")
+	# plt.legend()
+	# plt.show()
+	i = 0
+	while(i < len(filtered_patches)):
+		if(filtered_patches[i].LDAFeatureScore < LDA_thresh):
+			filtered_patches.pop(i)
+		else:
+			i += 1
+	"""
+	3. remove duplicated patches that are very similar
+	"""
+	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.LDAFeatureScore, reverse = True)
 
-	"""
-	---------HSV Uniqueness Score, it is tested that computeFlattenedHSVHistogram performs better than computeSeperateHSVHistogram-------------
-	"""
-	if(WEIGHTS_DICT['HSV'] > 0):
-		# computePatchesRGBHistogram(img,patches)
-		computePatchesHSVHistogram(img,patches)
-		dissmilarityMatrix = computeDissimilarityMatrix(img, patches, Jensen_Shannon_Divergence, "HSV")
-		print "dissmilarityMatrix shape:", dissmilarityMatrix.shape 
-		print "np.amin(dissmilarityMatrix):", np.amin(dissmilarityMatrix)
-		print "np.amax(dissmilarityMatrix)", np.amax(dissmilarityMatrix)
-		# plot the heat map of the dissimilarity matrix
-		# heatmap = plt.pcolor(dissmilarityMatrix,  vmin=np.amin(dissmilarityMatrix), vmax=np.amax(dissmilarityMatrix))
-		# plt.savefig("dissimilarityHeatMap_{img}.png".format(img = imgName[0:imgName.find(".")]))
-		# plt.show()
-		# plt.clf()
-		normalizer = float(dissmilarityMatrix.shape[0]) * np.amax(dissmilarityMatrix)
-		for i in range(0, dissmilarityMatrix.shape[0]):
-			score = distinguishabilityScore(dissmilarityMatrix[i])
-			# patches[i].setRGBScore(score/normalizer)
-			patches[i].setHSVScore(score/normalizer)
-
-	"""
-	---------Corner Response Uniqueness Score-------------
-	:start from top left window of size sigma x simga, Harris corner score recorded every sigma/2 pixel by default
-	"""
-	if(WEIGHTS_DICT['CORNER'] > 0):
-		maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
-		print "cornerResponseMatrix.shape (should be same as img.shape):", cornerResponseMatrix.shape
-		print "maxCornerResponse:", maxCornerResponse, " = ", np.amax(cornerResponseMatrix)
-		print "most negative Response:", np.amin(cornerResponseMatrix)
-		for i in range(0, len(patches)):
-			patches[i].setCornerResponseScore(cornerResponseMatrix, np.amax(cornerResponseMatrix), np.amin(cornerResponseMatrix))
-			# after HSV and Corner are set, setOverallScore
-			# patches[i].setOverallScore()
-
-	"""
-	---------HOG Uniqueness Score-------------
-	"""
-	if(WEIGHTS_DICT['HOG'] > 0):
-		img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
-		for i in range(0, len(patches)):
-			patches[i].computeHOG(img_gray, True)
-		HOG_dissimilarity_matrix = computeDissimilarityMatrix(img_gray, patches, Jensen_Shannon_Divergence, "HOG")
-		HOG_max_score = 0.0
-		for i in range(0, HOG_dissimilarity_matrix.shape[0]):
-			score = distinguishabilityScore(HOG_dissimilarity_matrix[i])
-			if(score > HOG_max_score):
-				HOG_max_score = score
-			patches[i].setHOGScore(score)
-		for i in range(0, len(patches)):
-			patches[i].setHOGScore(patches[i].HOGScore/HOG_max_score)
-
-	"""
-	---------- Set Overall Score ------------
-	"""
-	for i in range(0, len(patches)):
-		patches[i].setOverallScore()
-
-	# TODO: Do not just sort based on the distinctiveness score, sometimes, 
-	#       two similar patches will be both unique compared to the rest of the image, 
-	#       in this case we should go through the sorted list and only pick those have not had similar unique patches appeared before.
-	sorted_patches = sorted(patches, key = lambda patch: patch.overallScore, reverse=True)
-	print "check sorted score"
-	for i in range(0, len(sorted_patches)):
-		print sorted_patches[i].overallScore
-	return sorted_patches
-	# return sorted(patches, key = lambda patch: patch.HSVScore, reverse=True)
-	# return sorted(patches, key = lambda patch: patch.HOGScore, reverse=True)
-	# return sorted(patches, key = lambda patch: patch.cornerResponseScore, reverse=True)
+	# return removeDuplicates(sorted_patches,remove_duplicate_thresh_dict)
+	return sorted_patches[0:50]
 
 def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_patches, plotHist = False,  path = "", testPatchIndex = 0):
 	"""
@@ -1168,10 +946,10 @@ def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, full_im
 	patch.computeBOTTOM_RIGHT_GREEN(img)
 	patch.setBOTTOM_RIGHT_GREENScore(BOTTOM_RIGHT_GREENResponse(patch.BOTTOM_RIGHT_GREENHist))
 
-	# HOG Bins Features
-	for i in range(1, 5):
-		patch.computeHOG_BINs(img_gray, i, True)
-		patch.setHOG_BINScores(i,HOGResponse(getattr(patch, "HOG_BIN{i}".format(i = i))))
+	# # HOG Bins Features
+	# for i in range(1, 5):
+	# 	patch.computeHOG_BINs(img_gray, i, True)
+	# 	patch.setHOG_BINScores(i,HOGResponse(getattr(patch, "HOG_BIN{i}".format(i = i))))
 
 def findCombinatorialFeatureScore(img, testPatches, sigma, path = ""):
 	"""
@@ -1318,10 +1096,7 @@ def populateTestCombinatorialFeatureScore(test_folder_name, img_name, sigma = 39
 			i = sigma))
 	for i in range(0, len(listOfPatches)):
 		testPatches.append(listOfPatches[i][0]) # just append the best match
-	testPatches.insert(0, Patch(133,817,39))
-	testPatches.insert(0, Patch(133,817 - 19,39))
-	testPatches.insert(0, Patch(133 - 19,817,39))
-	testPatches.insert(0, Patch(133 - 19,817 - 19,39))
+
 	drawPatchesOnImg(np.copy(img), testPatches, True, None, (0,0,255), True)
 	for i in range(0, len(testPatches)):
 		testPatches[i].computeBOTTOM_RIGHT_GREEN(img)
@@ -1331,80 +1106,6 @@ def populateTestCombinatorialFeatureScore(test_folder_name, img_name, sigma = 39
 	print feature_set_scores
 
 def main():
-	# ---------------------------- Test -----------------------------
-	# temp1 = np.zeros(16)
-	# temp2 = np.zeros(16)
-	# # print chiSquareDistance(temp1, temp2)
-	# # for i in range(0, len(temp1)):
-	# # 	# temp1[i] = np.random.randint(0,10)
-	# # 	temp2[i] = np.random.randint(0,10)
-	# # 	# temp1[i] = i
-	# # 	temp2[i] = 1
-	# temp1[5] = 11
-	# temp2[5] = 10
-	# temp1[4] = 8
-	# temp2[4] = 9
-	# print temp1
-	# print temp2
-	# mean = (temp1 + temp2)/2
-	# print mean
-
-	# print earthMoverHatDistanceForHue(temp1, temp2)
-	# print earthMoverHatDistance(temp1, temp2)
-	# print klDivergence(temp1.astype(float), temp2.astype(float))
-	# print Jensen_Shannon_Divergence(temp1, temp2)
-
-	# cv2.imshow("test1",img)
-	# cv2.waitKey(0)
-	# kp = []
-	# keypoint1 = cv2.KeyPoint (100,100, 200, 60)
-	# kp.append(keypoint1)
-	# temp = cv2.drawKeypoints(img,kp,flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-	# cv2.imshow("test1",temp)
-	# cv2.waitKey(0)
-
-	### Testing for opencv calcHist function###
-	# img = cv2.imread("images/{folder}/{name}".format(folder = "testset4",  name = "test1.jpg"), 1)
-	# H, S,V = computeFullImageHSVHistogram(img)
-
-	# img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-	# img_hsv_hist = cv2.calcHist([img_hsv],[0,1], None, [16,16], [0, 180, 0,256 ])
-	# img_hsv_hist = cv2.calcHist([img_hsv],[1], None, [16], [0,256 ])
-	# img_hsv_hist = img_hsv_hist[:,0]
-	# img_hsv_hist = img_hsv_hist/np.sum(img_hsv_hist)
-	# print len(img_hsv_hist)
-	# print img_hsv_hist
-	# print np.sum(img_hsv_hist)
-
-	# img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
-	# print img.dtype
-	# print img.shape
-	# tempPatches = extractPatches(img, 39, 1)
-	# print "number of patches extracted:",len(tempPatches)
-	# for i in range(0, len(tempPatches)):
-	# 	print "computeHOG for tempPatches[{i}]".format(i =i )
-	# 	tempPatches[i].computeHOG(img, True)
-	
-	### Test HOG related ### 
-	# temp = Patch(19, 19, 39)
-	# temp.computeHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int))
-	# print HOGResponse(temp.HOG)
-
-	# for i in range(0, len(temp.HOGArr)):
-		# print temp.HOGArr[i]
-		# print np.sum(temp.HOGArr[i])
-
-	
-	# H, S, V = temp.RGBToHSV(222,100,10)
-	# print "Test RGBToHSV conversion:", H,", ", S, ", ",  V
-	# print CforHue(8)
-	# temp = cv2.DMatch(1,1,1)
-
-	# arr = np.array([1,2,3,8,0,10,11,0])
-	# max_ori =  np.argmax(arr)
-	# arr =  list(arr[max_ori:len(arr)]) + list(arr[0:max_ori])
-	# print np.array(arr)
-
 	folderNames = ["testset_illuminance1"]
 	### Test Algo2 in finding distinguishable patches ###
 	# for i in range(0, len(folderNames)):
@@ -1419,97 +1120,6 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	for i in range(0, len(folderNames)):
 		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-	raise ValueError ("purpose stop for TestCombinatorialFeatureScore")
-
-	#---------------------------Extract Bright Patches------------------------
-	# img = cv2.imread("aggregateRGBResponseImageSize_sigma101.jpg", 0)
-	# print img.shape
-	# tempPatches = extractPatches(img, 51, 1) # extract patches of size that can capture the distinguishable regions	
-	# for i in range(0, len(tempPatches)):
-	# 	tempPatches[i].computeAggregateRGBScore(img)
-	# 	if(tempPatches[i].aggregateRGBScore>0):
-	# 		print tempPatches[i].x, tempPatches[i].y, tempPatches[i].size
-	# sortedPatches = sorted(tempPatches, key = lambda patch: patch.aggregateRGBScore, reverse = True)
-	# kp = []
-	# i = 0
-	# while(i< 50):
-	# 	print sortedPatches[i].x, sortedPatches[i].y, sortedPatches[i].size, sortedPatches[i].aggregateRGBScore
-	# 	# note the x coordinate in the drawing is actually width, and y is the height, which is reverse of our data representation's x and y
-	# 	cv2.rectangle(img,(sortedPatches[i].y-sortedPatches[i].size/2,sortedPatches[i].x-sortedPatches[i].size/2),(sortedPatches[i].y+sortedPatches[i].size/2,sortedPatches[i].x+sortedPatches[i].size/2),(0,0,0),2) # np.random.randint(0,255,size = 3)
-	# 	# kp.append(cv2.KeyPoint(sortedPatches[i].y, sortedPatches[i].x, sortedPatches[i].size))
-	# 	i += 1
-	# imgWithKeyPoints = cv2.drawKeypoints(img,kp,flags = cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-	# cv2.imshow("temp", imgWithKeyPoints)
-	# cv2.waitKey(0)
-	# raise ValueError("test")
-
-	#-------------------------- ComparePatches ---------------------------
-	imgName = "test1.jpg"
-	folderName = "testset4"
-	img = cv2.imread("images/{folder}/{name}".format(folder = folderName,  name = imgName), 1)
-	print img.shape
-
-	sigma = 39
-	patches = extractPatches(img, sigma,1)
-	print "number of patches:", len(patches)
-	# computePatchesRGBHistogram(img,patches)
-	computePatchesHSVHistogram(img,patches)
-	dissmilarityMatrix = computeDissimilarityMatrix(img, patches, Jensen_Shannon_Divergence, "HSV")
-	print "dissmilarityMatrix shape:", dissmilarityMatrix.shape 
-	print np.amin(dissmilarityMatrix)
-	print np.amax(dissmilarityMatrix)
-	# plot the heat map of the dissimilarity matrix
-	# heatmap = plt.pcolor(dissmilarityMatrix,  vmin=np.amin(dissmilarityMatrix), vmax=np.amax(dissmilarityMatrix))
-	# plt.savefig("dissimilarityHeatMap_{img}.png".format(img = imgName[0:imgName.find(".")]))
-	# plt.show()
-	# plt.clf()
-
-	distinguishableIndividualPatchIndexes = sortedIndexOfDistinguishablePatches(patches, dissmilarityMatrix, "HSV")
-
-	# aggregateDistinguishabilityResponse = dissimilarityMetricOnImagePosition(img,patches,dissmilarityMatrix)
-
-	# aggregateDistinguishabilityResponse = aggregateDistinguishabilityResponse * 255/np.amax(aggregateDistinguishabilityResponse)
-	# aggregateDistinguishabilityResponse = aggregateDistinguishabilityResponse.astype(np.uint8)
-
-	# cv2.imwrite("aggregateRGBResponseImageSize_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")]), aggregateDistinguishabilityResponse)
-	# plt.imshow(aggregateDistinguishabilityResponse, cmap = plt.get_cmap('gray'))
-	# # plt.show()
-	# # plt.clf()
-
-	# aggregateResponsePatches = extractPatches(img, sigma, 1) # extract patches of size that can capture the distinguishable regions
-	# for i in range(0, len(aggregateResponsePatches)):
-	# 	aggregateResponsePatches[i].computeAggregateRGBScore(aggregateDistinguishabilityResponse)
-	# sortedPatches = sorted(aggregateResponsePatches, key = lambda patch: patch.aggregateRGBScore, reverse=True)
-
-	
-	# imgCopy = np.copy(img)
-	# responseCopy = np.copy(aggregateDistinguishabilityResponse)
-	# for i in range(0, 10):
-	# 	p = sortedPatches[i]
-	# 	# print p.aggregateRGBScore
-	# 	cv2.rectangle(responseCopy,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(0,0,0),2) # np.random.randint(0,255,size = 3)
-	# 	cv2.rectangle(imgCopy,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),np.random.randint(0,255,size = 3),2) # np.random.randint(0,255,size = 3)
-	# cv2.imshow("sorted based on aggregateRGBScore",imgCopy)
-	# cv2.imwrite("aggregateRGBScorePatches_{folder}_{img}_sigma{i}.jpg".format(folder =folderName,  i = 51, img = imgName[0:imgName.find(".")]), imgCopy)
-	# cv2.waitKey(0)
-
-	# draw the distinguishable patches
-	# keypoints = []
-	# for i in range(0, 50):
-		# p = patches[distinguishableIndividualPatchIndexes[i]]
-		# keypoints.append(cv2.KeyPoint(p.x,p.y,p.size))
-	# temp = cv2.drawKeypoints(img,keypoints,flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
-	#plot the top few patches with the most distinguishable histogram
-	for i in range(0, 10):
-		p = patches[distinguishableIndividualPatchIndexes[i]]
-		cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),np.random.randint(0,255,size = 3),1)
-	# cv2.imwrite("individualRGBScorePatches_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")]), img)
-	# cv2.imshow("sort based on Individual RGB score",img)
-	cv2.imwrite("individualNewHSVScorePatches_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")]), img)
-	cv2.imshow("sort based on Individual HSV score",img)
-	cv2.waitKey(0)
-
 
 	return
 

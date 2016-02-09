@@ -1035,7 +1035,7 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 
 def main():
 	
-	# ---------------------------------TEST DESCRIPTOR -----------------------------------
+	# ---------------------------------TEST DESCRIPTOR PERFORMANCE-----------------------------------
 	# folder_suffix = "_HOG_Jensen_Shannon_Divergence"
 	# folder_suffix = "_HOG_Circular_subCircle_Jensen_Shannon_Divergence"
 	# folder_suffix = "_HOG_16Bin_subAndSuperCircle_Jensen_Shannon_Divergence"
@@ -1062,98 +1062,6 @@ def main():
 	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
 	generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
-
-	raise ValueError("Purpose stop for testDescriptorPerformance")
-
-	# -------------------------FULL ALGORITHEM: Extract Distinguishable points + Match ---------------------
-	folderName = "testset7"
-	imgName = "test1.jpg"
-	imgToMatchName = "test2.jpg"
-	# imgName = "test2.jpg"
-	# imgToMatchName = "test3.jpg"
-
-	img = cv2.imread("images/{folder}/{name}".format(folder = folderName, name = imgName), 1)
-	imgToMatch = cv2.imread("images/{folder}/{name}".format(folder = folderName, name = imgToMatchName), 1)
-	sigma = 39
-
-
-	# # for testset3
-	# # testPatch1 = comparePatches.Patch(540, 65,sigma) # test1
-
-	# # for testset4
-	# # testPatch1 = comparePatches.Patch(400, 862, sigma) # test1
-	# # testPatch1 = comparePatches.Patch(310, 575, sigma) # test2
-	# # testPatch1 = comparePatches.Patch(556, 20, sigma)  # test3
-	# testPatch1 = comparePatches.Patch(379, 424, sigma) # test4
-	# # testPatch1 = comparePatches.Patch(475, 267, sigma) # test5
-	# # testPatch1 = comparePatches.Patch(440, 645, sigma) # test6
-	# # testPatch1 = comparePatches.Patch(592, 494, sigma) # test7
-	# # testPatch1 = comparePatches.Patch(437, 645, sigma) # test8
-
-	# testPatchIndex = 4
-
-	# # testPatch1.computeRGBHistogram(img)
-	# testPatch1.computeHSVHistogram(img)
-	# comparePatches.drawPatchesOnImg(np.copy(img), testPatch1)
-	# # cv2.imwrite("testPatchHSV/GaussianWindowSubPatches/new_testPatch{x}_{folder}_{file}_simga{i}.jpg".format(x = testPatchIndex, folder = folderName, file = imgName[0:imgName.find(".")], i = sigma), comparePatches.drawPatchesOnImg(np.copy(img), testPatch1))
-	
-	# 1. Find the most distinguishable patches in the test1 img
-	distinguishablePatches = comparePatches.findDistinguishablePatches(img, sigma)
-	distinguishablePatches = distinguishablePatches[0:10]
-	imgToSave = comparePatches.drawPatchesOnImg(np.copy(img), distinguishablePatches, False)
-	cv2.imwrite("matches/HSV_cornerWeight_0.5_MostDistinguishablePatch_{folder}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.jpg".format(folder = folderName, file1 = imgName[0:imgName.find(".")], file2 = imgToMatchName[0:imgToMatchName.find(".")],  i = sigma), imgToSave)
-	
-	# 2. Match the distinguishablePatches to every patches in the test2 img
-	# 2.0 Extract patches to match in test2 img with different windowScales
-	patchStep = 0.5 # shift the patch by 1/4 patch len
-	matchPatches_origin = comparePatches.extractPatches(imgToMatch, sigma, patchStep)
-	print "length of matchPatches:", len(matchPatches_origin)
-	scale = 8 # window pixel window for up and down scaling
-	patchesArr = []
-	patchesArr.append(matchPatches_origin)
-
-	for level in range(-2, 3):
-		if(level != 0):
-			patchesArr.append(comparePatches.extractPatches(imgToMatch, sigma + scale * level, patchStep))
-	for i in range(0, len(patchesArr)):
-		print "len(patchesArr[{i}]):".format(i = i),len(patchesArr[i])
-
-	# 2.1 Compute the Color Hist of the matchPatches
-	for index in range(0, len(patchesArr)):
-		matchPatches = patchesArr[index]
-		for i in range(0, len(matchPatches)):
-			# print "computeRGBHistogram for matchPatches[{i}]".format(i = i) 
-			# matchPatches[i].computeRGBHistogram(imgToMatch)j
-			print "computeHSVHistogram for matchPatches[{i}]".format(i = i) 
-			matchPatches[i].computeHSVHistogram(imgToMatch)
-	# imgToSave = comparePatches.drawPatchesOnImg(np.copy(imgToMatch), testFindOnePatchMatch(testPatch1, patchesArr))
-	# cv2.imwrite("testPatchHSV/GaussianWindowSubPatches/new_testPatch{x}_GoodMatches_{folder}_{file}_simga{i}_shiftBy{step}_gaussianWindowOnAWhole.jpg".format(x = testPatchIndex, folder = folderName, file = imgName[0:imgName.find(".")], i = sigma, step = patchStep), imgToSave)
-	# raise ValueError("purpose stop for test patch only")
-	
-	# 2.2 do the comparison of each distinguishable patch against the matchPatches(array)
-	patchesFound = []
-	k = 1 # 1 means looking at just the best match at each window size level only
-	for i in range(0, len(distinguishablePatches)):
-		patchToMatch = distinguishablePatches[i]
-		goodMatchesArr = [] # total good matches array for good matches at different window size level
-
-		for j in range(0, len(patchesArr)): # for each window size level, find the best matches
-			goodMatches = findBestMatches(patchToMatch, patchesArr[j],k)
-			goodMatchesArr.append(goodMatches) # append to the total good matches array
-
-		overAllGoodMatches = [item for sublist in goodMatchesArr for item in sublist] # flatten the list of list -> list
-		print "overAllGoodMatches len should be {x}:".format(x = k*len(patchesArr)), len(overAllGoodMatches)
-		bests = findBestMatches(patchToMatch, overAllGoodMatches,1) # rank the best patches found at different scale level
-		patchesFound.append(bests[0]) # pick the best one
-
-	print "len of best patch matches found, should be 10:", len(patchesFound)
-
-	# 2.3 plot out the found match patches
-	imgToSave = comparePatches.drawPatchesOnImg(np.copy(imgToMatch), patchesFound, False)
-	# imgToSave = comparePatches.drawPatchesOnImg(np.copy(imgToMatch), overAllGoodMatches)
-	# imgToSave = comparePatches.drawPatchesOnImg(np.copy(imgToMatch), findBestMatches(patchToMatch, overAllGoodMatches))
-	# cv2.imwrite("testPatch{x}_GoodMatches_{folder}_{file}_simga{i}.jpg".format(x = testPatchIndex, folder = folderName, file = imgName[0:imgName.find(".")], i = sigma), imgToSave)
-	cv2.imwrite("matches/HSV_cornerWeight_0.5_MostDistinguishableMatch_{folder}_{file1}_{file2}_simga{i}_moveby{step}_scaleChange{scale}__GaussianWindowOnAWhole.jpg".format(folder = folderName, file1 = imgName[0:imgName.find(".")], file2 = imgToMatchName[0:imgToMatchName.find(".")],  i = sigma, step = patchStep, scale = scale), imgToSave)
 
 	return
 
