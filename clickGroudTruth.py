@@ -132,28 +132,28 @@ class clickRecorder(object):
 
 def main():
 	"""For clicking on target image for groundTruth"""
-	test_folder_name = raw_input("Please input the testset name: ")
-	folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
-	upperPath = "testAlgo3"
-	image_db = "images"
-	my_click_recorder = clickRecorder()
-	# set path
-	my_click_recorder.setPath(test_folder_name, folder_suffix ,upperPath)
-	# plot the distinguishable patches on base image
-	my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
-	# plot the target image for user to click
-	my_click_recorder.plotTargetImg(test_folder_name, image_db)
-	# save the groundTruth if validated
-	my_click_recorder.saveGroundTruth(test_folder_name)
+	# test_folder_name = raw_input("Please input the testset name: ")
+	# folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
+	# upperPath = "testAlgo3"
+	# image_db = "images"
+	# my_click_recorder = clickRecorder()
+	# # set path
+	# my_click_recorder.setPath(test_folder_name, folder_suffix ,upperPath)
+	# # plot the distinguishable patches on base image
+	# my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
+	# # plot the target image for user to click
+	# my_click_recorder.plotTargetImg(test_folder_name, image_db)
+	# # save the groundTruth if validated
+	# my_click_recorder.saveGroundTruth(test_folder_name)
 
 	"""For clicking on base image for unique patches"""
-	# test_folder_name = raw_input("Please input the testset name: ")
-	# image_db = "images"
-	# upperPath = "testAlgo2"
-	# folder_suffix = "_eyeballed_unique_patches"
-	# my_click_recorder = clickRecorder()
-	# my_click_recorder.plotBaseImg(test_folder_name, image_db)
-	# my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
+	test_folder_name = raw_input("Please input the testset name: ")
+	image_db = "images"
+	upperPath = "testAlgo3"
+	folder_suffix = "_eyeballed_unique_patches_DONUT_SHAPE"
+	my_click_recorder = clickRecorder()
+	my_click_recorder.plotBaseImg(test_folder_name, image_db)
+	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
 
 
 

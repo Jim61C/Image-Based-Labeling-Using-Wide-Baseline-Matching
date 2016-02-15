@@ -84,6 +84,8 @@ def filter_patches(patches, thresh_pass, responseMatrix, maxResponse):
 	for i in range(0, len(patches)):
 		if(responseMatrix[patches[i].x][patches[i].y] >= thresh):
 			fitlered_patches.append(patches[i])
+		# elif(responseMatrix[patches[i].x][patches[i].y] < 0):
+		# 	print "patch at " , patches[i].x, ", ", patches[i].y, " is an edge"
 	return fitlered_patches
 
 
