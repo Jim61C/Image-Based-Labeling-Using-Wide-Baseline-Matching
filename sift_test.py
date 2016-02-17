@@ -42,29 +42,26 @@ def runSIFT(test_folder_name, test1_img_name, test2_img_name):
 
 	matches = matcher.knnMatch(desc1, trainDescriptors=desc2,
 										k=count_for_best_matches_in_knn)
-
 	matches = filter_matches(matches)
-
-
 
 	matches = sorted(matches, key= lambda match: match.distance)
 	print "len(matches)",len(matches)
 	print "len(features1)",len(features1)
 	print "len(features2)", len(features2)
 
-	match_img = drawMatches.drawMatches(img,features1,imgToMatch,features2,matches[:10])
+	match_img = drawMatches.drawMatches(img,features1,imgToMatch,features2,matches[:20])
 	cv2.imshow("match_img", match_img)
 	cv2.waitKey(0)
 	cv2.imwrite("testSIFT/{savefilename}.jpg".format(savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + test2_img_name[0:test2_img_name.find(".")]), match_img)
 
 
 def main():
-	runSIFT("testset_illuminance1", "test1.jpg", "test2.jpg")
-	runSIFT("testset_illuminance2", "test1.jpg", "test2.jpg")
-	runSIFT("testset_rotation1", "test1.jpg", "test2.jpg")
-	runSIFT("testset_rotation2", "test1.jpg", "test2.jpg")
-	runSIFT("testset4", "test1.jpg", "test2.jpg")
-	runSIFT("testset7", "test1.jpg", "test2.jpg")
+	# runSIFT("testset_illuminance1", "test1.jpg", "test2.jpg")
+	# runSIFT("testset_illuminance2", "test1.jpg", "test2.jpg")
+	# runSIFT("testset_rotation1", "test1.jpg", "test2.jpg")
+	# runSIFT("testset_rotation2", "test1.jpg", "test2.jpg")
+	# runSIFT("testset4", "test1.jpg", "test2.jpg")
+	runSIFT("testset7", "test1.jpg", "test3.jpg")
 
 if __name__ == "__main__":
 	main()

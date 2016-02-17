@@ -1,7 +1,9 @@
 from multiprocessing import Pool, cpu_count
 import matchPatches
+import comparePatches
 import os
 import time
+from feature_modules import utils
 
 def dispatch_match_test(testName):
 	start_time = time.time()
@@ -47,6 +49,10 @@ def dispatch_feature_matching(args):
 	folder_suffix = "_DistinguishablePatches_HS_0.3_Corner_0.4_HOG_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	matchPatches.populateFeatureMatchingStatistics(image_db, test_folder_name, "test1.jpg", "test2.jpg",folder_suffix, upperPath = "testMatches")
 	
+def dispatch_feature_detection_algo3(args):
+	test_folder_name, custom_features_set = args
+	comparePatches.populateTestFindDistinguishablePatchesAlgo3(test_folder_name = test_folder_name, img_name = "test1.jpg", sigma = 39, image_db = "images", custom_feature_sets = custom_features_set)
+
 def extract_all_testfoldernames(image_db):
 	folders = [(name, image_db) for name in os.listdir(image_db) \
 	if os.path.isdir(os.path.join(image_db, name))]
@@ -62,14 +68,23 @@ def main():
 	# testNames = ["populate_testset_rotation1","populate_testset_rotation2", "populate_testset7"]
 	# test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
 	# test_folder_names = ["testset2", "testset3", "testset5"]
-	test_folder_args = [("testset_illuminance1", image_db), ("testset_illuminance2", image_db), ("testset_rotation1", image_db), ("testset_rotation2", image_db), \
-	("testset4", image_db), ("testset7", image_db)]
+	# test_folder_args = [("testset_illuminance1", image_db), ("testset_illuminance2", image_db), ("testset_rotation1", image_db), ("testset_rotation2", image_db), \
+	# ("testset4", image_db), ("testset7", image_db)]
+	test_folder_args = [ \
+		("testset_illuminance1", [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]), \
+		("testset_illuminance1", [utils.TOP_LEFT_PURPLE_FEATURE_ID]), \
+		("testset_illuminance1", [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]), \
+		("testset_illuminance1", [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]), \
+		("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID]), \
+		("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]) \
+	]
 
 	pool = Pool(cpu_count())
 	# pool.map(dispatch_match_test, testNames)
 	# pool.map(dispatch_feature_detection, test_folder_args)
 	# pool.map(dispatch_feature_matching, test_folder_args)
-	pool.map(dispatch_full_algorithm, test_folder_args)
+	# pool.map(dispatch_full_algorithm, test_folder_args)
+	pool.map(dispatch_feature_detection_algo3, test_folder_args)
 
 	pool.close()
 	pool.join()

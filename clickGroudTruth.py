@@ -150,7 +150,7 @@ def main():
 	test_folder_name = raw_input("Please input the testset name: ")
 	image_db = "images"
 	upperPath = "testAlgo3"
-	folder_suffix = "_eyeballed_unique_patches_DONUT_SHAPE"
+	folder_suffix = "_eyeballed_unique_patches"
 	my_click_recorder = clickRecorder()
 	my_click_recorder.plotBaseImg(test_folder_name, image_db)
 	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)

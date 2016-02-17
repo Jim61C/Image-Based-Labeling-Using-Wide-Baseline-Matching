@@ -21,21 +21,48 @@ from feature_modules import Feature
 class FeatureBottomRightGreen(Feature):
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
-		self.FEATURE_MODEL = np.array([0.18286884, 0.09029599, 0.06645372, 0.19927835, 0.08860512, 0.17953152])
+		# the distribution of hue and saturation needed for the subpatch of interest
+		self.FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.08106389,  0.11229446,  0.,          0.,
+										  0.,          0.,          0.,          0.,          0.,          0.,          0.,
+										  0.,          0.,          0.,          0.,          0.,          0.,          0.,
+										  0.,          0.,          0.02104336,  0.0664095,   0.02171191,  0.,          0.,
+										  0.,          0.,          0.,          0.        ]) 
+		# reinforce that the other sub patches must not have the hue/saturation for the green color
+		self.FEATURE_MODEL = np.concatenate((self.FEATURE_MODEL, np.zeros(3 *(len(range(3,5)) + len(range(7,10))))), axis = 1)
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
 
-	### override BOTTOM_RIGHT_GREEN ###
+	### override super class ###
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
 			self.patch.HueHistArr = []
 			self.patch.SaturationHistArr = []
 			self.patch.ValueHistArr = []
 			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
-		self.hist = np.concatenate((self.patch.HueHistArr[4][4:5], self.patch.SaturationHistArr[4][8:10]), axis = 1)
-		for i in range(1,4):
-			self.hist = np.concatenate((self.hist, self.patch.SaturationHistArr[i][1:2]), axis = 1) 
-		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+		self.hist = np.concatenate((self.patch.HueHistArr[4], self.patch.SaturationHistArr[4]), axis = 1)
+		
+		"""feature constructor at build phace, not run anymore after feature is built"""
+		# model_constructor_hue = np.zeros(len(self.patch.HueHistArr[4]))
+		# model_constructor_saturation = np.zeros(len(self.patch.SaturationHistArr[4]))
+		# model_constructor_hue[3:5] = self.patch.HueHistArr[4][3:5]
+		# model_constructor_saturation[7:10] = self.patch.SaturationHistArr[4][7:10]
+		# model_hist = np.concatenate((model_constructor_hue, model_constructor_saturation), axis = 1) # no need to normalized the two models each as they will be normalized altogether later
+		# print model_hist
+		# plotStatistics.plotOneGivenHist("", "FeatureBottomRightGreen", self.hist, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("", "model_hist", model_hist, save = False, show = True)
 
+		for i in range(1,4):
+			other_patch_hue = self.patch.HueHistArr[i][3:5]
+			other_patch_saturation = self.patch.SaturationHistArr[i][7:10]
+			"""other patch hue / saturation at least one is not within green range"""
+			if(np.sum(other_patch_hue) == 0 or np.sum(other_patch_saturation) == 0):
+				other_patch_hist = np.zeros(len(other_patch_hue) + len(other_patch_saturation))
+			else:
+				other_patch_hist = np.concatenate((other_patch_hue, other_patch_saturation), axis = 1)
+			
+			self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
+			
+		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+		
 	def featureResponse(self):
 		assert (not self.hist is None), "Error in FeatureBottomRightGreen: calling computeScore before the feature hist is computed!"
 		assert len(self.hist) == len(self.FEATURE_MODEL), "Error in FeatureBottomRightGreen: feature length is not correctly computed!"

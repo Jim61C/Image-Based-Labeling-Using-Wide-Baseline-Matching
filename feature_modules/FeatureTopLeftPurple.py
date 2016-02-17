@@ -43,12 +43,12 @@ class FeatureTopLeftPurple(Feature):
 	def featureResponse(self):
 		"""
 		d_euclidean^2 = 2(1- cos(A, B)), if vector A, B are normalized: |A|, |B| = 1
-		Thus, 0 <= d_euclidean <= 2 for normalized vector A, B
+		Thus, 0 <= d_euclidean <= sqrt(2) for normalized vector A, B, and further, A, B both >=0, cos(A,B) >=0
 
 		0 <= Jensen_Shannon_Divergence (A, B) <= inf
 
-		d_cosine = 1 - cos(A,B)
-		Thus, 0 <= d_cosine <= 2, let cos_score = (2 - d_cosine) / 2, then 0 <= cos_score <= 1 
+		d_cosine = 1 - cos(A,B), since cos(A,B) >=0 
+		Thus, 0 <= d_cosine <= 1, let cos_score = (1 - d_cosine), then 0 <= cos_score <= 1 
 		"""
 		assert (not self.hist is None), "Error in FeatureTopLeftPurple: calling computeScore before the feature hist is computed!"
 		# assert len(self.hist) == len(self.FEATURE_MODEL), "Error in FeatureTopLeftPurple: feature length is not correctly computed!"

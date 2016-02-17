@@ -16,6 +16,7 @@ import comparePatches
 import scipy.spatial.distance as DIST
 from sklearn.preprocessing import normalize
 from feature_modules import Feature
+from feature_modules import utils
 
 
 class FeatureTopRightYellow(Feature):
@@ -61,7 +62,7 @@ class FeatureTopRightYellow(Feature):
 
 	def computeScore(self):
 		if(self.score is None):
-			self.score = self.featureResponse()
+			self.score = utils.converScaleTo01(self.featureResponse(), min = utils.MIN_RAW_EUCLIDEAN_SCORE, max = utils.MAX_RAW_EUCLIDEAN_SCORE)
 
 
 
