@@ -36,7 +36,8 @@ class FeatureSharpHOG(Feature):
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		if(self.patch.HOG_Uncirculated is None):
 			self.patch.computeHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
-		uncircualted = normalize(self.patch.HOG_Uncirculated, norm='l1')[0] 
+		""" Here uncircualted might have sum 0, which will result in runtime divide by 0 in Jensen_Shannon_Divergence, but does not affect result"""
+		uncircualted = normalize(self.patch.HOG_Uncirculated, norm='l1')[0]
 		# plotStatistics.plotOneGivenHist("","uncircualted", uncircualted, save = False, show = True)
 
 		# model_constructor = np.zeros(len(uncircualted))

@@ -22,11 +22,18 @@ class FeatureBottomRightGreen(Feature):
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
 		# the distribution of hue and saturation needed for the subpatch of interest
-		self.FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.08106389,  0.11229446,  0.,          0.,
+		# self.FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.08106389,  0.11229446,  0.,          0.,
+		# 								  0.,          0.,          0.,          0.,          0.,          0.,          0.,
+		# 								  0.,          0.,          0.,          0.,          0.,          0.,          0.,
+		# 								  0.,          0.,          0.02104336,  0.0664095,   0.02171191,  0.,          0.,
+		# 								  0.,          0.,          0.,          0.        ]) 
+
+		# hue model and saturation model normalized seperately:
+		self.FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.15622393,  0.84377607,  0.,          0.,
 										  0.,          0.,          0.,          0.,          0.,          0.,          0.,
 										  0.,          0.,          0.,          0.,          0.,          0.,          0.,
-										  0.,          0.,          0.02104336,  0.0664095,   0.02171191,  0.,          0.,
-										  0.,          0.,          0.,          0.        ]) 
+										  0.,          0.,          0.097113,    0.52010989,  0.38277711,  0.,          0.,
+										  0.,          0.,          0.,          0.        ])
 		# reinforce that the other sub patches must not have the hue/saturation for the green color
 		self.FEATURE_MODEL = np.concatenate((self.FEATURE_MODEL, np.zeros(3 *(len(range(3,5)) + len(range(7,10))))), axis = 1)
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
@@ -45,7 +52,9 @@ class FeatureBottomRightGreen(Feature):
 		# model_constructor_saturation = np.zeros(len(self.patch.SaturationHistArr[4]))
 		# model_constructor_hue[3:5] = self.patch.HueHistArr[4][3:5]
 		# model_constructor_saturation[7:10] = self.patch.SaturationHistArr[4][7:10]
-		# model_hist = np.concatenate((model_constructor_hue, model_constructor_saturation), axis = 1) # no need to normalized the two models each as they will be normalized altogether later
+		# model_hist = np.concatenate(\
+		# 	(normalize(model_constructor_hue, norm = "l1")[0], normalize(model_constructor_saturation, norm = "l1")[0]), \
+		# 	axis = 1) # no need to normalized the two models each as they will be normalized altogether later
 		# print model_hist
 		# plotStatistics.plotOneGivenHist("", "FeatureBottomRightGreen", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "model_hist", model_hist, save = False, show = True)

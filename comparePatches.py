@@ -79,7 +79,7 @@ Eg: feature id: 'BOTTOM_RIGHT_GREEN', feature object class: 'FeatureBottomRightG
 """
 
 class Patch:
-	def __init__(self, centreX, centreY, size): # rowIndex is x, colIndex is y
+	def __init__(self, centreX, centreY, size, initialize_features = True): # rowIndex is x, colIndex is y
 
 		self.x = centreX
 		self.y = centreY
@@ -119,29 +119,30 @@ class Patch:
 		# self.HOG_BIN4 = None
 		# self.HOG_BIN4Score = None
 
+
 		### Array of Feature objects###
 		self.feature_arr = []
-		# top right yellow
-		self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
-		# BOTTOM_RIGHT_GREEN: Feature length: 6 bins
-		self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
-		# top left purple
-		self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
-		# Donut shape feature
-		self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
-		# neighbour bottom right blue feature
-		self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
-		# bottom right yellow feature
-		self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
-		# cornerness feature
-		# self.feature_arr.append(feature_modules.FeatureCornerness(self, utils.CORNERNESS_FEATURE_ID))
-		# sharp HOG feature
-		self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
-		# border green feature
-		self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
-		# center yellow feature
-		self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
-
+		if (initialize_features):
+			# top right yellow
+			self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
+			# BOTTOM_RIGHT_GREEN: Feature length: 6 bins
+			self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
+			# top left purple
+			self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
+			# Donut shape feature
+			self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
+			# neighbour bottom right blue feature
+			self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
+			# bottom right yellow feature
+			self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
+			# cornerness feature
+			# self.feature_arr.append(feature_modules.FeatureCornerness(self, utils.CORNERNESS_FEATURE_ID))
+			# sharp HOG feature
+			self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
+			# border green feature
+			self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
+			# center yellow feature
+			self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
 
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
@@ -672,7 +673,7 @@ def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expan
 
 def klDivergence(hist1, hist2):
 	"""
-	Note: There will be a runtime waring if sum(hist1) == 0 || sum(hist2) == 0, but does not affect result since it will return 'inf'
+	Note: There will be a runtime waring if sum(hist1) == 0 or sum(hist2) == 0, but does not affect result since it will return 'inf'
 	"""
 	return entropy(hist1,hist2)
 
@@ -1204,8 +1205,14 @@ def populateTestCombinatorialFeatureScore( \
 
 	for i in range(0, len(testPatches)):
 		print "\ntestPatches[{i}]:".format(i = i)
-		testPatches[i].getFeatureObject(utils.BOTTOM_RIGHT_GREEN_FEATURE_ID).computeFeature(img)
-		plotStatistics.plotOneGivenHist(path,"testPatches[{i}]".format(i = i), testPatches[i].getFeatureObject(utils.BOTTOM_RIGHT_GREEN_FEATURE_ID).hist, save = False, show = True)
+		for this_feature in FEATURES:
+			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
+			plotStatistics.plotOneGivenHist(\
+				path, \
+				"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
+				testPatches[i].getFeatureObject(this_feature).hist, \
+				save = False, \
+				show = True)
 		
 
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
@@ -1230,7 +1237,7 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test2.jpg", 39)
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return
