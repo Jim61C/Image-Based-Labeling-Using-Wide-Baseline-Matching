@@ -22,9 +22,12 @@ from feature_modules import utils
 class FeatureTopRightYellow(Feature):
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
-		self.FEATURE_MODEL = np.array([ 0.22017666,  0.04357684,  0.10064056,  0.07138587,  0.02479606,  0.04455135,
-										  0.01240122,  0.10267356,  0.04152748,  0.01688085,  0.,          0.02183263,
-										  0.04705044])
+		self.FEATURE_MODEL = np.array([ 0.,          1.,          0.,          0.,          0. ,         0. ,         0.,
+										  0.,          0.,          0.,          0.,          0. ,         0.,          0.,
+										  0.,          0.,          0.,          0.,          0.,          0.,          0.,
+										  0. ,         0.,          0. ,         0.,          0.,          0.34,
+										  0.33,        0.33,        0.,        0.,          0.        ])
+		self.FEATURE_MODEL = np.concatenate((self.FEATURE_MODEL, np.zeros(3*len(range(1,2)))), axis = 1)
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
@@ -33,18 +36,37 @@ class FeatureTopRightYellow(Feature):
 			self.patch.SaturationHistArr = []
 			self.patch.ValueHistArr = []
 			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
-		
-		self.hist = np.concatenate((self.patch.HueHistArr[self.TOP_RIGHT_INDEX][1:2], \
-			self.patch.SaturationHistArr[self.TOP_RIGHT_INDEX][11:14]), axis = 1)
 
-		for i in range(self.TOP_LEFT_INDEX,self.BOTTOM_RIGHT_INDEX + 1):
+		
+		self.hist = np.concatenate((self.patch.HueHistArr[self.TOP_RIGHT_INDEX], \
+			self.patch.SaturationHistArr[self.TOP_RIGHT_INDEX]), axis = 1)
+
+		"""feature constructor at build phace, not run anymore after feature is built"""
+		# model_constructor_hue = np.zeros(len(self.patch.HueHistArr[self.TOP_RIGHT_INDEX]))
+		# model_constructor_saturation = np.zeros(len(self.patch.SaturationHistArr[self.TOP_RIGHT_INDEX]))
+		# model_constructor_hue[1:2] = self.patch.HueHistArr[self.TOP_RIGHT_INDEX][1:2]
+		# model_constructor_saturation[10:13] = self.patch.SaturationHistArr[self.TOP_RIGHT_INDEX][10:13]
+		# model_hist = np.concatenate(\
+		# 	(normalize(model_constructor_hue, norm='l1')[0], normalize(model_constructor_saturation, norm = "l1")[0]), \
+		# 	axis = 1) # the models are normalized seperately each before being concatenated together
+		# print "model_hist:\n", model_hist
+		# plotStatistics.plotOneGivenHist("", "hue", self.patch.HueHistArr[self.TOP_RIGHT_INDEX], save =False, show = True)
+		# plotStatistics.plotOneGivenHist("", "saturation", self.patch.SaturationHistArr[self.TOP_RIGHT_INDEX], save =False, show = True)
+		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("", "self.FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
+
+		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+		self.HISTBINNUM = len(self.patch.HueHist)
+
+		for i in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
 			if( i != self.TOP_RIGHT_INDEX):
-				self.hist = np.concatenate((self.hist, self.patch.SaturationHistArr[i][0:3]), axis = 1)
+				other_patch_hist = self.getSubPatchTargetHueFilteredBySaturation(\
+					img_hsv, i, range(1,2), range(10,13))
+				assert (len(other_patch_hist) == len(range(1,2))), \
+				"In FeatureTopRightYellow: other sub patch {i}'s hue response array needs to be of the same length as that of the patch of interest".format( i = i)
+				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
 
 		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
-		# print "self.hist:", self.hist
-		# plt.plot(self.FEATURE_MODEL)
-		# plt.show()
 
 	def featureResponse(self):
 		assert (not self.hist is None), "Error in FeatureTopRightYellow: calling computeScore before the feature hist is computed!"

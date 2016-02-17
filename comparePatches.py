@@ -60,9 +60,9 @@ WEIGHTS_DICT = {
 # FEATURES = [utils.BORDER_GREEN_FEATURE_ID]
 # FEATURES = [utils.SHARP_HOG_FEATURE_ID]
 # FEATURES = [utils.CORNERNESS_FEATURE_ID]
-# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
+FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]
-FEATURES = [utils.TOP_LEFT_PURPLE_FEATURE_ID]
+# FEATURES = [utils.TOP_LEFT_PURPLE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
@@ -1152,7 +1152,7 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 		folder = test_folder_name, \
 		file = img_name[:img_name.find(".")], \
 		i = sigma))
-	for i in range(0, 2): # just append the best one found
+	for i in range(0, 5): # just append the best one found
 		unique_patches.append(list_of_patches[i][0])
 	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 	for i in range(0, len(unique_patches)):
@@ -1237,8 +1237,8 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test2.jpg", 39)
+		populateCheckUniquePatchesAlgo3(folderNames[i], "test2.jpg", 39)
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return
 
