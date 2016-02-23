@@ -47,7 +47,7 @@ class FeatureBorderGreen(Feature):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		# print "hue channel:", img_hsv[:,:,0]
 		# print "saturation channel:", img_hsv[:,:,1]
-		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, 1.2, -3)
+		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -3)
 		inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
 
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/4.0)
@@ -57,8 +57,13 @@ class FeatureBorderGreen(Feature):
 		assert gaussian_window.shape == (self.patch.size, self.patch.size), "outer gaussian_window size not correct"
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
 
-		outer_hist = self.computeHueHist(img_hsv, self.patch, gaussian_window)
-		inner_hist = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.outer_hue_hist_scale_3_gaus_4 is None):
+			self.patch.outer_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, self.patch, gaussian_window)
+		if (self.patch.inner_hue_hist_scale_3_gaus_4 is None):
+			self.patch.inner_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
+		
+		outer_hist = self.patch.outer_hue_hist_scale_3_gaus_4
+		inner_hist = self.patch.inner_hue_hist_scale_3_gaus_4
 		border_hist = outer_hist - inner_hist
 		# model_constructor = np.zeros(len(border_hist))
 		# model_constructor[4:7] = border_hist[4:7]
@@ -81,4 +86,5 @@ class FeatureBorderGreen(Feature):
 	def computeScore(self):
 		if(self.score is None):
 			self.score = self.featureResponse()
+
 	

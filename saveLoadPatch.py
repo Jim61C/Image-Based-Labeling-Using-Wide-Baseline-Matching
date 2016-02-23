@@ -69,7 +69,17 @@ def loadPatchMatches(filename):
 
 	return patchMatches
 
-
+def loadUniquePatchesWithFeatureSet(filename):
+	patches = []
+	with open(filename) as csvfile:
+		reader = csv.DictReader(csvfile)
+		for row in reader:
+			this_patch_to_read = comparePatches.Patch(int(row['x']),int(row['y']),int(row['size']))
+			this_patch_to_read.setFeatureToUse([item[item.find("'") + 1 : item.find("'", -1)] \
+				for item in row['featureSet'][1:-1].split(",")])
+			this_patch_to_read.setFeatureWeights(np.ones(len(this_patch_to_read.feature_to_use)))
+			patches.append(this_patch_to_read)
+	return patches
 
 def main():
 	# img = cv2.imread("images/testset7/test1.jpg", 1)

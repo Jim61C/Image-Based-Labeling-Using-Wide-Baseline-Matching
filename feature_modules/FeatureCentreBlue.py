@@ -18,24 +18,31 @@ from sklearn.preprocessing import normalize
 from feature_modules import Feature
 from feature_modules import utils
 
-class FeatureCentreYellow(Feature):
+class FeatureCentreBlue(Feature):
 	"""
-	reinforce the outer border to be non-targeted yellow hue, i.e., hue does not contain 0.13-0.18, (bin 2 out of 16)
-	TODO: add inner patch's saturation hist (bin 7:9) as well, not just Hue 
+	reinforce the outer border to be non-targeted blue hue, i.e.,
 	"""
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
 		self.HISTBINNUM = 16
-		self.FEATURE_MODEL_HUE = np.array([ 0.,          0.,          0.44326144,  0.,          0.,          0.,          0.,
-										  0.,          0.,          0.,          0.,          0. ,         0.,          0.,
-										  0.,          0.        ])
-		self.FEATURE_MODEL_SATURATION = np.array([ 0.,          0.,          0.,          0.,          0. ,         0.,          0.,
-										  0.21110128,  0.21070874,  0.,          0.,          0. ,         0.,          0.,
-										  0.,          0.        ])
+		
+		self.HUE_START_INDEX = 9
+		self.HUE_END_INDEX = 10
+		self.SATURATION_START_INDEX = 8
+		self.SATURATION_END_INDEX = 10
+		
+		self.FEATURE_MODEL_HUE = np.zeros(self.HISTBINNUM)
+		self.FEATURE_MODEL_HUE[self.HUE_START_INDEX] = 1.0 # all in bin 9
+		
+		self.FEATURE_MODEL_SATURATION = np.zeros(self.HISTBINNUM)
+		self.FEATURE_MODEL_SATURATION[self.SATURATION_START_INDEX] = 0.5 # all in bin 8 or bin 9
+		self.FEATURE_MODEL_SATURATION[self.SATURATION_START_INDEX + 1] = 0.5 # all in bin 8 or bin 9
+
 		self.FEATURE_MODEL = np.concatenate(( \
 			self.FEATURE_MODEL_HUE, \
 			self.FEATURE_MODEL_SATURATION, \
-			np.zeros(len(range(2,3)) + len(range(7,9)))), axis = 1) # append the expected border response
+			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
@@ -46,8 +53,9 @@ class FeatureCentreYellow(Feature):
 		inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
 
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/4.0)
-		inner_gaussian_window = gaussian_window[ gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\
-		 gaussian_window.shape[1]/2 - inner_patch.size/2: gaussian_window.shape[1]/2 + inner_patch.size/2 + 1]
+		inner_gaussian_window = gaussian_window[ \
+		gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\
+		gaussian_window.shape[1]/2 - inner_patch.size/2: gaussian_window.shape[1]/2 + inner_patch.size/2 + 1]
 
 		assert gaussian_window.shape == (self.patch.size, self.patch.size), "outer gaussian_window size not correct"
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
@@ -72,37 +80,43 @@ class FeatureCentreYellow(Feature):
 		border_hist_saturation = outer_hist_saturation - inner_hist_saturation
 
 		# model_constructor_inner_saturation = np.zeros(len(inner_hist_saturation))
-		# model_constructor_inner_saturation[7:9] = inner_hist_saturation[7:9]
+		# model_constructor_inner_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX] = \
+		# inner_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]
 		# print "model_constructor_inner_saturation:\n", model_constructor_inner_saturation
 
-		# model_constructor = np.zeros(len(border_hist_hue))
-		# model_constructor[2:3] = inner_hist_hue[2:3]
-		# print model_constructor
+		# model_constructor_inner_hue = np.zeros(len(inner_hist_hue))
+		# model_constructor_inner_hue[self.HUE_START_INDEX:self.HUE_END_INDEX] = \
+		# inner_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX]
+		# print model_constructor_hue
+		# print "model_constructor_inner_hue:\n", model_constructor_inner_saturation
 
-		if(np.sum(border_hist_hue[2:3]) == 0 or np.sum(border_hist_saturation[7:9]) == 0):
-			border_hist = np.zeros(len(range(2,3)) + len(range(7,9)))
+		if(np.sum(border_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX]) == 0 or \
+			np.sum(border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]) == 0):
+			border_hist = np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+				len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))
 		else:
-			border_hist = np.concatenate((border_hist_hue[2:3], border_hist_saturation[7:9]), axis = 1)
+			border_hist = np.concatenate((border_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX], \
+				border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]), axis = 1)
 		self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
 		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
 		
 		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
-		# plotStatistics.plotOneGivenHist("","inner_hist", inner_hist_hue, save = False, show = True)
-		# plotStatistics.plotOneGivenHist("","border_hist", border_hist_hue, save = False, show = True)
-		# plotStatistics.plotOneGivenHist("","model constructed", model_constructor, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("","inner_hist_hue", inner_hist_hue, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("","border_hist_hue", border_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "inner_hist_saturation", inner_hist_saturation, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "border_hist_saturation", border_hist_saturation, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 		
 
 	def featureResponse(self):
-		assert (not self.hist is None), "Error in FeatureCentreYellow: calling computeScore before the feature hist is computed!"
-		assert (len(self.hist) == len(self.FEATURE_MODEL)), "Error in FeatureCentreYellow: hist length is not correct!"
+		assert (not self.hist is None), "Error in FeatureCentreBlue: calling computeScore before the feature hist is computed!"
+		assert (len(self.hist) == len(self.FEATURE_MODEL)), "Error in FeatureCentreBlue: hist length is not correct!" + \
+		"len(self.hist): {self_his_len}, len(self.FEATURE_MODEL): {feature_model_len}".format(self_his_len = len(self.hist), feature_model_len = len(self.FEATURE_MODEL))
 		# return np.sum(self.hist)
 		return 1.0 / (1.0 + DIST.euclidean(self.hist, self.FEATURE_MODEL))
 
 	def computeScore(self):
 		if(self.score is None):
-			# self.score = utils.converScaleTo01(self.featureResponse(), utils.MIN_RAW_EUCLIDEAN_SCORE, utils.MAX_RAW_EUCLIDEAN_SCORE)
 			self.score = self.featureResponse()
 	

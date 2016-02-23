@@ -60,13 +60,15 @@ WEIGHTS_DICT = {
 # FEATURES = [utils.BORDER_GREEN_FEATURE_ID]
 # FEATURES = [utils.SHARP_HOG_FEATURE_ID]
 # FEATURES = [utils.CORNERNESS_FEATURE_ID]
-FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
+# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]
 # FEATURES = [utils.TOP_LEFT_PURPLE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
+FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
+
 """
 Routine to add a feature: 
 
@@ -141,8 +143,17 @@ class Patch:
 			self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
 			# border green feature
 			self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
-			# center yellow feature
+			# centre yellow feature
 			self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
+			# centre blue feature
+			self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
+
+		### Feature auxiliary attributes to save time ###
+		self.inner_hue_hist_scale_3_gaus_4 = None # scale down 3 level, with gaussian window sigma = window length/4
+		self.inner_saturation_hist_scale_3_gaus_4 = None
+
+		self.outer_hue_hist_scale_3_gaus_4 = None
+		self.outer_saturation_hist_scale_3_gaus_4 = None
 
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
@@ -909,28 +920,31 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	# return removeDuplicates(sorted_patches,remove_duplicate_thresh_dict)
 	return sorted_patches[0:20]
 
-def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_patches, plotHist = False,  path = "", testPatchIndex = 0):
+
+def getOnePatchFeatureSetScore(this_feature_set, this_feature_weights, patch):
 	"""
 	this_feature_set: feature sets to consider
 	this_feature_weights: weights of features in the set
+	patch: patch with computed feature scores
+	return: the weighted feature set score for this patch
+	"""
+	one_response = 0.0
+	for i in range(0, len(this_feature_set)):
+		cur_feature_obj = patch.getFeatureObject(this_feature_set[i])
+		cur_feature_weight = this_feature_weights[i]
+		one_response += cur_feature_obj.score * cur_feature_weight
+	return one_response
+
+def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_patches_response, plotHist = False,  path = "", testPatchIndex = 0):
+	"""
+	this_feature_set: feature sets to consider
+	this_feature_weights: weights of features in the set
+	testPatch: patch of interest, with feature set scores computed
+	random_patches_response: the list of random_patches' distribution under this_feature_set
 	return: weighed LDA statistics of this testPatch and random_patches wrt the feature sets
 	"""
-	test_patch_response = 0
-	for i in range(0, len(this_feature_set)):
-		cur_feature_obj = testPatch.getFeatureObject(this_feature_set[i])
-		cur_feature_weight = this_feature_weights[i]
-		test_patch_response  += cur_feature_obj.score * cur_feature_weight
+	test_patch_response = getOnePatchFeatureSetScore(this_feature_set, this_feature_weights, testPatch)
 
-	random_patches_response = []
-	for j in range(0, len(random_patches)):
-		one_response = 0
-		for i in range(0, len(this_feature_set)):
-			cur_feature_obj = random_patches[j].getFeatureObject(this_feature_set[i])
-			cur_feature_weight = this_feature_weights[i]
-			one_response += cur_feature_obj.score * cur_feature_weight
-		if(one_response >= 0 ): # do not consider if the response is negative, i.e., this patch not considered under that feature combination
-			random_patches_response.append(one_response)
-		
 	# make the distribution to be np array
 	random_patches_response = np.asarray(random_patches_response)
 
@@ -976,11 +990,14 @@ def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, \
 
 	# compute feature and set score for each feature object in feature_arr
 	for feature_obj in patch.feature_arr:
+		# start_time = time.time()
 		if (isinstance(feature_obj, feature_modules.FeatureCornerness)):
 			feature_obj.computeFeature(img, max_corner_response)
 		else:
 			feature_obj.computeFeature(img)
 		feature_obj.computeScore()
+		# print "compute ", feature_obj.id, " spent time:", time.time() - start_time
+	# print "\n"
 
 	# # HOG Bins Features
 	# for i in range(1, 5):
@@ -1001,7 +1018,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist = computeFullImageHSVHistogram(img)
 	max_corner_response, _ = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), windowSize = sigma, _step = step)
 
-	random_patches = extractRandomPatches(img, sigma, 500)
+	random_patches = extractRandomPatches(img, sigma, 800)
 	print "FEATURES:", FEATURES
 
 	for i in range(0, len(testPatches)):
@@ -1025,9 +1042,15 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 		this_feature_weights = np.ones(len(this_feature_set)) # TODO: may need to adjust the weight based what features there are in the set
 		all_feature_set_weights.append(this_feature_weights)
 		print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
-		# TODO: increase efficiency: for each set, the distribution of random patches are all the same, no need to calculate for each testPatch[j]
+		# get the distribution of random patch response under this_feature_set
+		random_patches_response = []
+		for j in range(0, len(random_patches)):
+			one_response = getOnePatchFeatureSetScore(this_feature_set, this_feature_weights, random_patches[j])
+			if(one_response >= 0 ): # do not consider if the response is negative, i.e., this patch not considered under that feature combination
+				random_patches_response.append(one_response)
+		# set the LDA score for each test patch under this feature set
 		for j in range(0, len(testPatches)):
-			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches, path != "", path, j) # only save hist if path is there
+			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches_response, path != "", path, j) # only save hist if path is there
 
 	# set patch feature_to_use and LDAFeatureScore
 	for i in range(0, len(testPatches)):
@@ -1152,7 +1175,7 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 		folder = test_folder_name, \
 		file = img_name[:img_name.find(".")], \
 		i = sigma))
-	for i in range(0, 5): # just append the best one found
+	for i in range(0, 1): # just append the best one found
 		unique_patches.append(list_of_patches[i][0])
 	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 	for i in range(0, len(unique_patches)):
@@ -1205,14 +1228,14 @@ def populateTestCombinatorialFeatureScore( \
 
 	for i in range(0, len(testPatches)):
 		print "\ntestPatches[{i}]:".format(i = i)
-		for this_feature in FEATURES:
-			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
-			plotStatistics.plotOneGivenHist(\
-				path, \
-				"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
-				testPatches[i].getFeatureObject(this_feature).hist, \
-				save = False, \
-				show = True)
+		# for this_feature in FEATURES:
+		# 	testPatches[i].getFeatureObject(this_feature).computeFeature(img)
+		# 	plotStatistics.plotOneGivenHist(\
+		# 		path, \
+		# 		"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
+		# 		testPatches[i].getFeatureObject(this_feature).hist, \
+		# 		save = False, \
+		# 		show = True)
 		
 
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
@@ -1220,8 +1243,9 @@ def populateTestCombinatorialFeatureScore( \
 	print feature_set_scores
 
 def main():
-	folderNames = ["testset_illuminance1"]
+	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
+	folderNames = ["testset7"]
 	### Test Algo2 in finding distinguishable patches ###
 	# for i in range(0, len(folderNames)):
 	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)

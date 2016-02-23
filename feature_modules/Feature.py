@@ -28,6 +28,36 @@ class Feature(object):
 		self.BOTTOM_LEFT_INDEX = 3
 		self.BOTTOM_RIGHT_INDEX = 4
 		self.HISTBINNUM = 16 # default value, override by sub classes
+		self.GAUSSIAN_SCALE_FACTOR = 1.2
+
+	def computeHueHist(self,img_hsv, patch,gaussian_window):
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				this_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+				if (this_bin == self.HISTBINNUM):
+					this_bin = self.HISTBINNUM - 1
+				hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+				# hist[this_bin] += 1
+		return hist
+
+	def computeSaturationHist(self, img_hsv, patch, gaussian_window):
+		"""
+		img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-1
+		"""
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				this_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
+				if (this_bin == self.HISTBINNUM):
+					this_bin = self.HISTBINNUM - 1
+				hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+				# hist[this_bin] += 1
+		return hist
 
 	def targetHueFilteredBySaturation(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
 		hist = np.zeros(len(target_hue_bins))
@@ -81,6 +111,24 @@ class Feature(object):
 	def setScore(self, score):
 		self.score = score
 		return
+
+	def dissimilarityWith(self, hist):
+		"""
+		Default is l2 distance: overwritten by sub classes for different behaviour
+		"""
+		self.assertHist(hist)
+		return DIST.euclidean(self.hist, hist)
+
+	def assertHist(self, hist):
+		assert (len(self.hist) == len(hist)), "Error in feature " + self.id + ": Compared hist must have the same length as self.hist"
+		self_hist_norm = int(np.linalg.norm(self.hist, 1))
+
+		assert ( self_hist_norm == 1 or self_hist_norm == 0), "Error in feature " + self.id + ": self.hist must be l1 normalized" + \
+		", but get {norm}".format(norm = self_hist_norm)
+		
+		input_hist_norm = int(np.linalg.norm(hist, 1))
+		assert ( input_hist_norm == 1 or input_hist_norm == 0), "Error in feature " + self.id + ": input hist must be l1 normalized" + \
+		", but get {norm}".format(norm = input_hist_norm)
 
 
 

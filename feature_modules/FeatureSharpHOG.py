@@ -67,6 +67,10 @@ class FeatureSharpHOG(Feature):
 		if(self.score is None):
 			self.score = self.featureResponse()
 
+	def dissimilarityWith(self, hist):
+		self.assertHist(hist)
+		return comparePatches.Jensen_Shannon_Divergence(self.hist, hist)
+
 	def _checkRep(self):
 		assert (self.id == utils.SHARP_HOG_FEATURE_ID), "Error in FeatureSharpHOG: id is not correctly set: {id}".format(id = self.id)
 

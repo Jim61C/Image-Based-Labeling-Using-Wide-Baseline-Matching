@@ -41,7 +41,7 @@ class FeatureDonutShape(Feature):
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.uint8)
-		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, 1.2, -2)
+		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -2)
 		inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/4.0)
 		inner_gaussian_window = gaussian_window[ gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\

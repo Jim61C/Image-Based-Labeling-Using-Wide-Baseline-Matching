@@ -89,3 +89,7 @@ class FeatureBottomRightGreen(Feature):
 	def computeScore(self):
 		if(self.score is None):
 			self.score = self.featureResponse()
+
+
+
+
