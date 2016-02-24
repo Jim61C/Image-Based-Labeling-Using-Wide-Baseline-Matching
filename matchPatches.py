@@ -9,6 +9,7 @@ import copy
 import os
 import time
 import sys
+from feature_modules import utils
 
 FEATURE_WEIGHTING = {
 	'HSV':1.0,
@@ -16,7 +17,23 @@ FEATURE_WEIGHTING = {
 	# more features later
 }
 
-MANUAL_FEATURE_TO_USE = ["HSV"]
+MANUAL_FEATURE_TO_USE = [
+[utils.BOTTOM_RIGHT_GREEN_FEATURE_ID], \
+[utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID], \
+[utils.TOP_RIGHT_YELLOW_FEATURE_ID], \
+[utils.TOP_LEFT_PURPLE_FEATURE_ID], \
+[utils.SHARP_HOG_FEATURE_ID], \
+[utils.DONUT_SHAPE_FEATURE_ID], \
+[utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
+]
+
+# MANUAL_FEATURE_TO_USE = [\
+# [utils.BORDER_GREEN_FEATURE_ID], \
+# [utils.CENTRE_YELLOW_FEATURE_ID]
+# ]
+
+ALL_FEATURE_TO_COMPUTE = list(set([item for features in MANUAL_FEATURE_TO_USE for item in features]))
+
 
 # the lower the score (distance), the better;
 def getHSVHistOverAllDistance(patchToMatch, potentialPatch, metricFunc = comparePatches.earthMoverHatDistance):
@@ -112,11 +129,13 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 	for i in range(0, len(overall_distances)):
 		distance_vector = []
 		for this_feature_id in patchToMatch.feature_to_use:
-			distance_vector.append( \
-				metricFunc( \
-				patchToMatch.getFeatureObject(this_feature_id).hist, \
-				matchPatches[i].getFeatureObject(this_feature_id).hist\
-				))
+			# distance_vector.append( \
+			# 	metricFunc( \
+			# 	patchToMatch.getFeatureObject(this_feature_id).hist, \
+			# 	matchPatches[i].getFeatureObject(this_feature_id).hist\
+			# 	))
+			distance_vector.append(patchToMatch.getFeatureObject(this_feature_id).dissimilarityWith(\
+				matchPatches[i].getFeatureObject(this_feature_id).hist))
 		distance_vector = np.asarray(distance_vector)
 		assert (len(distance_vector) == len(patchToMatch.feature_weights)), "In findBestMatches: length of distance_vector must be the same as test patch feature_weights"
 		overall_distances[i] = np.linalg.norm(np.multiply(distance_vector, patchToMatch.feature_weights), 2)
@@ -228,7 +247,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 	# for i in range(0, len(testPatchesPyd)):
 	# 	comparePatches.drawPatchesOnImg(np.copy(imgPyd[i]), testPatchesPyd[i])
 	"""do the matching at top level and then repeat matching at lower pyramid level"""
-	matchesFound = None
+	matchesFound = None # a list of [list of matches] for each test patch
 	NUM_PATCH_SIZE_GAUSSIAN = 5 # number of different patch sizes used on top level of pyramid
 	for i in xrange(level, -1, -1):
 		thisImg = imgPyd[i]
@@ -252,28 +271,24 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			for j in range(0, len(matchesFound)):
 				matchesFoundNextLevelOnePatch = []
 				for k in range(0, len(matchesFound[j])):
-					# print "level {i}:".format(i = i), " test patch {j}".format(j = j), " match {k} :".format(k =k), matchesFound[j][k].x, matchesFound[j][k].y, matchesFound[j][k].size 
 					newPatch = comparePatches.Patch(matchesFound[j][k].x*2,matchesFound[j][k].y*2, matchesFound[j][k].size*2 + 1)
-					# print "level i after populate down pyramid:", newPatch.x, newPatch.y, newPatch.size 
-					# compute Histogram for newPatch
-					if(FEATURE_WEIGHTING['HSV'] != 0):
-						newPatch.computeHSVHistogram(thisImgToMatch,useGaussianWindow)
-					if(FEATURE_WEIGHTING['HOG'] != 0):
-						newPatch.computeHOG(thisImgToMatchGray, useGaussianWindow)
+					# compute Histogram for new potential match patch
+					for this_feature in ALL_FEATURE_TO_COMPUTE:
+						newPatch.getFeatureObject(this_feature).computeFeature(thisImgToMatch)
+					# append the new potential match patch for current particular one test patch
 					matchesFoundNextLevelOnePatch.append(newPatch)
-
 				matchesFoundNextLevel.append(matchesFoundNextLevelOnePatch)
 
-			# print "level ", i, ";Check, should be true: ", len(thisTestPatches) == len(matchesFoundNextLevel)
 			# rematch
 			rematches = []
 			for j in range(0, len(thisTestPatches)):
 				thisPatchToMatch = thisTestPatches[j]
-				if(FEATURE_WEIGHTING['HSV'] != 0):
-					thisPatchToMatch.computeHSVHistogram(thisImg,useGaussianWindow)
-				if(FEATURE_WEIGHTING['HOG'] != 0):
-					thisPatchToMatch.computeHOG(thisImgGray, useGaussianWindow)
-				rematches.append(findBestMatches(thisPatchToMatch, matchesFoundNextLevel[j], NUM_PATCH_SIZE_GAUSSIAN**(i+1), histToUse = "HSV", metricFunc = comparePatches.Jensen_Shannon_Divergence))	
+				for this_feature in thisPatchToMatch.feature_to_use:
+					thisPatchToMatch.getFeatureObject(this_feature).computeFeature(thisImg)
+				rematches.append(findBestMatches(thisPatchToMatch, \
+					matchesFoundNextLevel[j], \
+					NUM_PATCH_SIZE_GAUSSIAN**(i+1), \
+					metricFunc = comparePatches.Jensen_Shannon_Divergence))	
 			# free memeory and reassign matchesFound
 			del matchesFound[:]
 			matchesFound = []
@@ -288,7 +303,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 		assert len(matchesFound[i]) == NUM_PATCH_SIZE_GAUSSIAN, \
 		"final length of matches for each test path should be {n}".format(n = NUM_PATCH_SIZE_GAUSSIAN)
 
-	return matchesFound # a list of list of good matches
+	return matchesFound # a list of [list of good matches] for each test patch
 
 
 def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, testFolderName, k = 1, patchStep = 0.5, useGaussianWindow = True, metricFunc = comparePatches.Jensen_Shannon_Divergence):
@@ -312,29 +327,20 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgTo
 	for index in range(0, len(patchesArr)):
 		matchPatches = patchesArr[index]
 		for i in range(0, len(matchPatches)):
-			# print "computeRGBHistogram for matchPatches[{i}]".format(i = i) 
-			# matchPatches[i].computeRGBHistogram(imgToMatch)
-			if(FEATURE_WEIGHTING['HSV'] != 0):
-				# print "computeHSVHistogram for matchPatch[{i}] of patchArr[{index}] in {f}".format(i =i, index = index , f = testFolderName)
-				matchPatches[i].computeHSVHistogram(imgToMatch,useGaussianWindow)
-			if(FEATURE_WEIGHTING['HOG'] != 0):
-				# print "computeHOG for matchPatch[{i}] of patchArr[{index}] in {f}".format(i =i, index = index , f = testFolderName)
-				matchPatches[i].computeHOG(imgToMatch_gray, useGaussianWindow)
+			"""compute all features needed for the potential match patches"""
+			for this_feature in ALL_FEATURE_TO_COMPUTE:
+				matchPatches[i].getFeatureObject(this_feature).computeFeature(imgToMatch)
 
 		"""-------For logging purpose only: One PatchesArr done!------"""
-		if(FEATURE_WEIGHTING['HSV'] != 0):
-			print "computeHSVHistogram of patchArr[{index}] in {f} done".format(i =i, index = index , f = testFolderName)
-		if(FEATURE_WEIGHTING['HOG'] != 0):
-			print "computeHOG of patchArr[{index}] in {f} done".format(i =i, index = index , f = testFolderName)
+		print "compute match patches' features of patchArr[{index}] in {f} done".format(i =i, index = index , f = testFolderName)
 
 	testPatchMatches = []
 	#loop over all test patches
 	for this_test_patch in testPatches:
-		if(FEATURE_WEIGHTING['HSV'] != 0):
-			this_test_patch.computeHSVHistogram(img, useGaussianWindow)
-		if(FEATURE_WEIGHTING['HOG'] != 0):
-			this_test_patch.computeHOG(img_gray, useGaussianWindow)
-		
+		"""compute only the features needed for test patches (not needed for full algorithm, since it will be done during detection phase)"""
+		print "feature to use for this_test_patch:", this_test_patch.feature_to_use
+		for this_feature in this_test_patch.feature_to_use:
+			this_test_patch.getFeatureObject(this_feature).computeFeature(img)
 		bestMatches = testFindOnePatchMatch(this_test_patch, patchesArr, k, metricFunc) # will return the best matches (in an array) of the testPatch1
 		testPatchMatches.append(bestMatches)
 
@@ -351,7 +357,7 @@ def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMat
 	:sigma: 39
 	:patch search step: 0.5 (shift by 1/4 patch length)
 	"""
-
+	print "ALL_FEATURE_TO_COMPUTE:", ALL_FEATURE_TO_COMPUTE
 	#Create folder for the testset
 	if(not os.path.isdir("./{upperPath}/{folderToSave}/{testFolder}".format(
 		upperPath = upperPath, 
@@ -420,96 +426,31 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 	print "path:", path
 	if(not os.path.isdir(path)):
 		os.makedirs(path)
-
-	# testPatches[0].computeHSVHistogram(img, True, True)
-	# histLen = len(testPatches[0].HSVHist) # poll the length of the flattened HSVHist
-	# C = np.ones(shape = (histLen, histLen))
-	# rows = np.arange(0,histLen).reshape((histLen, 1))
-	# rows = np.repeat(rows, histLen, axis = 1)
-	# cols = np.arange(0, histLen).reshape((1,histLen))
-	# cols = np.repeat(cols, histLen, axis = 0)
-	# C = C + abs(rows - cols)
-
+		
 	for i in range(0, len(testPatches)):
-	# for i in range(2, 5):
-		# plot the overall H,S,V seperate Histogram 
-		# plotStatistics.plotColorHistogram(testPatches[i], img, path,"testPatch{i}".format(i = i), saveHist, displayHist)
-		# plotStatistics.plotColorHistogram(groundTruth[i], imgToMatch, path,"groundTruth{i}".format(i = i), saveHist, displayHist)
-		# plotStatistics.plotColorHistogram(matchesFound[i], imgToMatch, path,"matchFound{i}".format(i = i),saveHist,displayHist)
-		
-		testPatches[i].computeHSVHistogram(img, True, True)
-		groundTruth[i].computeHSVHistogram(imgToMatch, True, True)
-		matchesFound[i].computeHSVHistogram(imgToMatch, True, True)
+		"""Check the groundTruth and MatchesFound's feature object"""
+		for test_patch_feature in testPatches[i].feature_to_use:
+			print "testPatches[{i}]".format(i = i), "uses feature:", test_patch_feature
+			testPatches[i].getFeatureObject(test_patch_feature).computeFeature(img)
+			groundTruth[i].getFeatureObject(test_patch_feature).computeFeature(img)
+			matchesFound[i].getFeatureObject(test_patch_feature).computeFeature(img)
 
-		testPatches[i].computeHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int),  True)
-		groundTruth[i].computeHOG(cv2.cvtColor(imgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int),  True)
-		matchesFound[i].computeHOG(cv2.cvtColor(imgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int), True)
+			"""plot out the computed feature hist for testPatches, groundTruth, matchesFound"""
+			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
+				testPatches[i].getFeatureObject(test_patch_feature).hist, save = True, show = True)
+			plotStatistics.plotOneGivenHist(path,"groundTruth[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
+				groundTruth[i].getFeatureObject(test_patch_feature).hist, save = True, show = True)
+			plotStatistics.plotOneGivenHist(path,"matchesFound[{i}]_{feature}".format(i = i, feature = test_patch_feature), \
+				matchesFound[i].getFeatureObject(test_patch_feature).hist, save = True, show = True)
 
+			"""print the score of dissimilarityWith"""
+			dissimilarity_ground_truth = testPatches[i].getFeatureObject(test_patch_feature).dissimilarityWith(\
+				groundTruth[i].getFeatureObject(test_patch_feature).hist)
+			dissimilarity_match_found = testPatches[i].getFeatureObject(test_patch_feature).dissimilarityWith(\
+				matchesFound[i].getFeatureObject(test_patch_feature).hist)
 
-		print "\nfor test patch ", i
-		plotStatistics.plotHOGHistCmp(path, \
-			"HOGhistCmp{i}".format(i = i), \
-			testPatches[i].HOG, "testPatch{i}".format(i = i), \
-			matchesFound[i].HOG, "matchFound{i}".format(i = i),\
-			groundTruth[i].HOG, "groundTruth{i}".format(i = i), \
-			saveHist, displayHist)
-		plotStatistics.plotHSVSeperateHistCmp(path, \
-			"HSV Seperate Cmp_testPatch{i}".format(i = i), \
-			[testPatches[i].HueHist, testPatches[i].SaturationHist, testPatches[i].ValueHist], "testPatch{i}".format(i = i) , \
-			[matchesFound[i].HueHist, matchesFound[i].SaturationHist, matchesFound[i].ValueHist],  "matchFound{i}".format(i = i), \
-			[groundTruth[i].HueHist, groundTruth[i].SaturationHist, groundTruth[i].ValueHist], "groundTruth{i}".format(i = i), \
-			saveHist, displayHist)
-		
-		
-		# plotStatistics.plotHSVHistCmp(path, "HSVhistCmp{i}".format(i = i), testPatches[i].HSVHist, "testPatch{i}".format(i = i), matchesFound[i].HSVHist, "matchFound{i}".format(i = i), groundTruth[i].HSVHist,"groundTruth{i}".format(i = i), saveHist, displayHist)
-		# for j in range(1, len(testPatches[i].HSVHistArr)):
-			# subpatch_matchDistance = comparePatches.earthMoverHatDistance(testPatches[i].HSVHistArr[j], matchesFound[i].HSVHistArr[j])
-			# subpatch_groundTruthDistance = comparePatches.earthMoverHatDistance(testPatches[i].HSVHistArr[j], groundTruth[i].HSVHistArr[j])
-			# print "subpatch", j, " Match found distance:", subpatch_matchDistance
-			# print "subpatch", j, " Ground Truth distance:", subpatch_groundTruthDistance
-			# print "sub patch ", j, " Match Found is Better than Groud Truth? :", subpatch_groundTruthDistance >  subpatch_matchDistance
-			# plotStatistics.plotHSVHistCmp(path, "HSVHistCmp{i}_subpatch{j}".format(i = i , j = j), testPatches[i].HSVHistArr[j], "testPatch{i}_subpatch{j}".format(i = i, j = j), matchesFound[i].HSVHistArr[j], "matchFound{i}_subpatch{j}".format(i = i, j = j), groundTruth[i].HSVHistArr[j],"groundTruth{i}_subpatch{j}".format(i = i, j = j), saveHist, displayHist)
-		for j in range(1, len(testPatches[i].HOGArr)):
-			subpatch_matchDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HOGArr[j], matchesFound[i].HOGArr[j])
-			subpatch_groundTruthDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HOGArr[j], groundTruth[i].HOGArr[j])
-			print "subpatch", j, " Match found distance:", subpatch_matchDistance
-			print "subpatch", j, " Ground Truth distance:", subpatch_groundTruthDistance
-			print "sub patch ", j, " Match Found is Better than Groud Truth? :", subpatch_groundTruthDistance >  subpatch_matchDistance
-			plotStatistics.plotHOGHistCmp(path, \
-				"HOGhistCmp{i}_subpatch{j}".format(i = i , j = j), \
-				testPatches[i].HOGArr[j], "testPatch{i}_subpatch{j}".format(i = i, j = j), \
-				matchesFound[i].HOGArr[j], "matchFound{i}_subpatch{j}".format(i = i, j = j), \
-				groundTruth[i].HOGArr[j],"groundTruth{i}_subpatch{j}".format(i = i, j = j), \
-				saveHist, displayHist)
-
-		
-		# print "all sum(hist) should add to 1:", np.sum(testPatches[i].HSVHist), ", ", np.sum(matchesFound[i].HSVHist), "," ,np.sum(groundTruth[i].HSVHist)
-		print "seperate H, S, V hists all sum(hist) should add to 1:", np.sum(testPatches[i].HueHist), ", ", np.sum(matchesFound[i].SaturationHist), "," ,np.sum(groundTruth[i].ValueHist)
-		# print "HSVHist len:", len(testPatches[i].HSVHist)
-		# matchDistance = getHSVHistOverAllDistance(testPatches[i], matchesFound[i])
-		# matchDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HSVHist, matchesFound[i].HSVHist)
-		# matchDistance = comparePatches.earthMoverHatDistance(testPatches[i].HSVHist, matchesFound[i].HSVHist, C)
-		# matchDistance = comparePatches.chiSquareDistance(testPatches[i].HSVHist, matchesFound[i].HSVHist)
-		# matchDistance = getHSVSeperateHistAvgl2Distance(testPatches[i], matchesFound[i], comparePatches.earthMoverHatDistance)
-		# matchDistance = getHistArrl2Distance([testPatches[i].HueHist, testPatches[i].SaturationHist, testPatches[i].ValueHist],[matchesFound[i].HueHist,matchesFound[i].SaturationHist,matchesFound[i].ValueHist],comparePatches.Jensen_Shannon_Divergence)
-		# matchDistance = getHistArrl2Distance([testPatches[i].HueHist , testPatches[i].SaturationHist],[matchesFound[i].HueHist,matchesFound[i].SaturationHist],comparePatches.Jensen_Shannon_Divergence)
-		matchDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HOG, matchesFound[i].HOG)
-		print "Matches Found Distance:", matchDistance
-		print "Matches Found Seperate HSV Hist avg l2 distance:", getHSVSeperateHistAvgl2Distance(testPatches[i], matchesFound[i], comparePatches.Jensen_Shannon_Divergence)
-		# groundTruthDistance = getHSVHistOverAllDistance(testPatches[i], groundTruth[i])
-		# groundTruthDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HSVHist, groundTruth[i].HSVHist)
-		# groundTruthDistance = comparePatches.earthMoverHatDistance(testPatches[i].HSVHist, groundTruth[i].HSVHist, C)
-		# groundTruthDistance = comparePatches.chiSquareDistance(testPatches[i].HSVHist, groundTruth[i].HSVHist)
-		# groundTruthDistance = getHSVSeperateHistAvgl2Distance(testPatches[i], groundTruth[i], comparePatches.Jensen_Shannon_Divergence)
-		# groundTruthDistance = getHistArrl2Distance([testPatches[i].HueHist, testPatches[i].SaturationHist],[groundTruth[i].HueHist, groundTruth[i].SaturationHist],comparePatches.Jensen_Shannon_Divergence)
-		groundTruthDistance = comparePatches.Jensen_Shannon_Divergence(testPatches[i].HOG, groundTruth[i].HOG)
-		print "Gound Truth Distance:", groundTruthDistance
-		print "Ground Truth Seperate HSV Hist avg l2 distance:", getHSVSeperateHistAvgl2Distance(testPatches[i], groundTruth[i], comparePatches.Jensen_Shannon_Divergence)
-		# print "fullpatch Match Found is Better than Groud Truth? :", groundTruthDistance > matchDistance 
-		# print "overall Match Found better than Ground Truth? : ", getHSVHistOverAllDistance(testPatches[i], groundTruth[i]) > getHSVHistOverAllDistance(testPatches[i], matchesFound[i])
-		print "overall Match Found better than Ground Truth (Seperate HSV)? : ",  getHSVSeperateHistAvgl2Distance(testPatches[i], groundTruth[i], comparePatches.Jensen_Shannon_Divergence) > getHSVSeperateHistAvgl2Distance(testPatches[i], matchesFound[i], comparePatches.Jensen_Shannon_Divergence)
-		print "overall Match Found better than Ground Truth (HOG)? : ",  getHistArrl2Distance(testPatches[i].HOGArr, groundTruth[i].HOGArr, comparePatches.Jensen_Shannon_Divergence) > getHistArrl2Distance(testPatches[i].HOGArr, matchesFound[i].HOGArr, comparePatches.Jensen_Shannon_Divergence)
-		
+			print "testPatches[{i}] ".format(i = i), test_patch_feature, " dissimilarity_ground_truth:", dissimilarity_ground_truth
+			print "testPatches[{i}] ".format(i = i), test_patch_feature, " dissimilarity_match_found:", dissimilarity_match_found	
 	return
 
 def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"):
@@ -526,45 +467,73 @@ def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"
 	# testPatches.append(comparePatches.Patch(351, 822, sigma)) # test2
 	# testPatches.append(comparePatches.Patch(328, 943, sigma)) # test3
 	# testPatches.append(comparePatches.Patch(342, 145, sigma)) # test4
-	listOfPatches = saveLoadPatch.loadPatchMatches( \
-	"{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
-		path = upperPath + "/GaussianWindowOnAWhole/" + "testset_illuminance1" + "_eyeballed_unique_patches", \
-		folder = "testset_illuminance1", \
-		file = "test1", \
-		i = sigma))
-	for i in range(0, len(listOfPatches)):
-		testPatches.append(listOfPatches[i][0])
-	for this_test_patch in testPatches:
-		this_test_patch.setFeatureToUse(MANUAL_FEATURE_TO_USE)
-		this_test_patch.setFeatureWeights(np.ones(len(this_test_patch.feature_to_use)))
+
+	# groundTruth.append(comparePatches.Patch(179, 830, sigma)) # test0
+	# groundTruth.append(comparePatches.Patch(501, 728, sigma)) # test1
+	# groundTruth.append(comparePatches.Patch(377, 826, sigma)) # test2
+	# groundTruth.append(comparePatches.Patch(358, 943, sigma)) # test3
+	# groundTruth.append(comparePatches.Patch(360, 165, sigma)) # test4
+
+	# listOfPatches = saveLoadPatch.loadPatchMatches( \
+	# "{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+	# 	path = upperPath + "/GaussianWindowOnAWhole/" + "testset_illuminance1" + "_eyeballed_unique_patches", \
+	# 	folder = "testset_illuminance1", \
+	# 	file = "test1", \
+	# 	i = sigma))
+	# for i in range(0, len(listOfPatches)):
+	# 	testPatches.append(listOfPatches[i][0])
+	# for this_test_patch in testPatches:
+	# 	this_test_patch.setFeatureToUse(MANUAL_FEATURE_TO_USE)
+	# 	this_test_patch.setFeatureWeights(np.ones(len(this_test_patch.feature_to_use)))
+
+	for this_feature_set in MANUAL_FEATURE_TO_USE:
+		list_of_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet( \
+		"{path}/UniquePatches_{feature}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+			path = "testUniquePatches/algo3", \
+			feature = "_".join(this_feature_set), \
+			folder = "testset_illuminance1", \
+			file = "test1", \
+			i = sigma))
+		list_of_patches[0].setFeatureToUse(this_feature_set)
+		list_of_patches[0].setFeatureWeights(np.ones(len(list_of_patches[0].feature_to_use)))
+		testPatches.append(list_of_patches[0]) # append the best one found
 
 	comparePatches.drawPatchesOnImg(np.copy(img), testPatches, mark_sequence = True)
 
-	groundTruth.append(comparePatches.Patch(179, 830, sigma)) # test0
-	groundTruth.append(comparePatches.Patch(501, 728, sigma)) # test1
-	groundTruth.append(comparePatches.Patch(377, 826, sigma)) # test2
-	groundTruth.append(comparePatches.Patch(358, 943, sigma)) # test3
-	groundTruth.append(comparePatches.Patch(360, 165, sigma)) # test4
+
 
 	# listOfPatchMatches = saveLoadPatch.loadPatchMatches("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_illuminance1_256Bin_HS", folderToSave = "GaussianWindowOnAWhole", folder = "testset_illuminance1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
 	# listOfPatchMatches = saveLoadPatch.loadPatchMatches("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_illuminance1_256Bin_HS_earthMover", folderToSave = "GaussianWindowOnAWhole", folder = "testset_illuminance1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
-	# listOfPatchMatches = saveLoadPatch.loadPatchMatches("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_illuminance1" + folder_suffix, folderToSave = "GaussianWindowOnAWhole", folder = "testset_illuminance1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
-	# for i in range(0, len(listOfPatchMatches)):
-	# 	matchesFound.append(listOfPatchMatches[i][0]) # just append the best match
+	listOfPatchMatches = saveLoadPatch.loadPatchMatches(upperPath + "/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_illuminance1" + folder_suffix, folderToSave = "GaussianWindowOnAWhole", folder = "testset_illuminance1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
+	for i in range(0, len(listOfPatchMatches)):
+		matchesFound.append(listOfPatchMatches[i][0]) # just append the best match
+	comparePatches.drawPatchesOnImg(np.copy(img), matchesFound, mark_sequence = True)
+
+
+	for this_feature_set in MANUAL_FEATURE_TO_USE:
+		list_of_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet( \
+		"{path}/UniquePatches_{feature}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+			path = "testUniquePatches/algo3", \
+			feature = "_".join(this_feature_set), \
+			folder = "testset_illuminance1", \
+			file = "test2", \
+			i = sigma))
+		list_of_patches[0].setFeatureToUse(this_feature_set)
+		list_of_patches[0].setFeatureWeights(np.ones(len(list_of_patches[0].feature_to_use)))
+		groundTruth.append(list_of_patches[0]) # append the best one found
+
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_testPatches.jpg",comparePatches.drawPatchesOnImg(np.copy(img), testPatches, True))
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_groundTruth.jpg",comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, True))
 	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_matchesFound.jpg",comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, True))
 
-	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_256Bin_HS/hists", saveHist = False, displayHist = False)
-	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_256Bin_HS_earthMover/hists", saveHist = False, displayHist = False)
-	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1_seperateHS_Jensen_Shannon_Divergence/hists", saveHist = True, displayHist = False)
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./{upperPath}/GaussianWindowOnAWhole/testset_illuminance1{folder_suffix}/hists".format(upperPath = upperPath, folder_suffix = folder_suffix), saveHist = True, displayHist = False)
-	
-	listOfMatches = testDescriptorPerformance("images","testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+
+	listOfMatches = testDescriptorPerformance("images", "testset_illuminance1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma, upperPath = upperPath)
 	for i in range(0, len(listOfMatches)):
 		matchesFound.append(listOfMatches[i][0]) # just append the best match
-	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
+	cv2.imwrite(upperPath + "/GaussianWindowOnAWhole/testset_illuminance1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
 	return
 
 
@@ -615,7 +584,7 @@ def populate_testset_illuminance2(folder_suffix = ""):
 	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_illuminance2"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
 	return
 
-def populate_testset_rotation1(folder_suffix = ""):
+def populate_testset_rotation1(folder_suffix = "", upperPath = "testAlgo3"):
 	sigma = 39
 	testPatches = []
 	groundTruth = []
@@ -630,19 +599,32 @@ def populate_testset_rotation1(folder_suffix = ""):
 	# plt.imshow(np.dstack((imgToMatch[:,:,2], imgToMatch[:,:,1], imgToMatch[:,:,0])))
 	# plt.show()
 
-	testPatches.append(comparePatches.Patch(230, 492, sigma)) # test0
-	testPatches.append(comparePatches.Patch(189, 492, sigma)) # test1
-	testPatches.append(comparePatches.Patch(181, 59, sigma)) # test2
-	testPatches.append(comparePatches.Patch(552, 765, sigma)) # test3
+	# testPatches.append(comparePatches.Patch(230, 492, sigma)) # test0
+	# testPatches.append(comparePatches.Patch(189, 492, sigma)) # test1
+	# testPatches.append(comparePatches.Patch(181, 59, sigma)) # test2
+	# testPatches.append(comparePatches.Patch(552, 765, sigma)) # test3
 
-	for this_test_patch in testPatches:
-		this_test_patch.setFeatureToUse(MANUAL_FEATURE_TO_USE)
-		this_test_patch.setFeatureWeights(np.ones(len(this_test_patch.feature_to_use)))
+	# for this_test_patch in testPatches:
+	# 	this_test_patch.setFeatureToUse(MANUAL_FEATURE_TO_USE)
+	# 	this_test_patch.setFeatureWeights(np.ones(len(this_test_patch.feature_to_use)))
 
-	groundTruth.append(comparePatches.Patch(261,607,sigma)) # test0
-	groundTruth.append(comparePatches.Patch(230,627,sigma)) # test1
-	groundTruth.append(comparePatches.Patch(26,257,sigma)) # test2
-	groundTruth.append(comparePatches.Patch(684,709,sigma)) # test3
+	# groundTruth.append(comparePatches.Patch(261,607,sigma)) # test0
+	# groundTruth.append(comparePatches.Patch(230,627,sigma)) # test1
+	# groundTruth.append(comparePatches.Patch(26,257,sigma)) # test2
+	# groundTruth.append(comparePatches.Patch(684,709,sigma)) # test3
+	for this_feature_set in [[utils.BORDER_GREEN_FEATURE_ID], [utils.CENTRE_YELLOW_FEATURE_ID]]:
+		list_of_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet( \
+		"{path}/UniquePatches_{feature}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+			path = "testUniquePatches/algo3", \
+			feature = "_".join(this_feature_set), \
+			folder = "testset_rotation1", \
+			file = "test1", \
+			i = sigma))
+		list_of_patches[0].setFeatureToUse(this_feature_set)
+		list_of_patches[0].setFeatureWeights(np.ones(len(list_of_patches[0].feature_to_use)))
+		testPatches.append(list_of_patches[0]) # append the best one found
+
+	comparePatches.drawPatchesOnImg(np.copy(img), testPatches, mark_sequence = True)
 
 	# listOfPatchMatches = saveLoadPatch.loadPatchMatches("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(testFolder = "testset_rotation1"+folder_suffix, folderToSave = "GaussianWindowOnAWhole", folder = "testset_rotation1", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True))
 	# for i in range(0, len(listOfPatchMatches)):
@@ -659,10 +641,10 @@ def populate_testset_rotation1(folder_suffix = ""):
 
 
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/hists", saveHist = False, displayHist = True)
-	listOfMatches = testDescriptorPerformance("images", "testset_rotation1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
+	listOfMatches = testDescriptorPerformance("images", "testset_rotation1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma, upperPath = upperPath)
 	for i in range(0, len(listOfMatches)):
 		matchesFound.append(listOfMatches[i][0]) # just append the best match
-	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
+	cv2.imwrite(upperPath + "/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
 	return
 
 def populate_testset_rotation2(folder_suffix = ""):
@@ -885,7 +867,7 @@ def loadPatchesMatchesGroundtruth(upperPath, test_folder_name, folder_suffix, fi
 	for i in range(0, len(listOfTestPatches)):
 		matchesFound.append(listOfTestPatches[i][0])
 
-	# load groudTruth
+	# load groundTruth
 	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GroundTruth_{test_folder_name}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format(
 		upperPath = upperPath,
 		folderToSave = "GaussianWindowOnAWhole", 
@@ -1071,14 +1053,14 @@ def main():
 	# folder_suffix = "_seperateHSV_earthMover"
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
-	folder_suffix = "_eyeballed_unique_patches_seperateHS"
+	folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable
 	start_time = time.time()
 	print 'start matching:', start_time
 	populate_testset_illuminance1(folder_suffix, "testAlgo3")
 	# populate_testset_illuminance2(folder_suffix)
-	# populate_testset_rotation1(folder_suffix)
+	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
 	# populate_testset7(folder_suffix)

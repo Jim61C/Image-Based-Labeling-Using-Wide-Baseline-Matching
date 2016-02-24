@@ -66,8 +66,8 @@ WEIGHTS_DICT = {
 # FEATURES = [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
-# FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
-FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
+FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
+# FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
 
 """
 Routine to add a feature: 
@@ -1243,9 +1243,9 @@ def populateTestCombinatorialFeatureScore( \
 	print feature_set_scores
 
 def main():
-	# folderNames = ["testset_illuminance1"]
+	folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
-	folderNames = ["testset7"]
+	# folderNames = ["testset7"]
 	### Test Algo2 in finding distinguishable patches ###
 	# for i in range(0, len(folderNames)):
 	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
@@ -1261,8 +1261,8 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test2.jpg", 39)
-		populateCheckUniquePatchesAlgo3(folderNames[i], "test2.jpg", 39)
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test2.jpg", 39)
+		# populateCheckUniquePatchesAlgo3(folderNames[i], "test2.jpg", 39)
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return
 

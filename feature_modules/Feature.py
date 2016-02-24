@@ -117,7 +117,8 @@ class Feature(object):
 		Default is l2 distance: overwritten by sub classes for different behaviour
 		"""
 		self.assertHist(hist)
-		return DIST.euclidean(self.hist, hist)
+		# return DIST.euclidean(self.hist, hist)
+		return comparePatches.Jensen_Shannon_Divergence(self.hist, hist)
 
 	def assertHist(self, hist):
 		assert (len(self.hist) == len(hist)), "Error in feature " + self.id + ": Compared hist must have the same length as self.hist"
