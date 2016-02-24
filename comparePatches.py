@@ -66,8 +66,9 @@ WEIGHTS_DICT = {
 # FEATURES = [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
-FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
-# FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
+# FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
+FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
+# FEATURES = [utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID]
 
 """
 Routine to add a feature: 
@@ -147,6 +148,8 @@ class Patch:
 			self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
 			# centre blue feature
 			self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
+			# green patch bottom left blue
+			self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
 
 		### Feature auxiliary attributes to save time ###
 		self.inner_hue_hist_scale_3_gaus_4 = None # scale down 3 level, with gaussian window sigma = window length/4
@@ -1228,14 +1231,14 @@ def populateTestCombinatorialFeatureScore( \
 
 	for i in range(0, len(testPatches)):
 		print "\ntestPatches[{i}]:".format(i = i)
-		# for this_feature in FEATURES:
-		# 	testPatches[i].getFeatureObject(this_feature).computeFeature(img)
-		# 	plotStatistics.plotOneGivenHist(\
-		# 		path, \
-		# 		"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
-		# 		testPatches[i].getFeatureObject(this_feature).hist, \
-		# 		save = False, \
-		# 		show = True)
+		for this_feature in FEATURES:
+			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
+			plotStatistics.plotOneGivenHist(\
+				path, \
+				"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
+				testPatches[i].getFeatureObject(this_feature).hist, \
+				save = False, \
+				show = True)
 		
 
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
@@ -1243,9 +1246,9 @@ def populateTestCombinatorialFeatureScore( \
 	print feature_set_scores
 
 def main():
-	folderNames = ["testset_illuminance1"]
+	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
-	# folderNames = ["testset7"]
+	folderNames = ["testset7"]
 	### Test Algo2 in finding distinguishable patches ###
 	# for i in range(0, len(folderNames)):
 	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
@@ -1261,8 +1264,8 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test2.jpg", 39)
-		# populateCheckUniquePatchesAlgo3(folderNames[i], "test2.jpg", 39)
+		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return
 

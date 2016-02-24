@@ -264,7 +264,9 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1)) # each gaussian 125 best matches
 			matchesFound = thisListOfMatches
 			# draw the combined match view to check at this level
-			# drawCombinedMatchView(thisImg, thisImgToMatch, thisTestPatches, matchesFound, True)
+			drawCombinedMatchView(np.copy(thisImg), thisImgToMatch, thisTestPatches, matchesFound, True)
+			for j in range(0, len(matchesFound)):
+				comparePatches.drawPatchesOnImg(np.copy(thisImg), matchesFound[j], mark_sequence = True)
 		else:
 			"""otherwise, populate down the potential good matches and rematch"""
 			matchesFoundNextLevel = []
@@ -426,7 +428,7 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 	print "path:", path
 	if(not os.path.isdir(path)):
 		os.makedirs(path)
-		
+
 	for i in range(0, len(testPatches)):
 		"""Check the groundTruth and MatchesFound's feature object"""
 		for test_patch_feature in testPatches[i].feature_to_use:
