@@ -3,7 +3,7 @@ import cv2
 import matchPatches
 import saveLoadPatch
 import comparePatches
-
+import feature_modules
 
 class clickRecorder(object):
 	sigma = 39
@@ -11,8 +11,11 @@ class clickRecorder(object):
 	testPatches = []
 	imgToMatchPrev = []
 	
+	imgToMatchOrigin = None
 	imgToMatch = None
 	count = 0
+
+	centre_feature_count = 0
 
 	path = None
 
@@ -87,6 +90,7 @@ class clickRecorder(object):
 
 	def plotBaseImg(self, test_folder_name, image_db):
 		self.imgToMatch = cv2.imread("{image_db}/{test_folder_name}/test1.jpg".format(image_db = image_db, test_folder_name = test_folder_name), 1)
+		self.imgToMatchOrigin = np.copy(self.imgToMatch)
 		cv2.imshow("targetImage", self.imgToMatch)
 		cv2.setMouseCallback("targetImage", self.mouseEventCallback)
 		self.undoLoop()
@@ -129,6 +133,17 @@ class clickRecorder(object):
 			file = "test1", \
 			i = self.sigma))
 
+	def fitFeatures(self, test_folder_name, folder_suffix, upperPath):
+		cv2.imshow("imgToMatch original",self.imgToMatchOrigin)
+		cv2.waitKey(0)
+		for i in range(0, len(self.groundTruth)):
+			patch = self.groundTruth[i]
+			potential_centre_feature = feature_modules.FeatureCentreParadigm(patch, "centre_paradigm_{i}".format(i = self.centre_feature_count))
+			if(potential_centre_feature.fitParadigm(self.imgToMatchOrigin)):
+				self.centre_feature_count = self.centre_feature_count + 1
+				print "successfully constructed feature centre_paradigm for patch ", i, " clicked"
+
+
 
 def main():
 	"""For clicking on target image for groundTruth"""
@@ -150,11 +165,11 @@ def main():
 	test_folder_name = raw_input("Please input the testset name: ")
 	image_db = "images"
 	upperPath = "testAlgo3"
-	folder_suffix = "_eyeballed_unique_patches"
+	folder_suffix = "_eyeballed_unique_patches_feature_construction"
 	my_click_recorder = clickRecorder()
 	my_click_recorder.plotBaseImg(test_folder_name, image_db)
 	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
-
+	my_click_recorder.fitFeatures(test_folder_name, folder_suffix, upperPath)
 
 
 

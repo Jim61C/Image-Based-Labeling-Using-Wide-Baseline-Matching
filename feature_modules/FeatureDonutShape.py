@@ -21,11 +21,11 @@ class FeatureDonutShape(Feature):
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
 		self.HISTBINNUM = 16
-		self.FEATURE_MODEL = np.array([0.00351539,  0.57596057,  0.06858266,  0.02048219,  0.02166264,  0.02258441,
-									  0.01227705,  0.01083268,  0.00764063,  0.01532651,  0.0044623,   0.,          0.,
-									  0.,         0.,          0.,          0.,          0.00621184,  0.01046716,
-									  0.01155839,  0.00736686,  0.01444524,  0.0449813,  0.05170737,  0.01959358,
-									  0.02875307,  0.04158816,  0.,          0.,          0.,          0.,          0.        ])
+		# self.FEATURE_MODEL = np.array([0.00351539,  0.57596057,  0.06858266,  0.02048219,  0.02166264,  0.02258441,
+		# 							  0.01227705,  0.01083268,  0.00764063,  0.01532651,  0.0044623,   0.,          0.,
+		# 							  0.,         0.,          0.,          0.,          0.,           0. ])
+		self.FEATURE_MODEL = np.zeros(14 + 3)
+		self.FEATURE_MODEL[0] = 1.0
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 	def computeIntensityHist(self,img_gray, patch,gaussian_window):
@@ -52,7 +52,8 @@ class FeatureDonutShape(Feature):
 		outer_hist = self.computeIntensityHist(img_gray, self.patch, gaussian_window)
 		inner_hist = self.computeIntensityHist(img_gray, inner_patch, inner_gaussian_window)
 		donut_hist = outer_hist - inner_hist
-		self.hist = np.concatenate((inner_hist, donut_hist), axis = 1)
+		"""changed to sum of inner_hist of the starting few bins = 1"""
+		self.hist = np.concatenate((np.array([np.sum(inner_hist[0:3])]), inner_hist[3:], donut_hist[0:3]), axis = 1) # donut_hist should not contain any value from bin 0,1,2
 		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
 		# print self.hist
 		# plt.plot(outer_hist)

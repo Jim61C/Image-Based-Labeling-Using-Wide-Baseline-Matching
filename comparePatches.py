@@ -67,8 +67,8 @@ WEIGHTS_DICT = {
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
-FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
-# FEATURES = [utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID]
+# FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
+FEATURES = [utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID]
 
 """
 Routine to add a feature: 
@@ -162,6 +162,13 @@ class Patch:
 		self.feature_to_use = []
 		self.feature_weights = None
 		self.LDAFeatureScore = None # measure for the uniqueness of the feature sets
+		self.is_low_response = False # flag for if it is unique due to high response or low response, by default is due to high response
+
+	def setIsDueToLowResponse(self):
+		self.is_low_response = True
+
+	def setIsDueToHighResponse(self):
+		self.is_low_response = False
 
 	def getFeatureObject(self, id):
 		for obj in self.feature_arr:
@@ -901,7 +908,7 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
 	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
 	# positions = [(patch.x, patch.y) for patch in filtered_patches]
-	# drawPatchesOnImg(np.copy(img), filtered_patches)
+	drawPatchesOnImg(np.copy(img), filtered_patches)
 	"""
 	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
 	"""
@@ -1038,19 +1045,24 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 
 	all_feature_sets = generateAllFeatureSets(FEATURES)
 	all_feature_set_weights = []
-	feature_sets_score = np.zeros(shape = (len(all_feature_sets), len(testPatches)))
-	
+	feature_sets_score = np.zeros(shape = (len(all_feature_sets), len(testPatches))) # array of LDA score, shape = (number of feature sets, number of test patches)
+	feature_sets_mean_response = np.zeros(shape = (len(all_feature_sets))) # array of mean response of feature sets, shape = (number of feature sets, )
+
 	for i in range(0, len(all_feature_sets)):
 		this_feature_set = all_feature_sets[i]
-		this_feature_weights = np.ones(len(this_feature_set)) # TODO: may need to adjust the weight based what features there are in the set
+		"""TODO: may need to adjust the weight based what features there are in the set"""
+		this_feature_weights = np.ones(len(this_feature_set))
 		all_feature_set_weights.append(this_feature_weights)
 		print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
+		
 		# get the distribution of random patch response under this_feature_set
 		random_patches_response = []
 		for j in range(0, len(random_patches)):
 			one_response = getOnePatchFeatureSetScore(this_feature_set, this_feature_weights, random_patches[j])
 			if(one_response >= 0 ): # do not consider if the response is negative, i.e., this patch not considered under that feature combination
 				random_patches_response.append(one_response)
+		feature_sets_mean_response[i] = np.mean(random_patches_response)
+
 		# set the LDA score for each test patch under this feature set
 		for j in range(0, len(testPatches)):
 			feature_sets_score[i][j] = LDAFeatureScore(this_feature_set, this_feature_weights, testPatches[j], random_patches_response, path != "", path, j) # only save hist if path is there
@@ -1062,6 +1074,13 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 		testPatches[i].setLDAFeatureScore(this_patch_scores[this_patch_max_score_index])
 		testPatches[i].setFeatureToUse(all_feature_sets[this_patch_max_score_index])
 		testPatches[i].setFeatureWeights(all_feature_set_weights[this_patch_max_score_index])
+		# set patch is unique due to high or low response
+		"""TODO: might be faster to compute only for features that are selected to be unique"""
+		if (getOnePatchFeatureSetScore(testPatches[i].feature_to_use, testPatches[i].feature_weights, testPatches[i])\
+			< feature_sets_mean_response[this_patch_max_score_index]):
+			testPatches[i].setIsDueToLowResponse()
+		else:
+			testPatches[i].setIsDueToHighResponse()
 
 	# Log out the feature_sets_score for each testPatch
 	print "------------ Logging feature_sets_score for each testPatch ------------"
@@ -1153,8 +1172,15 @@ def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigm
 		print "feature_to_use for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_to_use
 		print "feature_weights for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_weights
 		print "LDAFeatureScore:", sorted_patches[i].LDAFeatureScore
-		print "Actual TOP_RIGHT_YELLOW Score:", sorted_patches[i].getFeatureObject(utils.TOP_RIGHT_YELLOW_FEATURE_ID).score
+		
+		for this_feature in FEATURES:
+			sorted_patches[i].getFeatureObject(this_feature).computeFeature(img)
+			sorted_patches[i].getFeatureObject(this_feature).computeScore()
+			print "sorted_patches[{i}] ".format(i = i), \
+			", actual {this_feature} Score:".format(this_feature = this_feature), \
+			sorted_patches[i].getFeatureObject(this_feature).score
 		print "" # spacing
+
 	result = drawPatchesOnImg(np.copy(img), sorted_patches, True, None, (0,0,255), True)
 	cv2.imwrite("testUniquePatches/algo3/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format(\
 		features = "_".join(FEATURES), \
@@ -1264,8 +1290,8 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return
 

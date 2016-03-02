@@ -23,21 +23,39 @@ class FeatureGreenPatchBottomLeftBlue(Feature):
 		Feature.__init__(self, patch, id)
 		self.HUE_START_INDEX = 8
 		self.HUE_END_INDEX = 9
-		self.SATURATION_START_INDEX = 6
-		self.SATURATION_END_INDEX = 11
+		self.SATURATION_START_INDEX = 7
+		self.SATURATION_END_INDEX = 12
 
+		self.OTHER_HUE_START_INDEX = 3
+		self.OTHER_HUE_END_INDEX = 4
+		self.OTHER_SATURATION_START_INDEX = 6
+		self.OTHER_SATURATION_END_INDEX = 10
+		
 		# bottom left blue: hue model and saturation model normalized seperately:
 		self.BLUE_FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.,          0.,          0. ,         0.,
 											  0.,          1.,          0. ,         0.,          0.,          0.,          0.,
-											  0.,          0. ,         0. ,         0.,          0.,          0.,          0.,
-											  0.,          0.2439846,   0.19498664,  0.24898269,  0.18389674,  0.12814933,
-											  0.,          0.,          0.,          0.,          0.        ])
+											  0.,          0. ,         \
+											  0. ,         0.,          0.,          0.,          0.,
+											  0.,          0.,   		0.2,  		 0.2,         0.2,         0.2,
+											  0.2,          0.,          0.,          0.,          0.        ])
 		# reinforce that the other sub patches must be green
 		self.GREEN_FEATURE_MODEL = np.array([ 0.,          0.,          0.,          1.,          0.,          0.,          0.,
 											  0.,          0.,          0.,          0.,          0.,          0.,          0.,
-											  0.,          0.,          0.,          0.,          0.,          0.,          0.,
-											  0.,          0.,          0.30407374,  0.44597865,  0.24994761,  0.,          0.,
-											  0.,          0.,          0.,          0.        ])
+											  0.,          0.,         \
+											  0.,          0.,          0.,          0.,          0.,          0.,          0.25,
+											  0.25,         0.25,         0.25,         0.,          0.,          0.,          0.,
+											  0.,          0.        ]) # with this, can get the target patch as 4th best
+
+		# """try changing the sum of targeted saturation to be = 1"""
+		# self.BLUE_FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.,          0.,          0. ,         0.,
+		# 									  0.,          1.,          0. ,         0.,          0.,          0.,          0.,
+		# 									  0.,          0. ,         \
+		# 									  1.           ])
+		# # reinforce that the other sub patches must be green
+		# self.GREEN_FEATURE_MODEL = np.array([ 0.,          0.,          0.,          1.,          0.,          0.,          0.,
+		# 									  0.,          0.,          0.,          0.,          0.,          0.,          0.,
+		# 									  0.,          0.,         \
+		# 									  1.           ])
 		
 		self.FEATURE_MODEL = np.concatenate(\
 			(self.BLUE_FEATURE_MODEL, self.GREEN_FEATURE_MODEL, self.GREEN_FEATURE_MODEL, self.GREEN_FEATURE_MODEL), \
@@ -51,7 +69,10 @@ class FeatureGreenPatchBottomLeftBlue(Feature):
 			self.patch.SaturationHistArr = []
 			self.patch.ValueHistArr = []
 			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
-		self.hist = np.concatenate((self.patch.HueHistArr[self.BOTTOM_LEFT_INDEX], self.patch.SaturationHistArr[self.BOTTOM_LEFT_INDEX]), axis = 1)
+		self.hist = np.concatenate((self.patch.HueHistArr[self.BOTTOM_LEFT_INDEX], \
+			self.patch.SaturationHistArr[self.BOTTOM_LEFT_INDEX]), axis = 1)
+		# plotStatistics.plotOneGivenHist("", "BOTTOM_LEFT Hue", self.patch.HueHistArr[self.BOTTOM_LEFT_INDEX], save = False, show = True)
+		# plotStatistics.plotOneGivenHist("", "BOTTOM_LEFT SaturationHistArr", self.patch.SaturationHistArr[self.BOTTOM_LEFT_INDEX], save = False, show = True)
 		
 		"""feature constructor at build phace, not run anymore after feature is built"""
 		# model_constructor_hue = np.zeros(len(self.patch.HueHistArr[self.BOTTOM_LEFT_INDEX]))
@@ -91,12 +112,13 @@ class FeatureGreenPatchBottomLeftBlue(Feature):
 			if (i != self.BOTTOM_LEFT_INDEX):
 				other_patch_hue = self.patch.HueHistArr[i]
 				other_patch_saturation = self.patch.SaturationHistArr[i]
-				"""other patch hue / saturation at least one is not within green range"""
-				if(np.sum(other_patch_hue) == 0 or np.sum(other_patch_saturation) == 0):
-					other_patch_hist = np.zeros(len(other_patch_hue) + len(other_patch_saturation))
-				else:
-					other_patch_hist = np.concatenate((other_patch_hue, other_patch_saturation), axis = 1)
-				
+
+				# plotStatistics.plotOneGivenHist("", "subpatch {i} Hue".format(i = i), \
+					# self.patch.HueHistArr[i], save = False, show = True)
+				# plotStatistics.plotOneGivenHist("", "subpatch {i} Saturation".format(i = i), \
+					# self.patch.SaturationHistArr[i], save = False, show = True)
+
+				other_patch_hist = np.concatenate((other_patch_hue, other_patch_saturation), axis = 1)
 				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
 			
 		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
@@ -104,7 +126,8 @@ class FeatureGreenPatchBottomLeftBlue(Feature):
 	def featureResponse(self):
 		assert (not self.hist is None), "Error in FeatureGreenPatchBottomLeftBlue: calling computeScore before the feature hist is computed!"
 		assert len(self.hist) == len(self.FEATURE_MODEL), "Error in FeatureGreenPatchBottomLeftBlue: feature length is not correctly computed!"
-		dissimilarity = DIST.euclidean(self.hist, self.FEATURE_MODEL)
+		# dissimilarity = DIST.euclidean(self.hist, self.FEATURE_MODEL)
+		dissimilarity = comparePatches.Jensen_Shannon_Divergence(self.hist, self.FEATURE_MODEL)
 		return 1.0 / (1.0 + dissimilarity)
 
 	def computeScore(self):
