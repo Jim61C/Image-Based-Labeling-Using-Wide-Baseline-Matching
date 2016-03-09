@@ -973,10 +973,12 @@ def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_pa
 
 def generateAllFeatureSets(features):
 	"""
-	return: all subsets of a list of string
+	# return: all subsets of a list of string
+	return: (n,1) and (n,2) subsets of a list of string
 	"""
 	all_sets = []
-	for i in range(1, len(features)+1):
+	# for i in range(1, len(features)+1):
+	for i in range(1, 3):
 		sets_same_size = list(itertools.combinations(features, i))
 		for j in range(0,len(sets_same_size)):
 			all_sets.append(list(sets_same_size[j]))
@@ -1171,6 +1173,7 @@ def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigm
 	for i in range(0, len(sorted_patches)):
 		print "feature_to_use for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_to_use
 		print "feature_weights for sorted_patches[{i}]: ".format(i = i), sorted_patches[i].feature_weights
+		print "is_low_response? for sorted_patches[{i}]".format(i = i), sorted_patches[i].is_low_response
 		print "LDAFeatureScore:", sorted_patches[i].LDAFeatureScore
 		
 		for this_feature in FEATURES:

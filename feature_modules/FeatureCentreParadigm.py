@@ -24,13 +24,13 @@ class FeatureCentreParadigm(Feature):
 	"""
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
-		self.HISTBINNUM = 16
+		self.HISTBINNUM = 36
 		self.GAUSSIAN_SCALE = 3
 		
-		self.HUE_START_INDEX = 9
-		self.HUE_END_INDEX = 10
-		self.SATURATION_START_INDEX = 8
-		self.SATURATION_END_INDEX = 10
+		self.HUE_START_INDEX = None
+		self.HUE_END_INDEX = None
+		self.SATURATION_START_INDEX = None
+		self.SATURATION_END_INDEX = None
 		
 		self.FEATURE_MODEL_HUE = np.zeros(self.HISTBINNUM)
 		
@@ -129,6 +129,7 @@ class FeatureCentreParadigm(Feature):
 		"""
 		self.HUEFRACTION = 0.7
 		self.SATURATIONFRACTION_INVERSE = 0.1
+		self.SHRINK_HUE_BIN_FRACTION = 0.9
 
 		self.HISTBINNUM = 36
 
@@ -155,14 +156,16 @@ class FeatureCentreParadigm(Feature):
 			return False
 
 		"""shrink hue bin, assign HUE_START_INDEX, HUE_END_INDEX, note that these two indexes need to mod self.HISTBINNUM before use"""
-		if (inner_hue[max_hue_bin]/inner_hue_density[max_hue_bin] > 0.9):
+		if (inner_hue[max_hue_bin]/inner_hue_density[max_hue_bin] > self.SHRINK_HUE_BIN_FRACTION):
+			# max_hue_bin itself is prominent
 			self.HUE_START_INDEX = max_hue_bin
 			self.HUE_END_INDEX = max_hue_bin + 1
-		elif (inner_hue[((max_hue_bin + 1) % self.HISTBINNUM)]/inner_hue_density[max_hue_bin] > 0.9):
+		elif (inner_hue[((max_hue_bin + 1) % self.HISTBINNUM)]/inner_hue_density[max_hue_bin] > self.SHRINK_HUE_BIN_FRACTION):
+			# max_hue_bin + 1 itself is prominent
 			self.HUE_START_INDEX = (max_hue_bin + 1)
 			self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
 		else:
-			# need to bins
+			# need two bins
 			self.HUE_START_INDEX = max_hue_bin
 			self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
 
