@@ -78,7 +78,7 @@ class FeatureSubSquareParadigm(Feature):
 			if(i != self.SUBPATCH_OF_INTEREST_INDEX):
 				other_patch_hue = np.array([ self.patch.HueHistArr[i][j % self.HISTBINNUM] \
 					for j in range(self.HUE_START_INDEX, self.HUE_END_INDEX)])
-				other_patch_saturation = self.patch.SaturationHistArr[i][self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]
+				other_patch_saturation = self.patch.SaturationHistArr[i][self.SATURATION_FILTER_START_INDEX:self.SATURATION_FILTER_END_INDEX]
 				"""
 				other patch hue / saturation, 
 				if one of them is not within the targeted range for the sub patch of interest, 
@@ -232,9 +232,11 @@ class FeatureSubSquareParadigm(Feature):
 
 	def computeFeatureModel(self, hue, saturation):
 		assert (not self.HUE_START_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
-		assert (not self.HUE_END_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
-		assert (not self.SATURATION_START_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
-		assert (not self.SATURATION_END_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
+		assert (not self.HUE_END_INDEX is None), "in computeFeatureModel: HUE_END_INDEX must not be None"
+		assert (not self.SATURATION_START_INDEX is None), "in computeFeatureModel: SATURATION_START_INDEX must not be None"
+		assert (not self.SATURATION_END_INDEX is None), "in computeFeatureModel: SATURATION_END_INDEX must not be None"
+		assert (not self.SATURATION_FILTER_START_INDEX is None), "in computeFeatureModel: SATURATION_FILTER_START_INDEX must not be None"
+		assert (not self.SATURATION_FILTER_END_INDEX is None), "in computeFeatureModel: SATURATION_FILTER_END_INDEX must not be None"
 		assert (not self.SUBPATCH_OF_INTEREST_INDEX is None), "in computeFeatureModel: SUBPATCH_OF_INTEREST_INDEX must not be None"
 		assert (len(hue) == self.HISTBINNUM), "in computeFeatureModel:, hue length must be the same as HISTBINNUM"
 		assert (len(saturation) == self.HISTBINNUM), "in computeFeatureModel:, saturation length must be the same as HISTBINNUM"
@@ -242,15 +244,15 @@ class FeatureSubSquareParadigm(Feature):
 		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
 			# self.FEATURE_MODEL_HUE[i % self.HISTBINNUM] = 1.0/(self.HUE_END_INDEX - self.HUE_START_INDEX) # hue indexes need mod before use
 			self.FEATURE_MODEL_HUE[i % self.HISTBINNUM] = hue[i % self.HISTBINNUM] # hue indexes need mod before use
-		for i in range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX):
-			# self.FEATURE_MODEL_SATURATION[i] = 1.0/(self.SATURATION_END_INDEX - self.SATURATION_START_INDEX)
+		for i in range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX):
+			# self.FEATURE_MODEL_SATURATION[i] = 1.0/(self.SATURATION_FILTER_END_INDEX - self.SATURATION_FILTER_START_INDEX)
 			self.FEATURE_MODEL_SATURATION[i] = saturation[i]
 		
 		self.FEATURE_MODEL = np.concatenate(( \
 			normalize(self.FEATURE_MODEL_HUE, norm = 'l1')[0], \
 			normalize(self.FEATURE_MODEL_SATURATION, norm = 'l1')[0], \
 			np.zeros( 3 *(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
-			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX))) )), axis = 1) # append the expected border response
+			len(range(self.SATURATION_FILTER_START_INDEX,self.SATURATION_FILTER_END_INDEX))) )), axis = 1) # append the expected border response
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
