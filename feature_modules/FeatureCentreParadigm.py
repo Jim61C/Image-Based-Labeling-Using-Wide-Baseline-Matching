@@ -186,7 +186,7 @@ class FeatureCentreParadigm(Feature):
 		# plotStatistics.plotOneGivenHist("", "border_hist_saturation", border_hist_saturation, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
-		plotStatistics.plotOneGivenHist("", "filtered_inner_hist_hue", filtered_inner_hist_hue, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("", "filtered_inner_hist_hue", filtered_inner_hist_hue, save = False, show = True)
 		
 
 	def featureResponse(self, metric_func = DIST.euclidean):

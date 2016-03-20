@@ -11,3 +11,5 @@ PASCAL_VOC/
 testAlgo2/
 testAlgo3/
 testUniquePatches/
+*.pyc
+feature_modules/*.pyc
