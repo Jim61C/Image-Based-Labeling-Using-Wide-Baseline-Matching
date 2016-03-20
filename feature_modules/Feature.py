@@ -200,14 +200,24 @@ class Feature(object):
 		# for bin in non_zeros_saturation_bins:
 		# 	if (hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
 		# 		acquired_saturation_bins.append(bin)
-		"""acquire bins based on neighbourhood, empirically estimate that 7/36 bins up and down away from mode saturation bin will be good"""
+		"""
+		acquire bins based on neighbourhood, empirically estimate that 7/36 bins up and down away from mode saturation bin will be good
+		Or, other than having separate filter_saturation_bins, adjust the SATURATION_ACQUIRE_FRACTION to be lower
+		"""
 		acquired_saturation_bins = []
 		for bin in range(max_saturation_bin - SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD, \
 			max_saturation_bin + SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD + 1):
-			# if (bin >= 0 and bin < self.HISTBINNUM):
 			if (bin >= 0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
 				acquired_saturation_bins.append(bin)
-		return np.min(acquired_saturation_bins),  np.max(acquired_saturation_bins) + 1
+
+		min_acquired_bin = np.min(acquired_saturation_bins)
+		max_acquired_bin = np.max(acquired_saturation_bins) + 1
+		filter_saturation_bins = []
+		bin_to_go_up_down = (2 * SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD - (max_acquired_bin - min_acquired_bin))/2
+		for bin in range(min_acquired_bin - bin_to_go_up_down, max_acquired_bin + bin_to_go_up_down):
+			if (bin >=0 and bin < self.HISTBINNUM and hist[bin] > 0.1 * hist[max_saturation_bin]):
+				filter_saturation_bins.append(bin)
+		return min_acquired_bin, max_acquired_bin , np.min(filter_saturation_bins), np.max(filter_saturation_bins) + 1
 
 	def setPatch(self, patch):
 		self.patch = patch

@@ -69,7 +69,7 @@ class FeatureSubSquareParadigm(Feature):
 			sub_patch, \
 			sub_gaussian_window, \
 			target_hue_bins, \
-			target_saturation_bins)
+			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX))
 
 		self.hist = np.concatenate((filtered_hue_of_interest, \
 			self.patch.SaturationHistArr[self.SUBPATCH_OF_INTEREST_INDEX]), axis = 1)
@@ -185,7 +185,9 @@ class FeatureSubSquareParadigm(Feature):
 				for j in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
 					target_hue_bins.append(j % self.HISTBINNUM)
 				"""SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use"""
-				self.SATURATION_START_INDEX, self.SATURATION_END_INDEX = self.findSaturationRangeForTargetHueBin( \
+				self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, \
+				self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
+				self.findSaturationRangeForTargetHueBin( \
 					img_hsv, this_patch, target_hue_bins, this_sub_gaussian_window)
 				
 				"""Check other three hists, should not contain targeted hue"""
@@ -220,6 +222,8 @@ class FeatureSubSquareParadigm(Feature):
 			"self.HUE_END_INDEX:", self.HUE_END_INDEX, \
 			"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
 			"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX, \
+			"self.SATURATION_FILTER_START_INDEX:", self.SATURATION_FILTER_START_INDEX, \
+			"self.SATURATION_FILTER_END_INDEX:", self.SATURATION_FILTER_END_INDEX, \
 			"self.SUBPATCH_OF_INTEREST_INDEX:", self.SUBPATCH_OF_INTEREST_INDEX
 
 			self.computeFeatureModel(this_hue, this_saturation)

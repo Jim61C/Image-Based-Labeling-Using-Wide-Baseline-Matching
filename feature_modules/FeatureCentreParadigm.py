@@ -37,6 +37,8 @@ class FeatureCentreParadigm(Feature):
 			 1: try seperate indexes used to filter hue bins that are wrongly categorized within target bins (now saturation range is very wide, may introduce noise)
 		     2: try change HISTBINNUM to 16
 		     3: If border saturation is concentrated, then add that as well.
+		     4: try use Saturation * Hue as FEATURE_MODEL
+		     5: try 2D histogram -> leads to the problem of dissimilarity metric
 		"""
 		self.SATURATION_FILTER_START_INDEX = None
 		self.SATURATION_FILTER_END_INDEX = None
@@ -143,7 +145,7 @@ class FeatureCentreParadigm(Feature):
 			inner_patch, \
 			inner_gaussian_window, \
 			target_hue_bins, \
-			target_saturation_bins)
+			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX))
 
 		"""aggregate the target_hue_bins"""
 		target_hue_sum = 0.0
@@ -184,6 +186,7 @@ class FeatureCentreParadigm(Feature):
 		# plotStatistics.plotOneGivenHist("", "border_hist_saturation", border_hist_saturation, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
+		plotStatistics.plotOneGivenHist("", "filtered_inner_hist_hue", filtered_inner_hist_hue, save = False, show = True)
 		
 
 	def featureResponse(self, metric_func = DIST.euclidean):
@@ -320,9 +323,9 @@ class FeatureCentreParadigm(Feature):
 			target_hue_bins.append(i % self.HISTBINNUM)
 		"""
 		SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use
-		TODO: saturation range should still remain narrow, but when filtering, use a broder saturation range
 		"""
-		self.SATURATION_START_INDEX, self.SATURATION_END_INDEX = self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
+		self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
+		self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
 		plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
 		plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
 		
@@ -340,7 +343,9 @@ class FeatureCentreParadigm(Feature):
 		print "successfully constructed feature centre_paradigm, self.HUE_START_INDEX:", self.HUE_START_INDEX, \
 		"self.HUE_END_INDEX:", self.HUE_END_INDEX, \
 		"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
-		"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX
+		"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX, \
+		"self.SATURATION_FILTER_START_INDEX:", self.SATURATION_FILTER_START_INDEX, \
+		"self.SATURATION_FILTER_END_INDEX:", self.SATURATION_FILTER_END_INDEX
 
 		self.computeFeatureModel(inner_hue, inner_saturation)
 
