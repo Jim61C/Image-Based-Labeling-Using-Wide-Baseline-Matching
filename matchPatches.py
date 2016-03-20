@@ -135,9 +135,11 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 			hog_distances[i] = getHistArrl2Distance(patchToMatch.HOGArr, matchPatches[i].HOGArr, metricFunc) 
 	
 	overall_distances = np.sqrt(\
-		(patchToMatch.feature_weights[patchToMatch.feature_to_use.index('HSV')] if ('HSV' in patchToMatch.feature_to_use) else 0.0) * color_distances**2 + \
-		(patchToMatch.feature_weights[patchToMatch.feature_to_use.index('HOG')] if ('HOG' in patchToMatch.feature_to_use) else 0.0) * hog_distances**2)
-	
+		FEATURE_WEIGHTING['HSV'] * color_distances**2 + \
+		FEATURE_WEIGHTING['HOG'] * hog_distances**2)
+
+	sortedIndex = np.argsort(overall_distances) # the lower the (distance) the better
+
 	"""Use patch to patch similarity of the features"""
 	# overall_distances = np.zeros(len(matchPatches))
 	# for i in range(0, len(overall_distances)):
