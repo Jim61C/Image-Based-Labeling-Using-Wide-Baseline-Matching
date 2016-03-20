@@ -162,6 +162,7 @@ class clickRecorder(object):
 		cv2.imshow("imgToMatch original",self.imgToMatchOrigin)
 		cv2.waitKey(0)
 		for i in range(0, len(self.groundTruth)):
+			print "\nin clickRecorder, checking clicked patch:", i
 			patch = self.groundTruth[i]
 			"""centre_paradigm"""
 			potential_centre_feature_id = "{centre_paradigm}{count}".format( \

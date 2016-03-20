@@ -204,8 +204,8 @@ class Feature(object):
 		acquired_saturation_bins = []
 		for bin in range(max_saturation_bin - SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD, \
 			max_saturation_bin + SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD + 1):
-			if (bin >= 0 and bin < self.HISTBINNUM):
-			# if (bin >= 0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
+			# if (bin >= 0 and bin < self.HISTBINNUM):
+			if (bin >= 0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
 				acquired_saturation_bins.append(bin)
 		return np.min(acquired_saturation_bins),  np.max(acquired_saturation_bins) + 1
 

@@ -875,34 +875,34 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	""" read matches found """
-	# list_of_patches = saveLoadPatch.loadPatchMatches( \
-	# 	upperPath + \
-	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
-	# 		testFolder = "testset7" + folder_suffix, \
-	# 		folderToSave = "GaussianWindowOnAWhole", \
-	# 		folder = "testset7", \
-	# 		file1 = "test1", \
-	# 		file2 = "test3", \
-	# 		i = sigma, \
-	# 		step = 0.5, \
-	# 		tf = True))
-	# for i in range(0, len(list_of_patches)):
-	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
-	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
-	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
+	list_of_patches = saveLoadPatch.loadPatchMatches( \
+		upperPath + \
+		"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+			testFolder = "testset7" + folder_suffix, \
+			folderToSave = "GaussianWindowOnAWhole", \
+			folder = "testset7", \
+			file1 = "test1", \
+			file2 = "test3", \
+			i = sigma, \
+			step = 0.5, \
+			tf = True))
+	for i in range(0, len(list_of_patches)):
+		print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+		matchesFound.append(list_of_patches[i][0]) # just append the best match
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	# checkHistogramOfTruthAndMatchesFound( \
-	# 	testPatches, \
-	# 	groundTruth, \
-	# 	matchesFound, \
-	# 	img, \
-	# 	imgToMatch, \
-	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
-	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
-	# 	True, \
-	# 	True)
+	checkHistogramOfTruthAndMatchesFound( \
+		testPatches, \
+		groundTruth, \
+		matchesFound, \
+		img, \
+		imgToMatch, \
+		"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+			upperPath = upperPath, folder_suffix = folder_suffix), \
+		True, \
+		True)
 
-	# raise ValueError ("purpose stop for checking hists")
+	raise ValueError ("purpose stop for checking hists")
   
 	listOfBestMatches = testDescriptorPerformance( \
 		"images", \

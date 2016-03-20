@@ -146,7 +146,7 @@ class FeatureSubSquareParadigm(Feature):
 		found_feature_patch_flag = False
 		for i in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
 			idx = i - 1 # true idx for the lists
-			print "checking subpatch index:", idx
+			# print "checking subpatch index:", idx
 			this_patch = sub_patches[idx]
 			this_sub_gaussian_window = sub_gaussian_windows[idx]
 
@@ -158,11 +158,11 @@ class FeatureSubSquareParadigm(Feature):
 				this_hue_density[j] = this_hue[j] + this_hue[((j+1)%self.HISTBINNUM)]
 			max_hue_bin = np.argmax(this_hue_density)
 
-			print "np.sum(this_hue):", np.sum(this_hue)
-			print "max response:", this_hue_density[max_hue_bin]
+			# print "np.sum(this_hue):", np.sum(this_hue)
+			# print "max response:", this_hue_density[max_hue_bin]
 
-			plotStatistics.plotOneGivenHist("", "potential_target_hue", this_hue, save = False, show = True)
-			plotStatistics.plotOneGivenHist("", "potential_target_saturation", this_saturation, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "potential_target_hue", this_hue, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "potential_target_saturation", this_saturation, save = False, show = True)
 
 			if(this_hue_density[max_hue_bin] >= self.HUEFRACTION * np.sum(this_hue)):
 
@@ -202,12 +202,12 @@ class FeatureSubSquareParadigm(Feature):
 							img_hsv, sub_patches[j - 1], sub_gaussian_windows[j - 1], target_hue_bins, target_saturation_bins)
 						filtered_other_hue = filtered_other_hue + one_filtered_other_hue
 
-				print "filtered_other_hue:", filtered_other_hue
-				print "np.sum(filtered_other_hue):", np.sum(filtered_other_hue)
-				print "np.sum(other_hue):", np.sum(other_hue)
+				# print "filtered_other_hue:", filtered_other_hue
+				# print "np.sum(filtered_other_hue):", np.sum(filtered_other_hue)
+				# print "np.sum(other_hue):", np.sum(other_hue)
 
-				plotStatistics.plotOneGivenHist("", "filtered_other_hue", filtered_other_hue, save = False, show = True)
-				plotStatistics.plotOneGivenHist("", "other_hue", other_hue, save = False, show = True)
+				# plotStatistics.plotOneGivenHist("", "filtered_other_hue", filtered_other_hue, save = False, show = True)
+				# plotStatistics.plotOneGivenHist("", "other_hue", other_hue, save = False, show = True)
 
 				if (np.sum(filtered_other_hue)/ np.sum(other_hue) <= self.SATURATIONFRACTION_INVERSE):
 					"""Found feature patch, break and return True"""

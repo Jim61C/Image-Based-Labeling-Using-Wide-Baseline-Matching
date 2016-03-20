@@ -23,7 +23,7 @@ class FeatureCentreParadigm(Feature):
 	"""
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
-		self.HISTBINNUM = 36
+		self.HISTBINNUM = 16 # adjustable number of bins
 		self.GAUSSIAN_SCALE = 3
 		self.GAUSSIAN_WINDOW_LENGTH_SIGMA = 4.0 # used for border feature case, window length = 4 sigma
 		
@@ -64,7 +64,6 @@ class FeatureCentreParadigm(Feature):
 		# self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
-		self.HISTBINNUM = 36
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		# print "hue channel:", img_hsv[:,:,0]
 		# print "saturation channel:", img_hsv[:,:,1]
@@ -80,20 +79,20 @@ class FeatureCentreParadigm(Feature):
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
 
 		"""Still need to compute the overall Hue, Saturation, since sigma is different now 4.0 instead of 6.0"""
-		if (self.patch.outer_hue_hist_scale_3_gaus_4_hist_36 is None):
-			self.patch.outer_hue_hist_scale_3_gaus_4_hist_36 = self.computeHueHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.outer_saturation_hist_scale_3_gaus_4_hist_36 is None):
-			self.patch.outer_saturation_hist_scale_3_gaus_4_hist_36 = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.inner_hue_hist_scale_3_gaus_4_hist_36 is None):
-			self.patch.inner_hue_hist_scale_3_gaus_4_hist_36 = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
-		if (self.patch.inner_saturation_hist_scale_3_gaus_4_hist_36 is None):
-			self.patch.inner_saturation_hist_scale_3_gaus_4_hist_36 = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.inner_hue_hist_scale_3_gaus_4_centre_paradigm is None):
+			self.patch.inner_hue_hist_scale_3_gaus_4_centre_paradigm = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.inner_saturation_hist_scale_3_gaus_4_centre_paradigm is None):
+			self.patch.inner_saturation_hist_scale_3_gaus_4_centre_paradigm = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm is None):
+			self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm = self.computeHueHist(img_hsv, self.patch, gaussian_window)
+		if (self.patch.outer_saturation_hist_scale_3_gaus_4_centre_paradigm is None):
+			self.patch.outer_saturation_hist_scale_3_gaus_4_centre_paradigm = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
+		
+		inner_hist_hue = self.patch.inner_hue_hist_scale_3_gaus_4_centre_paradigm
+		inner_hist_saturation = self.patch.inner_saturation_hist_scale_3_gaus_4_centre_paradigm
 
-		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4_hist_36
-		outer_hist_saturation = self.patch.outer_saturation_hist_scale_3_gaus_4_hist_36
-
-		inner_hist_hue = self.patch.inner_hue_hist_scale_3_gaus_4_hist_36
-		inner_hist_saturation = self.patch.inner_saturation_hist_scale_3_gaus_4_hist_36
+		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm
+		outer_hist_saturation = self.patch.outer_saturation_hist_scale_3_gaus_4_centre_paradigm
 
 		border_hist_hue = outer_hist_hue - inner_hist_hue
 		border_hist_saturation = outer_hist_saturation - inner_hist_saturation
@@ -278,8 +277,6 @@ class FeatureCentreParadigm(Feature):
 		self.HUEFRACTION = 0.7
 		self.SATURATIONFRACTION_INVERSE = 0.1 # maximum border hist
 		self.SHRINK_HUE_BIN_FRACTION = 0.9
-
-		self.HISTBINNUM = 36
 
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
