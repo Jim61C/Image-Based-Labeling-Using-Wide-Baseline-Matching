@@ -50,19 +50,25 @@ def dispatch_feature_matching(args):
 	matchPatches.populateFeatureMatchingStatistics(image_db, test_folder_name, "test1.jpg", "test2.jpg",folder_suffix, upperPath = "testMatches")
 	
 def dispatch_feature_detection_algo3(args):
-	test_folder_name, custom_features_set = args
-	comparePatches.populateTestFindDistinguishablePatchesAlgo3(test_folder_name = test_folder_name, img_name = "test1.jpg", sigma = 39, image_db = "images", custom_feature_sets = custom_features_set)
+	test_folder_name, custom_features_set, img_name = args
+	comparePatches.populateTestFindDistinguishablePatchesAlgo3(\
+		test_folder_name = test_folder_name, \
+		img_name = img_name, \
+		sigma = 39, \
+		image_db = "images", \
+		custom_feature_sets = custom_features_set)
 
 def extract_all_testfoldernames(image_db):
 	folders = [(name, image_db) for name in os.listdir(image_db) \
 	if os.path.isdir(os.path.join(image_db, name))]
 	return folders
 
-def main():
-	print "cpu_count():",cpu_count()
-	start_time = time.time()
 
+def main():
+	"""Necessary step for dispatch_feature_detection_algo3"""
+	utils.loadGeneratedFeatureParadigm()
 	image_db = "images"
+
 	# test_folder_args = extract_all_testfoldernames(image_db)
 	# testNames = ["populate_testset_illuminance1", "populate_testset_illuminance2", "populate_testset_rotation1","populate_testset_rotation2","populate_testset4"]
 	# testNames = ["populate_testset_rotation1","populate_testset_rotation2", "populate_testset7"]
@@ -70,15 +76,28 @@ def main():
 	# test_folder_names = ["testset2", "testset3", "testset5"]
 	# test_folder_args = [("testset_illuminance1", image_db), ("testset_illuminance2", image_db), ("testset_rotation1", image_db), ("testset_rotation2", image_db), \
 	# ("testset4", image_db), ("testset7", image_db)]
+	# test_folder_args = [ \
+	# 	("testset_illuminance1", [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]), \
+	# 	("testset_illuminance1", [utils.TOP_LEFT_PURPLE_FEATURE_ID]), \
+	# 	("testset_illuminance1", [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]), \
+	# 	("testset_illuminance1", [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]), \
+	# 	("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID]), \
+	# 	("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]) \
+	# ]
+
+
 	test_folder_args = [ \
-		("testset_illuminance1", [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]), \
-		("testset_illuminance1", [utils.TOP_LEFT_PURPLE_FEATURE_ID]), \
-		("testset_illuminance1", [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]), \
-		("testset_illuminance1", [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]), \
-		("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID]), \
-		("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]) \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test3.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test3.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test3.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test3.jpg") \
 	]
 
+	start_time = time.time()
 	pool = Pool(cpu_count())
 	# pool.map(dispatch_match_test, testNames)
 	# pool.map(dispatch_feature_detection, test_folder_args)

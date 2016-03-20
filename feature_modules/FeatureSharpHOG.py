@@ -67,7 +67,8 @@ class FeatureSharpHOG(Feature):
 		if(self.score is None):
 			self.score = self.featureResponse()
 
-	def dissimilarityWith(self, hist):
+	def dissimilarityWith(self, feature_obj):
+		hist = feature_obj.hist
 		self.assertHist(hist)
 		return comparePatches.Jensen_Shannon_Divergence(self.hist, hist)
 

@@ -59,6 +59,43 @@ class Feature(object):
 				# hist[this_bin] += 1
 		return hist
 
+
+	def withinPatch(self, patch, i, j):
+		"""
+		checkes if the given indexes: i, j are within the patch
+		"""
+		if (i < patch.x + patch.size/2 + 1 and \
+			j < patch.y + patch.size/2 + 1 and \
+			i >= patch.x - patch.size/2 and \
+			j >= patch.y - patch.size/2):
+			return True
+		else:
+			return False
+
+
+	def borderTargetHueFilteredBySaturation(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins, target_saturation_bins):
+		"""
+		img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-1
+		inner_patch: square inner patch with a smaller window size than patch
+		return: hist of length equal to self.HISTBINNUM for the targetHueFilteredBySaturation
+		"""
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				if (not self.withinPatch(inner_patch, i, j)): # only check the border pixels
+					this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+					if (this_hue_bin == self.HISTBINNUM):
+						this_hue_bin = self.HISTBINNUM - 1
+					this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
+					if (this_saturation_bin == self.HISTBINNUM):
+						this_saturation_bin = self.HISTBINNUM - 1
+
+					if (this_hue_bin in target_hue_bins and this_saturation_bin in target_saturation_bins):
+						hist[this_hue_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+		return hist
+
 	def targetHueFilteredBySaturation(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
 		hist = np.zeros(len(target_hue_bins))
 		ref_x = patch.x - patch.size/2
@@ -75,7 +112,38 @@ class Feature(object):
 					hist[target_hue_bins.index(this_hue_bin)] += 1 * gaussian_window[i - ref_x][j - ref_y]
 		return hist
 
-	def getSubPatchTargetHueFilteredBySaturation(self, img_hsv, sub_patch_index, target_hue_bins, target_saturation_bins):
+	def computeHueHistFilterOffHueWithWrongSaturation(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
+		"""Do not add to Hue Hist if the hue is in target_saturation_bins but not in the target_saturation_bins"""
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+				if (this_hue_bin == self.HISTBINNUM):
+					this_hue_bin = self.HISTBINNUM - 1
+				this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
+				if (this_saturation_bin == self.HISTBINNUM):
+					this_saturation_bin = self.HISTBINNUM - 1
+
+				"""If in target_hue_bins but not correct saturation, ignore"""
+				if (not (this_hue_bin in target_hue_bins and (not this_saturation_bin in target_saturation_bins))):
+					hist[this_hue_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+		return hist
+
+	def getTargetHueAndSaturationBins(self):
+		assert (not self.HUE_START_INDEX is None), "In getTargetHueAndSaturationBins: HUE_START_INDEX must not be None"
+		assert (not self.HUE_END_INDEX is None), "In getTargetHueAndSaturationBins: HUE_END_INDEX must not be None"
+		assert (not self.SATURATION_START_INDEX is None), "In getTargetHueAndSaturationBins: SATURATION_START_INDEX must not be None"
+		assert (not self.SATURATION_END_INDEX is None), "In getTargetHueAndSaturationBins: SATURATION_END_INDEX must not be None"
+
+		target_hue_bins = []
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			target_hue_bins.append(i % self.HISTBINNUM)
+		target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
+		return target_hue_bins, target_saturation_bins
+
+	def getSubPatchAndSubPatchGaussianFromSubPatchIndex(self, sub_patch_index):
 		newLen = (self.patch.size+1)/2
 		if(newLen % 2 == 0):
 			newSize = newLen -1
@@ -96,9 +164,54 @@ class Feature(object):
 			sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], gaussian_window.shape[1] - newSize: gaussian_window.shape[1]]
 			sub_patch = comparePatches.Patch(self.patch.x + newLen/2, self.patch.y + newLen/2, newSize, initialize_features = False)
 
+		return sub_patch, sub_gaussian_window
+
+
+	def getSubPatchTargetHueFilteredBySaturation(self, img_hsv, sub_patch_index, target_hue_bins, target_saturation_bins):
+		sub_patch, sub_gaussian_window = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(sub_patch_index)
 		return self.targetHueFilteredBySaturation(img_hsv, sub_patch, sub_gaussian_window, target_hue_bins, target_saturation_bins)
 
 
+	def findSaturationRangeForTargetHueBin(self, img_hsv, inner_patch, target_hue_bins, inner_gaussian_window):
+		"""return: the saturation range of the given target_hue_bins"""
+		SATURATION_ACQUIRE_FRACTION = 0.5 # reduced to tackle cases where saturation changes a lot across images of the same patch
+		SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD = int(10/36.0 * self.HISTBINNUM)
+
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = inner_patch.x - inner_patch.size/2
+		ref_y = inner_patch.y - inner_patch.size/2
+		for i in range(inner_patch.x - inner_patch.size/2, inner_patch.x + inner_patch.size/2 + 1):
+			for j in range(inner_patch.y - inner_patch.size/2, inner_patch.y + inner_patch.size/2 + 1):
+				this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+				if (this_hue_bin == self.HISTBINNUM):
+					this_hue_bin = self.HISTBINNUM - 1
+				this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
+				if (this_saturation_bin == self.HISTBINNUM):
+					this_saturation_bin = self.HISTBINNUM - 1
+
+				if (this_hue_bin in target_hue_bins):
+					# print "for ", this_hue_bin, " saturation bin is:", this_saturation_bin
+					hist[this_saturation_bin] += 1 * inner_gaussian_window[i - ref_x][j - ref_y]
+
+		non_zeros_saturation_bins = np.where(hist != 0)[0]
+		max_saturation_bin = np.argmax(hist)
+		"""acquire bins based on response percentage"""
+		# acquired_saturation_bins = []
+		# for bin in non_zeros_saturation_bins:
+		# 	if (hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
+		# 		acquired_saturation_bins.append(bin)
+		"""acquire bins based on neighbourhood, empirically estimate that 7/36 bins up and down away from mode saturation bin will be good"""
+		acquired_saturation_bins = []
+		for bin in range(max_saturation_bin - SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD, \
+			max_saturation_bin + SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD + 1):
+			if (bin >= 0 and bin < self.HISTBINNUM):
+			# if (bin >= 0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
+				acquired_saturation_bins.append(bin)
+		return np.min(acquired_saturation_bins),  np.max(acquired_saturation_bins) + 1
+
+	def setPatch(self, patch):
+		self.patch = patch
+	
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		return
 
@@ -112,10 +225,11 @@ class Feature(object):
 		self.score = score
 		return
 
-	def dissimilarityWith(self, hist):
+	def dissimilarityWith(self, feature_obj):
 		"""
 		Default is l2 distance: overwritten by sub classes for different behaviour
 		"""
+		hist = feature_obj.hist
 		self.assertHist(hist)
 		# return DIST.euclidean(self.hist, hist)
 		return comparePatches.Jensen_Shannon_Divergence(self.hist, hist)

@@ -19,6 +19,9 @@ from feature_modules import Feature
 
 
 class FeatureGreenPatchBottomLeftBlue(Feature):
+	"""
+	TODO: Add an HOG feature to compensate for this feature
+	"""
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
 		self.HUE_START_INDEX = 8
@@ -126,8 +129,8 @@ class FeatureGreenPatchBottomLeftBlue(Feature):
 	def featureResponse(self):
 		assert (not self.hist is None), "Error in FeatureGreenPatchBottomLeftBlue: calling computeScore before the feature hist is computed!"
 		assert len(self.hist) == len(self.FEATURE_MODEL), "Error in FeatureGreenPatchBottomLeftBlue: feature length is not correctly computed!"
-		# dissimilarity = DIST.euclidean(self.hist, self.FEATURE_MODEL)
-		dissimilarity = comparePatches.Jensen_Shannon_Divergence(self.hist, self.FEATURE_MODEL)
+		dissimilarity = DIST.euclidean(self.hist, self.FEATURE_MODEL)
+		# dissimilarity = comparePatches.Jensen_Shannon_Divergence(self.hist, self.FEATURE_MODEL)
 		return 1.0 / (1.0 + dissimilarity)
 
 	def computeScore(self):

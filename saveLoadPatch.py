@@ -3,6 +3,7 @@ import comparePatches
 import pickle
 import cv2
 import csv
+import pickle
 
 def load_data(filename):
     try:
@@ -80,6 +81,14 @@ def loadUniquePatchesWithFeatureSet(filename):
 			this_patch_to_read.setFeatureWeights(np.ones(len(this_patch_to_read.feature_to_use)))
 			patches.append(this_patch_to_read)
 	return patches
+
+
+def save_object(obj, filename):
+	"""
+	filname: include path to .pkl file
+	"""
+	with open(filename, 'wb') as output:
+		pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
 def main():
 	# img = cv2.imread("images/testset7/test1.jpg", 1)

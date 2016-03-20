@@ -14,7 +14,6 @@ import itertools
 import random
 import comparePatches
 import scipy.spatial.distance as DIST
-from sklearn.preprocessing import normalize
 from feature_modules import Feature
 from feature_modules import utils
 
@@ -26,32 +25,53 @@ class FeatureCentreParadigm(Feature):
 		Feature.__init__(self, patch, id)
 		self.HISTBINNUM = 36
 		self.GAUSSIAN_SCALE = 3
+		self.GAUSSIAN_WINDOW_LENGTH_SIGMA = 4.0 # used for border feature case, window length = 4 sigma
 		
 		self.HUE_START_INDEX = None
 		self.HUE_END_INDEX = None
 		self.SATURATION_START_INDEX = None
 		self.SATURATION_END_INDEX = None
+
+		"""
+		TODO 0: try aggragate Hue bins
+			 1: try seperate indexes used to filter hue bins that are wrongly categorized within target bins (now saturation range is very wide, may introduce noise)
+		     2: try change HISTBINNUM to 16
+		     3: If border saturation is concentrated, then add that as well.
+		"""
+		self.SATURATION_FILTER_START_INDEX = None
+		self.SATURATION_FILTER_END_INDEX = None
 		
 		self.FEATURE_MODEL_HUE = np.zeros(self.HISTBINNUM)
 		
 		self.FEATURE_MODEL_SATURATION = np.zeros(self.HISTBINNUM)
 
-		self.FEATURE_MODEL = np.concatenate(( \
-			self.FEATURE_MODEL_HUE, \
-			self.FEATURE_MODEL_SATURATION, \
-			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
-			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
-		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
+		self.FEATURE_MODEL = None
+
+		self.border_hist_hue = None
+		self.border_hist_saturation = None
+		
+		self.inner_hist_hue = None
+		self.inner_hist_saturation = None
+
+		# cutted and mannually crafted hist
+		self.border_hist = None
+
+		# self.FEATURE_MODEL = np.concatenate(( \
+		# 	self.FEATURE_MODEL_HUE, \
+		# 	self.FEATURE_MODEL_SATURATION, \
+		# 	np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+		# 	len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
+		# self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
-		self.HISTBINNUM = 16
+		self.HISTBINNUM = 36
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		# print "hue channel:", img_hsv[:,:,0]
 		# print "saturation channel:", img_hsv[:,:,1]
 		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -self.GAUSSIAN_SCALE)
 		inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
 
-		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/4.0)
+		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
 		inner_gaussian_window = gaussian_window[ \
 		gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\
 		gaussian_window.shape[1]/2 - inner_patch.size/2: gaussian_window.shape[1]/2 + inner_patch.size/2 + 1]
@@ -60,20 +80,20 @@ class FeatureCentreParadigm(Feature):
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
 
 		"""Still need to compute the overall Hue, Saturation, since sigma is different now 4.0 instead of 6.0"""
-		if (self.patch.outer_hue_hist_scale_3_gaus_4 is None):
-			self.patch.outer_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.outer_saturation_hist_scale_3_gaus_4 is None):
-			self.patch.outer_saturation_hist_scale_3_gaus_4 = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.inner_hue_hist_scale_3_gaus_4 is None):
-			self.patch.inner_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
-		if (self.patch.inner_saturation_hist_scale_3_gaus_4 is None):
-			self.patch.inner_saturation_hist_scale_3_gaus_4 = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.outer_hue_hist_scale_3_gaus_4_hist_36 is None):
+			self.patch.outer_hue_hist_scale_3_gaus_4_hist_36 = self.computeHueHist(img_hsv, self.patch, gaussian_window)
+		if (self.patch.outer_saturation_hist_scale_3_gaus_4_hist_36 is None):
+			self.patch.outer_saturation_hist_scale_3_gaus_4_hist_36 = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
+		if (self.patch.inner_hue_hist_scale_3_gaus_4_hist_36 is None):
+			self.patch.inner_hue_hist_scale_3_gaus_4_hist_36 = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.inner_saturation_hist_scale_3_gaus_4_hist_36 is None):
+			self.patch.inner_saturation_hist_scale_3_gaus_4_hist_36 = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
 
-		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4
-		outer_hist_saturation = self.patch.outer_saturation_hist_scale_3_gaus_4
+		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4_hist_36
+		outer_hist_saturation = self.patch.outer_saturation_hist_scale_3_gaus_4_hist_36
 
-		inner_hist_hue = self.patch.inner_hue_hist_scale_3_gaus_4
-		inner_hist_saturation = self.patch.inner_saturation_hist_scale_3_gaus_4
+		inner_hist_hue = self.patch.inner_hue_hist_scale_3_gaus_4_hist_36
+		inner_hist_saturation = self.patch.inner_saturation_hist_scale_3_gaus_4_hist_36
 
 		border_hist_hue = outer_hist_hue - inner_hist_hue
 		border_hist_saturation = outer_hist_saturation - inner_hist_saturation
@@ -89,15 +109,74 @@ class FeatureCentreParadigm(Feature):
 		# print model_constructor_hue
 		# print "model_constructor_inner_hue:\n", model_constructor_inner_saturation
 
-		if(np.sum(border_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX]) == 0 or \
+		"""compute border_hist"""
+		border_hist_hue_targetted = np.array([border_hist_hue[i % self.HISTBINNUM] \
+			for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX)])
+		if(np.sum(border_hist_hue_targetted) == 0 or \
 			np.sum(border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]) == 0):
 			border_hist = np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 				len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))
 		else:
-			border_hist = np.concatenate((border_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX], \
+			border_hist = np.concatenate((border_hist_hue_targetted, \
 				border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]), axis = 1)
-		self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
+
+		target_hue_bins = []
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			target_hue_bins.append(i % self.HISTBINNUM)
+		target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
+			
+		"""Alternative: make border hist to be target border_hue with target saturation filtered"""
+		# border_hist_full = self.borderTargetHueFilteredBySaturation(img_hsv, self.patch, inner_patch, \
+		# 	gaussian_window, target_hue_bins, target_saturation_bins)
+		# border_hist = np.array([border_hist_full[hue_bin] for hue_bin in target_hue_bins])
+		# if(np.sum(border_hist) == 0):
+		# 	border_hist = np.concatenate((border_hist, \
+		# 		np.zeros(len(range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)))), axis = 1)
+		# else:
+		# 	border_hist = np.concatenate((border_hist, \
+		# 		border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]), axis = 1)
+
+		"""
+		filter the inner hist hue based the target bins for saturation as well
+		"""
+		filtered_inner_hist_hue = self.computeHueHistFilterOffHueWithWrongSaturation(\
+			img_hsv, \
+			inner_patch, \
+			inner_gaussian_window, \
+			target_hue_bins, \
+			target_saturation_bins)
+
+		"""aggregate the target_hue_bins"""
+		target_hue_sum = 0.0
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			target_hue_sum += filtered_inner_hist_hue[i % self.HISTBINNUM]
+
+		if (self.HUE_END_INDEX > self.HISTBINNUM):
+			aggregated_filtered_inner_hist_hue = np.concatenate((\
+				filtered_inner_hist_hue[self.HUE_END_INDEX % self.HISTBINNUM:self.HUE_START_INDEX], \
+				np.array([target_hue_sum]),\
+				filtered_inner_hist_hue[self.HUE_END_INDEX:]), axis = 1)
+		else:
+			aggregated_filtered_inner_hist_hue = np.concatenate((\
+				filtered_inner_hist_hue[:self.HUE_START_INDEX], \
+				np.array([target_hue_sum]),\
+				filtered_inner_hist_hue[self.HUE_END_INDEX:]), axis = 1)
+
+		"""Try: normalizing border hist so that the weightage of border effect is comparable to that of the inner patch"""
+		# self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, normalize(border_hist, norm = "l1")[0]), axis = 1)
+		# self.hist = np.concatenate((filtered_inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
+		self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, border_hist), axis = 1)
+		# self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, normalize(border_hist, norm = "l1")[0] * \
+		# 	np.sum(border_hist_hue)), axis = 1)
 		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+		
+		self.inner_hist_hue = normalize(inner_hist_hue, norm = 'l1')[0]
+		self.inner_hist_saturation = normalize(inner_hist_saturation, norm = 'l1')[0]
+		self.border_hist_hue = normalize(border_hist_hue, norm = 'l1')[0]
+		self.border_hist_saturation = normalize(border_hist_saturation, norm = 'l1')[0]
+		self.border_hist = border_hist
+
+		# print "self.HUE_START_INDEX: ", self.HUE_START_INDEX, "self.HUE_END_INDEX: ", self.HUE_END_INDEX
 		
 		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
 		# plotStatistics.plotOneGivenHist("","inner_hist_hue", inner_hist_hue, save = False, show = True)
@@ -108,16 +187,85 @@ class FeatureCentreParadigm(Feature):
 		# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 		
 
-	def featureResponse(self):
+	def featureResponse(self, metric_func = DIST.euclidean):
 		assert (not self.hist is None), "Error in FeatureCentreParadigm: calling computeScore before the feature hist is computed!"
 		assert (len(self.hist) == len(self.FEATURE_MODEL)), "Error in FeatureCentreParadigm: hist length is not correct!" + \
 		"len(self.hist): {self_his_len}, len(self.FEATURE_MODEL): {feature_model_len}".format(\
 			self_his_len = len(self.hist), feature_model_len = len(self.FEATURE_MODEL))
-		return 1.0 / (1.0 + DIST.euclidean(self.hist, self.FEATURE_MODEL))
+		# print "distance:", metric_func(self.hist, self.FEATURE_MODEL)
+
+		return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
+		# return 1.0 / (1.0 + metric_func(\
+		# 	np.concatenate((self.hist[:self.HISTBINNUM], self.hist[self.HISTBINNUM*2:]), axis = 1), \
+		# 	np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM], self.FEATURE_MODEL[self.HISTBINNUM*2:]), axis = 1)))
+
+		"""Seperate comparison of response"""
+		# assert (len(self.inner_hist_hue) == len(self.FEATURE_MODEL[:self.HISTBINNUM])), \
+		# "Seperate feature response, inner hist hue should have the same range"
+		# assert (len(self.inner_hist_saturation) == len(self.FEATURE_MODEL[self.HISTBINNUM: self.HISTBINNUM * 2])), \
+		# "Seperate feature response, inner hist saturation should have the same range"
+		# assert (len(self.border_hist) == len(self.FEATURE_MODEL[self.HISTBINNUM *2:])), \
+		# "Seperate feature response, border hist should have the same range"
+
+		# inner_hist_hue_distance = metric_func(self.inner_hist_hue, self.FEATURE_MODEL[:self.HISTBINNUM])
+		# inner_hist_saturation_distance = metric_func(self.inner_hist_saturation, self.FEATURE_MODEL[self.HISTBINNUM: self.HISTBINNUM * 2])
+		# """TODO: for border_distance can just use euclidean"""
+		# border_distance = metric_func(self.border_hist, self.FEATURE_MODEL[self.HISTBINNUM *2:])
+
+		# return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, inner_hist_saturation_distance, border_distance], 2))
 
 	def computeScore(self):
 		if(self.score is None):
-			self.score = self.featureResponse()
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence)
+			# self.score = self.featureResponse()
+
+
+	def computeFeatureModel(self, inner_hue, inner_saturation):
+		assert (not self.HUE_START_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
+		assert (not self.HUE_END_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
+		assert (not self.SATURATION_START_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
+		assert (not self.SATURATION_END_INDEX is None), "in computeFeatureModel: HUE_START_INDEX must not be None"
+		assert (len(inner_hue) == self.HISTBINNUM), "in computeFeatureModel:, inner_hue length must be the same as HISTBINNUM"
+		assert (len(inner_saturation) == self.HISTBINNUM), "in computeFeatureModel:, inner_saturation length must be the same as HISTBINNUM"
+		
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			# self.FEATURE_MODEL_HUE[i % self.HISTBINNUM] = 1.0/(self.HUE_END_INDEX - self.HUE_START_INDEX) # hue indexes need mod before use
+			self.FEATURE_MODEL_HUE[i % self.HISTBINNUM] = inner_hue[i % self.HISTBINNUM] # hue indexes need mod before use
+		for i in range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX):
+			# self.FEATURE_MODEL_SATURATION[i] = 1.0/(self.SATURATION_END_INDEX - self.SATURATION_START_INDEX)
+			self.FEATURE_MODEL_SATURATION[i] = inner_saturation[i]
+		
+		# self.FEATURE_MODEL = np.concatenate(( \
+		# 	normalize(self.FEATURE_MODEL_HUE, norm = 'l1')[0], \
+		# 	normalize(self.FEATURE_MODEL_SATURATION, norm = 'l1')[0], \
+		# 	np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+		# 	len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
+
+		"""aggregate Hue bins"""
+		target_hue_sum = 0.0
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			target_hue_sum += self.FEATURE_MODEL_HUE[i % self.HISTBINNUM]
+
+		if (self.HUE_END_INDEX > self.HISTBINNUM):
+			AGGREGATED_HUE_MODEL = np.concatenate((\
+				self.FEATURE_MODEL_HUE[self.HUE_END_INDEX % self.HISTBINNUM:self.HUE_START_INDEX], \
+				np.array([target_hue_sum]),\
+				self.FEATURE_MODEL_HUE[self.HUE_END_INDEX:]), axis = 1)
+		else:
+			AGGREGATED_HUE_MODEL = np.concatenate((\
+				self.FEATURE_MODEL_HUE[:self.HUE_START_INDEX], \
+				np.array([target_hue_sum]),\
+				self.FEATURE_MODEL_HUE[self.HUE_END_INDEX:]), axis = 1)
+
+		"""Here did not save saturation hist, if detection fail due to this, revert and adjust featureResponse method instead"""
+		self.FEATURE_MODEL = np.concatenate(( \
+			normalize(AGGREGATED_HUE_MODEL, norm = 'l1')[0], \
+			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
+		
+		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
+
+		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
 
 	def fitParadigm(self, img):
@@ -128,13 +276,13 @@ class FeatureCentreParadigm(Feature):
 		returns true or false
 		"""
 		self.HUEFRACTION = 0.7
-		self.SATURATIONFRACTION_INVERSE = 0.1
+		self.SATURATIONFRACTION_INVERSE = 0.1 # maximum border hist
 		self.SHRINK_HUE_BIN_FRACTION = 0.9
 
 		self.HISTBINNUM = 36
 
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
-		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/4.0)
+		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
 
 		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -self.GAUSSIAN_SCALE)
 		inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
@@ -173,8 +321,13 @@ class FeatureCentreParadigm(Feature):
 		target_hue_bins = []
 		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
 			target_hue_bins.append(i % self.HISTBINNUM)
+		"""
+		SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use
+		TODO: saturation range should still remain narrow, but when filtering, use a broder saturation range
+		"""
 		self.SATURATION_START_INDEX, self.SATURATION_END_INDEX = self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
 		plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
+		plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
 		
 		"""Check border hist, should not contain targeted hue"""
 		target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
@@ -192,64 +345,35 @@ class FeatureCentreParadigm(Feature):
 		"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
 		"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX
 
+		self.computeFeatureModel(inner_hue, inner_saturation)
+
 		return True
 
-	def findSaturationRangeForTargetHueBin(self, img_hsv, inner_patch, target_hue_bins, inner_gaussian_window):
-		SATURATION_ACQUIRE_FRACTION = 0.5
-		hist = np.zeros(self.HISTBINNUM)
-		ref_x = inner_patch.x - inner_patch.size/2
-		ref_y = inner_patch.y - inner_patch.size/2
-		for i in range(inner_patch.x - inner_patch.size/2, inner_patch.x + inner_patch.size/2 + 1):
-			for j in range(inner_patch.y - inner_patch.size/2, inner_patch.y + inner_patch.size/2 + 1):
-				this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
-				if (this_hue_bin == self.HISTBINNUM):
-					this_hue_bin = self.HISTBINNUM - 1
-				this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
-				if (this_saturation_bin == self.HISTBINNUM):
-					this_saturation_bin = self.HISTBINNUM - 1
+	# def dissimilarityWith(self, feature_obj):
+	# 	"""
+	# 	return the customized dissimilarity measure with another feature_obj of the same type
+	# 	"""
+	# 	hist = feature_obj.hist
+	# 	self.assertHist(hist)
 
-				if (this_hue_bin in target_hue_bins):
-					print "for ", this_hue_bin, " saturation bin is:", this_saturation_bin
-					hist[this_saturation_bin] += 1 * inner_gaussian_window[i - ref_x][j - ref_y]
+	# 	assert (len(self.border_hist_hue) == len(feature_obj.border_hist_hue)), "In FeatureCentreParadigm: border_hist_hue should have the same length"
+	# 	assert (len(self.border_hist_saturation) == len(feature_obj.border_hist_saturation)), "In FeatureCentreParadigm: border_hist_saturation should have the same length"
+	# 	assert (len(self.inner_hist_hue) == len(feature_obj.inner_hist_hue)), "In FeatureCentreParadigm: inner_hist_hue should have the same length"
+	# 	assert (len(self.inner_hist_saturation) == len(feature_obj.inner_hist_saturation)), "In FeatureCentreParadigm: inner_hist_saturation should have the same length"
 
-		non_zeros_saturation_bins = np.where(hist != 0)[0]
-		max_saturation_bin = np.argmax(hist)
-		acquired_saturation_bins = []
-		for bin in non_zeros_saturation_bins:
-			if (hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
-				acquired_saturation_bins.append(bin)
-		print "acquired saturation bins:", 
-		return np.min(acquired_saturation_bins),  np.max(acquired_saturation_bins) + 1
+	# 	border_hist_hue_distance = comparePatches.Jensen_Shannon_Divergence(self.border_hist_hue, \
+	# 		feature_obj.border_hist_hue)
+	# 	border_hist_saturation_distance = comparePatches.Jensen_Shannon_Divergence(self.border_hist_saturation, \
+	# 		feature_obj.border_hist_saturation)
+	# 	inner_hist_hue_distance = comparePatches.Jensen_Shannon_Divergence(self.inner_hist_hue, \
+	# 		feature_obj.inner_hist_hue)
+	# 	inner_hist_saturation_distance = comparePatches.Jensen_Shannon_Divergence(self.inner_hist_saturation, \
+	# 		feature_obj.inner_hist_saturation)
 
+	# 	distance_vector = np.array([border_hist_hue_distance, \
+	# 		inner_hist_hue_distance])
 
-	def withinPatch(self, patch, i, j):
-		if (i < patch.x + patch.size/2 + 1 and \
-			j < patch.y + patch.size/2 + 1 and \
-			i >= patch.x - patch.size/2 and \
-			j >= patch.y - patch.size/2):
-			return True
-		else:
-			return False
-
-	def borderTargetHueFilteredBySaturation(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins, target_saturation_bins):
-		hist = np.zeros(self.HISTBINNUM)
-		ref_x = patch.x - patch.size/2
-		ref_y = patch.y - patch.size/2
-		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
-			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
-				if (not self.withinPatch(inner_patch, i, j)): # only check the border pixels
-					this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
-					if (this_hue_bin == self.HISTBINNUM):
-						this_hue_bin = self.HISTBINNUM - 1
-					this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
-					if (this_saturation_bin == self.HISTBINNUM):
-						this_saturation_bin = self.HISTBINNUM - 1
-
-					if (this_hue_bin in target_hue_bins and this_saturation_bin in target_saturation_bins):
-						hist[this_hue_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
-		return hist
-
-
-
+	# 	weights = np.ones(len(distance_vector))
+	# 	return np.linalg.norm(np.multiply(distance_vector, weights), 2)
 
 	

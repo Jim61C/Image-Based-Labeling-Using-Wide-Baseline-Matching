@@ -112,6 +112,7 @@ def plotGivenHSVHists(path, fname, HueHist, SaturationHist, ValueHist, save = Tr
 def plotOneGivenHist(path,fname, Hist, save = True, show = True):
 	plt.bar(np.arange(len(Hist)),Hist, width = 1.0,color = 'r', label = fname+"_Hist")
 	plt.xlim(0, len(Hist))
+	plt.ylim(0, 1.0)
 	plt.legend()
 	plt.xlabel(fname+"_Hist")
 

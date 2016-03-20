@@ -17,20 +17,30 @@ FEATURE_WEIGHTING = {
 	# more features later
 }
 
-MANUAL_FEATURE_TO_USE = [
-[utils.BOTTOM_RIGHT_GREEN_FEATURE_ID], \
-[utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID], \
-[utils.TOP_RIGHT_YELLOW_FEATURE_ID], \
-[utils.TOP_LEFT_PURPLE_FEATURE_ID], \
-[utils.SHARP_HOG_FEATURE_ID], \
-[utils.DONUT_SHAPE_FEATURE_ID], \
-[utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
-]
+### For testset_illuminance1 ###
+# MANUAL_FEATURE_TO_USE = [
+# [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID], \
+# [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID], \
+# [utils.TOP_RIGHT_YELLOW_FEATURE_ID], \
+# [utils.TOP_LEFT_PURPLE_FEATURE_ID], \
+# [utils.SHARP_HOG_FEATURE_ID], \
+# [utils.DONUT_SHAPE_FEATURE_ID], \
+# [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
+# ]
 
+### For testset_rotation1 ###
 # MANUAL_FEATURE_TO_USE = [\
 # [utils.BORDER_GREEN_FEATURE_ID], \
 # [utils.CENTRE_YELLOW_FEATURE_ID]
 # ]
+
+### For testset7 ###
+# MANUAL_FEATURE_TO_USE = [ \
+# [utils.GENERATED_FEATURE_IDS[0]], \
+# [utils.GENERATED_FEATURE_IDS[1]], \
+# [utils.GENERATED_FEATURE_IDS[2]] \
+# ]
+MANUAL_FEATURE_TO_USE = []
 
 ALL_FEATURE_TO_COMPUTE = list(set([item for features in MANUAL_FEATURE_TO_USE for item in features]))
 
@@ -136,7 +146,7 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 	# 		# 	matchPatches[i].getFeatureObject(this_feature_id).hist\
 	# 		# 	))
 	# 		distance_vector.append(patchToMatch.getFeatureObject(this_feature_id).dissimilarityWith(\
-	# 			matchPatches[i].getFeatureObject(this_feature_id).hist))
+	# 			matchPatches[i].getFeatureObject(this_feature_id)))
 	# 	distance_vector = np.asarray(distance_vector)
 	# 	assert (len(distance_vector) == len(patchToMatch.feature_weights)), "In findBestMatches: length of distance_vector must be the same as test patch feature_weights"
 	# 	overall_distances[i] = np.linalg.norm(np.multiply(distance_vector, patchToMatch.feature_weights), 2)
@@ -280,10 +290,10 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 				thisImgToMatch, thisImgToMatchGray, \
 				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1)) # each gaussian 125 best matches
 			matchesFound = thisListOfMatches
-			# draw the combined match view to check at this level
+			"""draw the combined match view to check at this level"""
 			# drawCombinedMatchView(np.copy(thisImg), thisImgToMatch, thisTestPatches, matchesFound, True)
 			# for j in range(0, len(matchesFound)):
-				# comparePatches.drawPatchesOnImg(np.copy(thisImg), matchesFound[j], mark_sequence = True)
+				# comparePatches.drawPatchesOnImg(np.copy(thisImgToMatch), matchesFound[j], mark_sequence = True)
 		else:
 			"""otherwise, populate down the potential good matches and rematch"""
 			matchesFoundNextLevel = []
@@ -453,29 +463,36 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 	for i in range(0, len(testPatches)):
 		"""Check the groundTruth and MatchesFound's feature object"""
 		for test_patch_feature in testPatches[i].feature_to_use:
-			print "testPatches[{i}]".format(i = i), "uses feature:", test_patch_feature
+			print "\ntestPatches[{i}]".format(i = i), "uses feature:", test_patch_feature
+			print "testPatches[{i}]".format(i = i), "computeScore"
 			testPatches[i].getFeatureObject(test_patch_feature).computeFeature(img)
 			testPatches[i].getFeatureObject(test_patch_feature).computeScore()
 
+			print "groundTruth[{i}]".format(i = i), "computeScore"
 			groundTruth[i].getFeatureObject(test_patch_feature).computeFeature(imgToMatch)
 			groundTruth[i].getFeatureObject(test_patch_feature).computeScore()
 
+			print "matchesFound[{i}]".format(i = i), "computeScore"
 			matchesFound[i].getFeatureObject(test_patch_feature).computeFeature(imgToMatch)
 			matchesFound[i].getFeatureObject(test_patch_feature).computeScore()
 
 			"""plot out the computed feature hist for testPatches, groundTruth, matchesFound"""
 			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
-				testPatches[i].getFeatureObject(test_patch_feature).hist, save = True, show = True)
+				testPatches[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
 			plotStatistics.plotOneGivenHist(path,"groundTruth[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
-				groundTruth[i].getFeatureObject(test_patch_feature).hist, save = True, show = True)
+				groundTruth[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
 			plotStatistics.plotOneGivenHist(path,"matchesFound[{i}]_{feature}".format(i = i, feature = test_patch_feature), \
-				matchesFound[i].getFeatureObject(test_patch_feature).hist, save = True, show = True)
+				matchesFound[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
+			"""plot out this feature model"""
+			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL".format(i = i , feature = test_patch_feature), \
+				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL, save = saveHist, show = displayHist)
+
 
 			"""print the score of dissimilarityWith"""
 			dissimilarity_ground_truth = testPatches[i].getFeatureObject(test_patch_feature).dissimilarityWith(\
-				groundTruth[i].getFeatureObject(test_patch_feature).hist)
+				groundTruth[i].getFeatureObject(test_patch_feature))
 			dissimilarity_match_found = testPatches[i].getFeatureObject(test_patch_feature).dissimilarityWith(\
-				matchesFound[i].getFeatureObject(test_patch_feature).hist)
+				matchesFound[i].getFeatureObject(test_patch_feature))
 
 			print "testPatches[{i}] ".format(i = i), test_patch_feature, \
 			" dissimilarity_ground_truth:", dissimilarity_ground_truth, \
@@ -673,10 +690,21 @@ def populate_testset_rotation1(folder_suffix = "", upperPath = "testAlgo3"):
 
 
 	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/hists", saveHist = False, displayHist = True)
-	listOfMatches = testDescriptorPerformance("images", "testset_rotation1", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma, upperPath = upperPath)
+	listOfMatches = testDescriptorPerformance( \
+		"images", \
+		"testset_rotation1", \
+		testPatches, \
+		"test1.jpg", \
+		"test2.jpg", \
+		"GaussianWindowOnAWhole", \
+		True, \
+		folder_suffix, \
+		sigma, \
+		upperPath = upperPath)
 	for i in range(0, len(listOfMatches)):
 		matchesFound.append(listOfMatches[i][0]) # just append the best match
-	cv2.imwrite(upperPath + "/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
+	cv2.imwrite(upperPath + "/GaussianWindowOnAWhole/testset_rotation1"+folder_suffix+"/_combined_scene_match.jpg", \
+		comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
 	return
 
 def populate_testset_rotation2(folder_suffix = ""):
@@ -783,89 +811,119 @@ def populate_testset4(folder_suffix = ""):
 		matchesFound.append(listOfMatches[i][0]) # just append the best match
 	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset4"+folder_suffix+"/_combined_scene_match.jpg",comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = False))
 
-def populate_testset7(folder_suffix = ""):
+def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_img_name = "test2.jpg", upperPath = "testAlgo3"):
 	sigma = 39
 	testPatches = []
 	groundTruth = []
 	matchesFound = []
 	# for testset7
-	img = cv2.imread("images/testset7/test1.jpg", 1)
-	imgToMatch = cv2.imread("images/testset7/test2.jpg", 1)
+	img = cv2.imread("images/testset7/{base_img_name}".format(base_img_name = base_img_name), 1)
+	imgToMatch = cv2.imread("images/testset7/{target_img_name}".format(target_img_name = target_img_name), 1)
 
-	# plt.imshow(np.dstack((img[:,:,2], img[:,:,1], img[:,:,0])))
-	# plt.imshow(np.dstack((imgToMatch[:,:,2], imgToMatch[:,:,1], imgToMatch[:,:,0])))
-	# plt.show()
-	# raise ValueError
-	
-	testPatches.append(comparePatches.Patch(433, 792, sigma)) # test0
-	testPatches.append(comparePatches.Patch(325, 899, sigma)) # test1
-	testPatches.append(comparePatches.Patch(700, 759, sigma)) # test2
-	testPatches.append(comparePatches.Patch(700, 530, sigma - 8)) # test3
-	testPatches.append(comparePatches.Patch(484, 352, sigma)) # test4
-	testPatches.append(comparePatches.Patch(80, 722, sigma)) # test5
-	testPatches.append(comparePatches.Patch(162, 455, sigma)) # test6
+	print img.shape
 
-	# matchesFound.append(comparePatches.Patch(358 , 918 , 31)) # test0
-	# matchesFound.append(comparePatches.Patch(274 , 981 , 31)) # test1
-	# matchesFound.append(comparePatches.Patch(554 , 876 , 31)) # test2
-	# # matchesFound.append(comparePatches.Patch(106 , 904 , 31)) # test3 is mismatch using 64 bins
-	# # matchesFound.append(comparePatches.Patch(727 , 565 , 27)) # test3 is mismatch using 4096 bins
-	# matchesFound.append(comparePatches.Patch(606 , 782 , 47)) # test3 is mismatch using HS 256 bins
-	# matchesFound.append(comparePatches.Patch(610 , 701 , 31 )) # test3 HS 256 bins new testPatch3 is correct!
-	# matchesFound.append(comparePatches.Patch(91 , 415 , 39))  # test4 is mismatch due to patch size and search, test4 is good match if we use patchSize 39 + 8 + 8 = 55
-	# matchesFound.append(comparePatches.Patch(100 , 883 , 39)) # test5
-	# matchesFound.append(comparePatches.Patch(588 , 994 , 57)) # test6 is mismatch using 64 bins
+	global MANUAL_FEATURE_TO_USE
+	MANUAL_FEATURE_TO_USE = [ \
+	[utils.GENERATED_FEATURE_IDS[0]], \
+	[utils.GENERATED_FEATURE_IDS[1]], \
+	[utils.GENERATED_FEATURE_IDS[2]] \
+	]
 
-	groundTruth.append(comparePatches.Patch(355 , 916 , 31)) # test0
-	groundTruth.append(comparePatches.Patch(276 , 982 , 27)) # test1
-	groundTruth.append(comparePatches.Patch(560 , 884 , 29)) # test2
-	groundTruth.append(comparePatches.Patch(615 , 700 , 31)) # test3
-	groundTruth.append(comparePatches.Patch(451 , 514 , 39)) # test4
-	# # groundTruth.append(comparePatches.Patch(460 , 514 , 39)) # test4
-	# # groundTruth.append(comparePatches.Patch(451 , 523 , 39)) # test4
-	# # groundTruth.append(comparePatches.Patch(460 , 523 , 39)) # test4
-	groundTruth.append(comparePatches.Patch(100, 880 , 39)) # test5
-	groundTruth.append(comparePatches.Patch(146 , 657 , 37)) # test6
+	print "mannual feature to use:", MANUAL_FEATURE_TO_USE
 
+	"""read test patches"""
+	for this_feature_set in MANUAL_FEATURE_TO_USE:
+		list_of_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet( \
+		"{path}/UniquePatches_{feature}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+			path = "testUniquePatches/algo3", \
+			feature = "_".join(this_feature_set), \
+			folder = "testset7", \
+			file = "test1", \
+			i = sigma))
+		list_of_patches[0].setFeatureToUse(this_feature_set)
+		list_of_patches[0].setFeatureWeights(np.ones(len(list_of_patches[0].feature_to_use)))
+		testPatches.append(list_of_patches[0]) # append the best one found
+	comparePatches.drawPatchesOnImg(np.copy(img), testPatches, mark_sequence = True)
 
-	# # MatchesFound using 4096Bin HSV Histogram
-	# testPatchMatches = saveLoadPatch.load_data("testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.dat".format(testFolder = "testset7_4096Bin_newTestPatch3", folderToSave = "GaussianWindowOnAWhole", folder = "testset7", file1 = "test1", file2 = "test2", i = sigma, step = 0.5, tf = True)) #testset7_256Bin_HS_newTestPatch3
-	# print len(testPatchMatches)
-	# level = 5
-	# for i in range(0, len(testPatchMatches)):
-	# 	# if(i/level == 0):
-	# 	# 	matchesFound.append(comparePatches.Patch(testPatchMatches[i].x, testPatchMatches[i].y, testPatchMatches[i].size))
-	# 	# 	break; # check the histogram of the first testPatch (since it is not accurately matched)
-	# 	if(i%level == 0):
-	# 		matchesFound.append(comparePatches.Patch(testPatchMatches[i].x, testPatchMatches[i].y, testPatchMatches[i].size))
-	# 		print "matches found for test patch " , i/level
-	# 	print testPatchMatches[i].x, ", ", testPatchMatches[i].y, ", ", testPatchMatches[i].size
-	# print "should be 7:", len(matchesFound)
-	
-	# listOfPatchMatches = saveLoadPatch.loadPatchMatches( \
-	# 	"testPatchHSV/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format( \
+	global ALL_FEATURE_TO_COMPUTE
+	ALL_FEATURE_TO_COMPUTE = list(set([feature for patch in testPatches for feature in patch.feature_to_use]))
+
+	""" read ground truth """
+	list_of_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet( \
+	"{path}/UniquePatches_{feature}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+		path = "testUniquePatches/algo3", \
+		feature = "_".join([utils.GENERATED_FEATURE_IDS[0]]), \
+		folder = "testset7", \
+		file = "test3", \
+		i = sigma))
+	groundTruth.append(list_of_patches[0])
+	# groundTruth.append(comparePatches.Patch(269, 979, 23)) # red dot, test3.jpg
+	groundTruth.append(comparePatches.Patch(268, 976, 23)) # red dot, test3.jpg
+	# groundTruth.append(comparePatches.Patch(272, 976, 23)) # red dot, test3.jpg
+	# groundTruth.append(comparePatches.Patch(264, 976, 23)) # red dot, test3.jpg
+	# groundTruth.append(comparePatches.Patch(268, 980, 23)) # red dot, test3.jpg
+	# groundTruth.append(comparePatches.Patch(268, 972, 23)) # red dot, test3.jpg
+
+	groundTruth.append(comparePatches.Patch(342, 935, 23)) # heart orange, test3.jpg
+	# groundTruth.append(comparePatches.Patch(340, 936, 23)) # heart orange, test3.jpg
+	# groundTruth.append(comparePatches.Patch(344, 932, 23)) # heart orange, test3.jpg
+	# groundTruth.append(comparePatches.Patch(388, 904, 31)) # heart orange usually wrongly matched patch, test3.jpg
+	for i  in range(0, len(MANUAL_FEATURE_TO_USE)):
+		print "setting feature_to_use for groundTruth[{i}]".format(i = i)
+		groundTruth[i].setFeatureToUse(MANUAL_FEATURE_TO_USE[i])
+		groundTruth[i].setFeatureWeights(np.zeros(len(groundTruth[i].feature_to_use)))
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
+
+	""" read matches found """
+	# list_of_patches = saveLoadPatch.loadPatchMatches( \
+	# 	upperPath + \
+	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+	# 		testFolder = "testset7" + folder_suffix, \
 	# 		folderToSave = "GaussianWindowOnAWhole", \
-	# 		testFolder = "testset7"+folder_suffix, \
 	# 		folder = "testset7", \
 	# 		file1 = "test1", \
-	# 		file2 = "test2", \
-	# 		i = sigma, step = 0.5, tf = True))
-	# for i in range(0, len(listOfPatchMatches)):
-	# 	matchesFound.append(listOfPatchMatches[i][0]) # just append the best match
+	# 		file2 = "test3", \
+	# 		i = sigma, \
+	# 		step = 0.5, \
+	# 		tf = True))
+	# for i in range(0, len(list_of_patches)):
+	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
+	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/_testPatches.jpg",comparePatches.drawPatchesOnImg(np.copy(img), testPatches, True))
-	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/_matchesFound.jpg",comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, True, None))
-	# cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/_groundTruth.jpg",comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, True))
-	
-	# checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, "./testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/hists", True, False)
-	
-	
-	listOfBestMatches_1_2 = testDescriptorPerformance("images", "testset7", testPatches, "test1.jpg","test2.jpg","GaussianWindowOnAWhole",True,  folder_suffix, sigma)
-	for i in range(0, len(listOfBestMatches_1_2)):
-		matchesFound.append(listOfBestMatches_1_2[i][0]) # just append the best match
-	# testDescriptorPerformance("testset7", listOfBestMatches_1_2, "test2.jpg","test3.jpg","GaussianWindowOnAWhole",True, "_4096Bin", sigma)
-	# testDescriptorPerformance("testset7", testPatches, "test1.jpg","test3.jpg","GaussianWindowOnAWhole",True, "_4096Bin", sigma)
-	cv2.imwrite("testPatchHSV/GaussianWindowOnAWhole/testset7"+folder_suffix+"/_combined_scene_match.jpg",\
+	# checkHistogramOfTruthAndMatchesFound( \
+	# 	testPatches, \
+	# 	groundTruth, \
+	# 	matchesFound, \
+	# 	img, \
+	# 	imgToMatch, \
+	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
+	# 	True, \
+	# 	True)
+
+	# raise ValueError ("purpose stop for checking hists")
+  
+	listOfBestMatches = testDescriptorPerformance( \
+		"images", \
+		"testset7", \
+		testPatches, \
+		base_img_name, \
+		target_img_name, \
+		"GaussianWindowOnAWhole", \
+		True, \
+		folder_suffix, \
+		sigma, \
+		upperPath = upperPath)
+	for i in range(0, len(listOfBestMatches)):
+		matchesFound.append(listOfBestMatches[i][0]) # just append the best match
+	cv2.imwrite( \
+		upperPath + \
+		"/GaussianWindowOnAWhole/testset7" + \
+		folder_suffix + \
+		"/_combined_scene_match_{base_img_name}_{target_img_name}.jpg".format(\
+			base_img_name = base_img_name[:base_img_name.find(".")], \
+			target_img_name = target_img_name[:target_img_name.find(".")]),\
 		comparePatches.drawMatchesOnImg(img, imgToMatch, testPatches, matchesFound, show = True))
 
 def loadPatchesMatchesGroundtruth(upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
@@ -1085,17 +1143,22 @@ def main():
 	# folder_suffix = "_seperateHSV_earthMover"
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
-	folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Response_Based"
+	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue"
+	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable
 	start_time = time.time()
 	print 'start matching:', start_time
-	populate_testset_illuminance1(folder_suffix, "testAlgo3")
+	
+	"""Necessary step to initialise the features constructed"""
+	utils.loadGeneratedFeatureParadigm()
+
+	# populate_testset_illuminance1(folder_suffix, "testAlgo3")
 	# populate_testset_illuminance2(folder_suffix)
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	# populate_testset7(folder_suffix)
+	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)

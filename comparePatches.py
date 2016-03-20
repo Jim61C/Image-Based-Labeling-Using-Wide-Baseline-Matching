@@ -18,6 +18,11 @@ import feature_modules
 import scipy.spatial.distance as DIST
 from feature_modules import utils
 import time
+import os
+import pickle
+import copy
+from scipy.special import (comb, chndtr, gammaln, entr, kl_div, xlogy, ive)
+
 
 HUE_16BIN_C = np.array(
 [[ 1,  2,  3,  4,  5,  6,  7,  8,  9,  8,  7,  6,  5,  4,  3,  2],
@@ -68,7 +73,9 @@ WEIGHTS_DICT = {
 # FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
 # FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
 # FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
-FEATURES = [utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID]
+# FEATURES = [utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID]
+# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+FEATURES = []
 
 """
 Routine to add a feature: 
@@ -150,6 +157,18 @@ class Patch:
 			self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
 			# green patch bottom left blue
 			self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
+			# load the auto generated feature objects
+			for feature in utils.GENERATED_FEATURE_PARADIGMS:
+				"""TODO: try not to do deepcopy rather, do initialization"""
+				# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL_{name}".format(name = feature_obj_pkl), \
+				# this_generated_feature.FEATURE_MODEL, save = False, show = True)
+				this_generated_feature = copy.deepcopy(feature)
+				# print this_generated_feature.id
+				this_generated_feature.setPatch(self)
+				# print this_generated_feature.HISTBINNUM
+				# print this_generated_feature.patch.x,  this_generated_feature.patch.y, this_generated_feature.patch.size
+				self.feature_arr.append(this_generated_feature)
+
 
 		### Feature auxiliary attributes to save time ###
 		self.inner_hue_hist_scale_3_gaus_4 = None # scale down 3 level, with gaussian window sigma = window length/4
@@ -157,6 +176,13 @@ class Patch:
 
 		self.outer_hue_hist_scale_3_gaus_4 = None
 		self.outer_saturation_hist_scale_3_gaus_4 = None
+
+		# For HISTHUM = 36
+		self.inner_hue_hist_scale_3_gaus_4_hist_36 = None 
+		self.inner_saturation_hist_scale_3_gaus_4_hist_36 = None
+
+		self.outer_hue_hist_scale_3_gaus_4_hist_36 = None
+		self.outer_saturation_hist_scale_3_gaus_4_hist_36 = None
 
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
@@ -698,11 +724,31 @@ def klDivergence(hist1, hist2):
 	"""
 	return entropy(hist1,hist2)
 
+def klDivergence_mannual (pk, qk, base = None):
+	assert (not pk is None), "pk should not be none"
+	assert (not qk is None), "qk should not be none"
+	pk = np.asarray(pk)
+	if np.sum(pk, axis = 0) != 0:
+		pk = 1.0*pk / np.sum(pk, axis=0)
+
+	qk = np.asarray(qk)
+	if len(qk) != len(pk):
+		raise ValueError("qk and pk must have same length.")
+	# do not normalize qk if pk is zero
+	if (np.sum(qk, axis = 0) != 0) and (np.sum(pk, axis = 0) != 0):
+		qk = 1.0*qk / np.sum(qk, axis=0)
+	vec = kl_div(pk, qk)
+	S = np.sum(vec, axis=0)
+	if base is not None:
+		S /= math.log(base)
+	return S
+
 def Jensen_Shannon_Divergence(hist1,hist2):
 	# print "hist1:",hist1
 	# print "hist2:",hist2
 	mean = (hist1 + hist2) / 2
-	dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
+	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
+	dist = 0.5 * (klDivergence_mannual(hist1,mean) + klDivergence_mannual(hist2,mean))
 	# print dist
 	return dist
 
@@ -908,7 +954,7 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
 	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
 	# positions = [(patch.x, patch.y) for patch in filtered_patches]
-	drawPatchesOnImg(np.copy(img), filtered_patches)
+	# drawPatchesOnImg(np.copy(img), filtered_patches)
 	"""
 	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
 	"""
@@ -1209,6 +1255,9 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 		i = sigma))
 	for i in range(0, 1): # just append the best one found
 		unique_patches.append(list_of_patches[i][0])
+
+	unique_patches.append(Patch(608,781, 39))
+
 	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 	for i in range(0, len(unique_patches)):
 		print "checking unique_patches[{i}]".format(i = i)
@@ -1226,6 +1275,38 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 				unique_patches[i].getFeatureObject(this_feature).hist, \
 				save = False, \
 				show = True)
+
+			plotStatistics.plotOneGivenHist( \
+				"", \
+				"{this_feature} FEATURE_MODEL[{i}]".format(i = i, this_feature = this_feature), \
+				unique_patches[i].getFeatureObject(this_feature).FEATURE_MODEL, \
+				save = False, \
+				show = True)
+def populateCheckMostUniqueMatch(test_folder_name, img_name1, img_name2, sigma = 39, image_db = "images"):
+	img1 = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name1), 1)
+	img2 = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name2), 1)
+	
+	list_of_patches1 = saveLoadPatch.loadPatchMatches( \
+		"{path}/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+		features = "_".join(FEATURES), \
+		path = "testUniquePatches/algo3" , \
+		folder = test_folder_name, \
+		file = img_name1[:img_name1.find(".")], \
+		i = sigma))
+
+	img1_most_unique_patch = list_of_patches1[0][0]
+
+	list_of_patches2 = saveLoadPatch.loadPatchMatches( \
+		"{path}/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+		features = "_".join(FEATURES), \
+		path = "testUniquePatches/algo3" , \
+		folder = test_folder_name, \
+		file = img_name2[:img_name2.find(".")], \
+		i = sigma))
+
+	img2_most_unique_patch = list_of_patches2[0][0]
+
+	img_match_scene = drawMatchesOnImg(img1, img2, [img1_most_unique_patch], [img2_most_unique_patch], show = True)
 
 def populateTestCombinatorialFeatureScore( \
 	test_folder_name, \
@@ -1275,6 +1356,10 @@ def populateTestCombinatorialFeatureScore( \
 	print feature_set_scores
 
 def main():
+	utils.loadGeneratedFeatureParadigm()
+	global FEATURES
+	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
 	folderNames = ["testset7"]
@@ -1283,7 +1368,7 @@ def main():
 	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
 	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
-	## Test combinatorial feature scores on a set of eyeballed patches
+	# Test combinatorial feature scores on a set of eyeballed patches
 	# for i in range(0, len(folderNames)):
 	# 	populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
 	# 		upperPath = "testAlgo3", \
@@ -1293,8 +1378,9 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
+		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return
 

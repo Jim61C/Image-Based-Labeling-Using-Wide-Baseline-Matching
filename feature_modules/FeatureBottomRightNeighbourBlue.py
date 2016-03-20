@@ -54,7 +54,8 @@ class FeatureBottomRightNeighbourBlue(Feature):
 				# use Jensen_Shannon_Divergence since the comparison is between two complete histograms
 				self.score = 1.0/(1.0 + comparePatches.Jensen_Shannon_Divergence(self.hist, self.HUE_MODEL))
 
-	def dissimilarityWith(self, hist):
+	def dissimilarityWith(self, feature_obj):
+		hist = feature_obj.hist
 		if(self.hist is None or hist is None):
 			return sys.maxint
 		else:
