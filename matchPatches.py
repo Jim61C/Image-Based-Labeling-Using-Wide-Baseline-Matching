@@ -887,10 +887,13 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	# groundTruth.append(comparePatches.Patch(268, 980, 23)) # red dot, test3.jpg
 	# groundTruth.append(comparePatches.Patch(268, 972, 23)) # red dot, test3.jpg
 
-	groundTruth.append(comparePatches.Patch(342, 935, 23)) # heart orange, test3.jpg
-	# groundTruth.append(comparePatches.Patch(340, 936, 23)) # heart orange, test3.jpg
+	# groundTruth.append(comparePatches.Patch(342, 935, 23)) # heart orange, test3.jpg
+	groundTruth.append(comparePatches.Patch(340, 936, 23)) # heart orange, test3.jpg
+	# groundTruth.append(comparePatches.Patch(340, 932, 23)) # heart orange, test3.jpg
 	# groundTruth.append(comparePatches.Patch(344, 932, 23)) # heart orange, test3.jpg
+	# groundTruth.append(comparePatches.Patch(344, 936, 23)) # heart orange, test3.jpg
 	# groundTruth.append(comparePatches.Patch(388, 904, 31)) # heart orange usually wrongly matched patch, test3.jpg
+	
 	for i  in range(0, len(MANUAL_FEATURE_TO_USE)):
 		print "setting feature_to_use for groundTruth[{i}]".format(i = i)
 		groundTruth[i].setFeatureToUse(MANUAL_FEATURE_TO_USE[i])
@@ -898,34 +901,34 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	""" read matches found """
-	# list_of_patches = saveLoadPatch.loadPatchMatches( \
-	# 	upperPath + \
-	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
-	# 		testFolder = "testset7" + folder_suffix, \
-	# 		folderToSave = "GaussianWindowOnAWhole", \
-	# 		folder = "testset7", \
-	# 		file1 = "test1", \
-	# 		file2 = "test3", \
-	# 		i = sigma, \
-	# 		step = 0.5, \
-	# 		tf = True))
-	# for i in range(0, len(list_of_patches)):
-	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
-	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
-	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
+	list_of_patches = saveLoadPatch.loadPatchMatches( \
+		upperPath + \
+		"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+			testFolder = "testset7" + folder_suffix, \
+			folderToSave = "GaussianWindowOnAWhole", \
+			folder = "testset7", \
+			file1 = "test1", \
+			file2 = "test3", \
+			i = sigma, \
+			step = 0.5, \
+			tf = True))
+	for i in range(0, len(list_of_patches)):
+		print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+		matchesFound.append(list_of_patches[i][0]) # just append the best match
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	# checkHistogramOfTruthAndMatchesFound( \
-	# 	testPatches, \
-	# 	groundTruth, \
-	# 	matchesFound, \
-	# 	img, \
-	# 	imgToMatch, \
-	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
-	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
-	# 	True, \
-	# 	True)
+	checkHistogramOfTruthAndMatchesFound( \
+		testPatches, \
+		groundTruth, \
+		matchesFound, \
+		img, \
+		imgToMatch, \
+		"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+			upperPath = upperPath, folder_suffix = folder_suffix), \
+		True, \
+		True)
 
-	# raise ValueError ("purpose stop for checking hists")
+	raise ValueError ("purpose stop for checking hists")
   
 	listOfBestMatches = testDescriptorPerformance( \
 		"images", \
@@ -1166,7 +1169,7 @@ def main():
 	# folder_suffix = "_seperateHSV_earthMover"
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
-	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_16bin"
+	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable

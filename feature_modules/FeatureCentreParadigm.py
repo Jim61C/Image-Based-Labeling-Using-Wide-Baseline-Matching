@@ -40,10 +40,13 @@ class FeatureCentreParadigm(Feature):
 		     4: !try use Saturation * Hue as FEATURE_MODEL
 		     5: try 2D histogram -> leads to the problem of dissimilarity metric
 		     6: !try switch back to 36 bins, but for hue, widen up for border error detection
-		     7: !! if current one still wrongly match, try adjust border_hist weight
+		     7: !! if current one still wrongly match, try adjust border_hist weight and increase border_hist saturation range!!!!
 		"""
 		self.SATURATION_FILTER_START_INDEX = None
 		self.SATURATION_FILTER_END_INDEX = None
+
+		self.SATURATION_BORDER_FILTER_START_INDEX = None
+		self.SATURATION_BORDER_FILTER_END_INDEX = None
 		
 		self.FEATURE_MODEL_HUE = np.zeros(self.HISTBINNUM)
 		
@@ -126,11 +129,15 @@ class FeatureCentreParadigm(Feature):
 		target_hue_bins = []
 		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
 			target_hue_bins.append(i % self.HISTBINNUM)
-		target_saturation_bins = range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX)
+		target_saturation_bins = []
+		for i in range(self.SATURATION_FILTER_START_INDEX - 3, self.SATURATION_FILTER_END_INDEX + 3):
+			if (i >= 0 and i < self.HISTBINNUM):
+				target_saturation_bins.append(i)
 			
 		"""Alternative: make border hist to be target border_hue with target saturation filtered"""
 		border_hist_full = self.borderTargetHueFilteredBySaturation(img_hsv, self.patch, inner_patch, \
 			gaussian_window, target_hue_bins, target_saturation_bins)
+
 		border_hist = np.array([border_hist_full[hue_bin] for hue_bin in target_hue_bins])
 		if(np.sum(border_hist) == 0):
 			border_hist = np.concatenate((border_hist, \
@@ -181,7 +188,7 @@ class FeatureCentreParadigm(Feature):
 
 		# print "self.HUE_START_INDEX: ", self.HUE_START_INDEX, "self.HUE_END_INDEX: ", self.HUE_END_INDEX
 		
-		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
+		comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
 		# plotStatistics.plotOneGivenHist("","inner_hist_hue", inner_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("","border_hist_hue", border_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "inner_hist_saturation", inner_hist_saturation, save = False, show = True)
@@ -189,6 +196,7 @@ class FeatureCentreParadigm(Feature):
 		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "filtered_inner_hist_hue", filtered_inner_hist_hue, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("", "border_hist_full", border_hist_full, save = False, show = True)
 		
 
 	def featureResponse(self, metric_func = DIST.euclidean):
