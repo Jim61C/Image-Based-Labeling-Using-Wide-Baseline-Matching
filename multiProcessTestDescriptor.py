@@ -87,13 +87,13 @@ def main():
 
 
 	test_folder_args = [ \
-		# ("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test1.jpg"), \
 		("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test3.jpg"), \
-		# ("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test1.jpg"), \
 		("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test3.jpg"), \
-		# ("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test1.jpg"), \
 		("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test3.jpg"), \
-		# ("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test1.jpg"), \
 		("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test3.jpg") \
 	]
 

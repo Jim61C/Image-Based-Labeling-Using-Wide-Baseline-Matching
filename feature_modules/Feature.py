@@ -30,6 +30,22 @@ class Feature(object):
 		self.HISTBINNUM = 16 # default value, override by sub classes
 		self.GAUSSIAN_SCALE_FACTOR = 1.2
 
+	def computeHueHistSaturationWeighted(self, img_hsv, patch, gaussian_window):
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				this_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+				if (this_bin == self.HISTBINNUM):
+					this_bin = self.HISTBINNUM - 1
+				# weight by saturation value [0,1]
+				if (not gaussian_window is None):
+					hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y] * img_hsv[i][j][1]
+				else:
+					hist[this_bin] += 1 * img_hsv[i][j][1]
+		return hist
+
 	def computeHueHist(self,img_hsv, patch,gaussian_window):
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
@@ -39,8 +55,11 @@ class Feature(object):
 				this_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
 				if (this_bin == self.HISTBINNUM):
 					this_bin = self.HISTBINNUM - 1
-				hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
-				# hist[this_bin] += 1
+				if (gaussian_window is None):
+					hist[this_bin] += 1
+				else:	
+					hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+				
 		return hist
 
 	def computeSaturationHist(self, img_hsv, patch, gaussian_window):
@@ -55,8 +74,11 @@ class Feature(object):
 				this_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
 				if (this_bin == self.HISTBINNUM):
 					this_bin = self.HISTBINNUM - 1
-				hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
-				# hist[this_bin] += 1
+				if (gaussian_window is None):
+					hist[this_bin] += 1
+				else:
+					hist[this_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+				
 		return hist
 
 
@@ -175,6 +197,7 @@ class Feature(object):
 	def findSaturationRangeForTargetHueBin(self, img_hsv, inner_patch, target_hue_bins, inner_gaussian_window):
 		"""return: the saturation range of the given target_hue_bins"""
 		SATURATION_ACQUIRE_FRACTION = 0.5 # reduced to tackle cases where saturation changes a lot across images of the same patch
+		SATURATION_FILTER_FRACTION = 0.1 # used to settle SATURATION FILTER BINS
 		SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD = int(10/36.0 * self.HISTBINNUM)
 
 		hist = np.zeros(self.HISTBINNUM)
@@ -215,7 +238,7 @@ class Feature(object):
 		filter_saturation_bins = []
 		bin_to_go_up_down = (2 * SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD - (max_acquired_bin - min_acquired_bin))/2
 		for bin in range(min_acquired_bin - bin_to_go_up_down, max_acquired_bin + bin_to_go_up_down):
-			if (bin >=0 and bin < self.HISTBINNUM and hist[bin] > 0.1 * hist[max_saturation_bin]):
+			if (bin >=0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_FILTER_FRACTION * hist[max_saturation_bin]):
 				filter_saturation_bins.append(bin)
 		return min_acquired_bin, max_acquired_bin , np.min(filter_saturation_bins), np.max(filter_saturation_bins) + 1
 
