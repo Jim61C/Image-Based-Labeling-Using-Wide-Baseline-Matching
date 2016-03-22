@@ -1363,6 +1363,19 @@ def testFunc(hist1, hist2, metricFunc):
 	return metricFunc(hist1, hist2)
 
 def main():
+	### Test 2D histogram ###
+	# img = cv2.imread("images/testset7/test3.jpg", 1)
+	# img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+	# img_hist_hue_saturation = cv2.calcHist([img_hsv], [0, 1], None, [36, 100], [0, 360.0, 0, 1.0]) # for 2D HS case
+	# print img_hist_hue_saturation.shape # row is hue, col is saturation
+	# plt.pcolormesh(np.arange(0,img_hist_hue_saturation.shape[1]),np.arange(0,img_hist_hue_saturation.shape[0]),img_hist_hue_saturation)
+	# plt.xlabel('Saturation')
+	# plt.ylabel('Hue')
+	# cbar = plt.colorbar()
+	# cbar.ax.set_ylabel('2D histogram Value')
+	# plt.show()
+	# raise ValueError("test 2D histogram")
+	
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
 	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
