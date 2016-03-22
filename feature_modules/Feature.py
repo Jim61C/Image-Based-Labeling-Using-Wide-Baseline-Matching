@@ -265,7 +265,7 @@ class Feature(object):
 		hist = feature_obj.hist
 		self.assertHist(hist)
 		# return DIST.euclidean(self.hist, hist)
-		return comparePatches.Jensen_Shannon_Divergence(self.hist, hist)
+		return comparePatches.Jensen_Shannon_Divergence_Unnormalized(self.hist, hist)
 
 	def assertHist(self, hist):
 		assert (len(self.hist) == len(hist)), "Error in feature " + self.id + ": Compared hist must have the same length as self.hist"
