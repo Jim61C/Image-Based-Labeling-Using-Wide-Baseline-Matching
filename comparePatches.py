@@ -746,13 +746,19 @@ def klDivergence_mannual (pk, qk, base = None, normalize = True):
 		S /= math.log(base)
 	return S
 
-def Jensen_Shannon_Divergence(hist1,hist2, normalize = True):
-	# print "hist1:",hist1
-	# print "hist2:",hist2
+def Jensen_Shannon_Divergence(hist1,hist2):
 	mean = (hist1 + hist2) / 2
 	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
-	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = normalize) + \
-		klDivergence_mannual(hist2,mean, normalize = normalize))
+	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = True) + \
+		klDivergence_mannual(hist2,mean, normalize = True))
+	# print dist
+	return dist
+
+def Jensen_Shannon_Divergence_Unnormalized(hist1,hist2):
+	mean = (hist1 + hist2) / 2
+	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
+	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = False) + \
+		klDivergence_mannual(hist2,mean, normalize = False))
 	# print dist
 	return dist
 
