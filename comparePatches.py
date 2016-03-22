@@ -724,31 +724,35 @@ def klDivergence(hist1, hist2):
 	"""
 	return entropy(hist1,hist2)
 
-def klDivergence_mannual (pk, qk, base = None):
+def klDivergence_mannual (pk, qk, base = None, normalize = True):
 	assert (not pk is None), "pk should not be none"
 	assert (not qk is None), "qk should not be none"
 	pk = np.asarray(pk)
-	if np.sum(pk, axis = 0) != 0:
-		pk = 1.0*pk / np.sum(pk, axis=0)
+	if (normalize):
+		if np.sum(pk, axis = 0) != 0:
+			pk = 1.0*pk / np.sum(pk, axis=0)
 
 	qk = np.asarray(qk)
 	if len(qk) != len(pk):
 		raise ValueError("qk and pk must have same length.")
-	# do not normalize qk if pk is zero
-	if (np.sum(qk, axis = 0) != 0) and (np.sum(pk, axis = 0) != 0):
-		qk = 1.0*qk / np.sum(qk, axis=0)
+	
+	if (normalize):
+		# do not normalize qk if pk is zero, otherwise, all qk with different histogram height will be the same again zero pk
+		if (np.sum(qk, axis = 0) != 0) and (np.sum(pk, axis = 0) != 0):
+			qk = 1.0*qk / np.sum(qk, axis=0)
 	vec = kl_div(pk, qk)
 	S = np.sum(vec, axis=0)
 	if base is not None:
 		S /= math.log(base)
 	return S
 
-def Jensen_Shannon_Divergence(hist1,hist2):
+def Jensen_Shannon_Divergence(hist1,hist2, normalize = True):
 	# print "hist1:",hist1
 	# print "hist2:",hist2
 	mean = (hist1 + hist2) / 2
 	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
-	dist = 0.5 * (klDivergence_mannual(hist1,mean) + klDivergence_mannual(hist2,mean))
+	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = normalize) + \
+		klDivergence_mannual(hist2,mean, normalize = normalize))
 	# print dist
 	return dist
 
@@ -1354,6 +1358,9 @@ def populateTestCombinatorialFeatureScore( \
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
 	feature_set_scores = findCombinatorialFeatureScore(img, testPatches, sigma, path)
 	print feature_set_scores
+
+def testFunc(hist1, hist2, metricFunc):
+	return metricFunc(hist1, hist2)
 
 def main():
 	utils.loadGeneratedFeatureParadigm()
