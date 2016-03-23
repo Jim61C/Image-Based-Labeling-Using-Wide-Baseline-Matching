@@ -263,9 +263,11 @@ class Feature(object):
 		Default is l2 distance: overwritten by sub classes for different behaviour
 		"""
 		hist = feature_obj.hist
-		self.assertHist(hist)
-		# return DIST.euclidean(self.hist, hist)
-		return comparePatches.Jensen_Shannon_Divergence_Unnormalized(self.hist, hist)
+		# self.assertHist(hist)
+		h_s_distance = comparePatches.distanceBHATTACHARYYA(self.hist, feature_obj.hist)
+		border_distance = comparePatches.distanceBHATTACHARYYA(self.border_hist, feature_obj.border_hist)
+		
+		return np.linalg.norm([h_s_distance, border_distance], 2)
 
 	def assertHist(self, hist):
 		assert (len(self.hist) == len(hist)), "Error in feature " + self.id + ": Compared hist must have the same length as self.hist"

@@ -170,6 +170,54 @@ def plotHOGHistCmp(path, fname, testPatchesHOGHist,testPatchLabel, matchesFoundH
 	plt.clf()
 	return
 
+
+def plotHSVSeperateHistCmp2d(path, fname, \
+	test_patch_hs_2d, test_patch_label, \
+	matches_found_hs_2d, match_found_label, \
+	ground_truth_hs_2d, ground_truth_label, \
+	save_hist = True, display_hist =True):
+	xlabel = "Saturation"
+	ylabel = "Hue"
+	f, ((test_patch_ax ),\
+		(match_found_ax ), \
+		(ground_truth_ax)) = plt.subplots(1, 3, sharex='col', sharey='row')
+	
+	f.set_figheight(10)
+	f.set_figwidth(40)
+	# test Patch
+	axmesh = test_patch_ax.pcolormesh(np.arange(0,test_patch_hs_2d.shape[1] + 1),np.arange(0,test_patch_hs_2d.shape[0] + 1),test_patch_hs_2d)
+	test_patch_ax.set_xlabel(xlabel + "({i})".format(i = test_patch_label))
+	test_patch_ax.set_ylabel(ylabel)
+	# cbar = axmesh.colorbar()
+	# cbar.ax.set_ylabel('2D histogram Value' + test_patch_label)
+
+	# match found
+	axmesh = match_found_ax.pcolormesh(np.arange(0,matches_found_hs_2d.shape[1] + 1),np.arange(0,matches_found_hs_2d.shape[0] + 1),matches_found_hs_2d)
+	match_found_ax.set_xlabel(xlabel + "({i})".format(i = match_found_label))
+	match_found_ax.set_ylabel(ylabel)
+	# cbar = axmesh.colorbar()
+	# cbar.ax.set_ylabel('2D histogram Value' + match_found_label)
+
+	# ground truth 
+	axmesh = ground_truth_ax.pcolormesh(np.arange(0,ground_truth_hs_2d.shape[1] + 1),np.arange(0,ground_truth_hs_2d.shape[0] + 1),ground_truth_hs_2d)
+	ground_truth_ax.set_xlabel(xlabel + "({i})".format(i = ground_truth_label))
+	ground_truth_ax.set_ylabel(ylabel)
+	# cbar = f.colorbar(axmesh)
+	# cbar.ax.set_ylabel('2D histogram Value' + ground_truth_label)
+
+	f.subplots_adjust(right=0.8)
+	cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
+	cbar = f.colorbar(axmesh, cax=cbar_ax)
+	cbar.ax.set_ylabel('2D histogram Value')
+
+
+	if(save_hist):
+		plt.savefig(path+"/"+fname+".png")
+	if(display_hist):
+		plt.show()
+	plt.clf()
+	return
+
 def plotHSVSeperateHistCmp(path, fname, \
 	testPatchHSVSeperateHists, testPatchLabel, \
 	matchesFoundHSVSeperateHists, matchFoundLabel, \
@@ -273,4 +321,14 @@ def plotResponseDistribution(path, this_feature_set, testPatchIndex, test_patch_
 		plt.show()
 	plt.clf()
 
-	
+def plot2Dhistogram(path, fname, hist_2d, xlabel = "Saturation", ylabel = "Hue", save = False, show = False):
+	plt.pcolormesh(np.arange(0,hist_2d.shape[1] + 1),np.arange(0,hist_2d.shape[0] + 1),hist_2d)
+	plt.xlabel(xlabel)
+	plt.ylabel(ylabel)
+	cbar = plt.colorbar()
+	cbar.ax.set_ylabel('2D histogram Value' + fname)
+	if (save):
+		plt.savefig(path+"/"+fname+".png")
+	if (show):
+		plt.show()
+	plt.clf()

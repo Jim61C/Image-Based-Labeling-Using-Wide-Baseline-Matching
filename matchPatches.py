@@ -477,6 +477,7 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 		# 	matchesFound[i].HOG, "matchFound{i}".format(i = i),\
 		# 	groundTruth[i].HOG, "groundTruth{i}".format(i = i), \
 		# 	saveHist, displayHist)
+
 		plotStatistics.plotHSVSeperateHistCmp(path, \
 			"HSV Seperate Cmp_testPatch{i}".format(i = i), \
 			[testPatches[i].HueHist, testPatches[i].SaturationHist, testPatches[i].ValueHist], "testPatch{i}".format(i = i) , \
@@ -500,14 +501,14 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 			matchesFound[i].getFeatureObject(test_patch_feature).computeScore()
 
 			"""plot out the computed feature hist for testPatches, groundTruth, matchesFound"""
-			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
+			plotStatistics.plot2Dhistogram(path,"testPatches[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
 				testPatches[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
-			plotStatistics.plotOneGivenHist(path,"groundTruth[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
+			plotStatistics.plot2Dhistogram(path,"groundTruth[{i}]_{feature}".format(i = i , feature = test_patch_feature), \
 				groundTruth[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
-			plotStatistics.plotOneGivenHist(path,"matchesFound[{i}]_{feature}".format(i = i, feature = test_patch_feature), \
+			plotStatistics.plot2Dhistogram(path,"matchesFound[{i}]_{feature}".format(i = i, feature = test_patch_feature), \
 				matchesFound[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
 			"""plot out this feature model"""
-			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL".format(i = i , feature = test_patch_feature), \
+			plotStatistics.plot2Dhistogram(path,"testPatches[{i}]_{feature}_FEATURE_MODEL".format(i = i , feature = test_patch_feature), \
 				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL, save = saveHist, show = displayHist)
 
 
@@ -524,6 +525,14 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 			" dissimilarity_match_found:", dissimilarity_match_found, \
 			" matchesFound[{i}] actual feature score".format(i = i), matchesFound[i].getFeatureObject(test_patch_feature).score
 			print "testPatches[{i}] ".format(i = i), "match found is better? ", dissimilarity_match_found < dissimilarity_ground_truth	
+		
+		# for 2d full patch HS histogram
+		plotStatistics.plotHSVSeperateHistCmp2d(path, \
+			"HS 2D Full Patch Unormalized testPatch{i}".format(i = i), \
+			testPatches[i].outer_hist_scale_3_gaus_4_centre_paradigm_2d, "testPatches{i}".format(i = i) , \
+			matchesFound[i].outer_hist_scale_3_gaus_4_centre_paradigm_2d, "matchesFound{i}".format(i = i), \
+			groundTruth[i].outer_hist_scale_3_gaus_4_centre_paradigm_2d, "groundTruth{i}".format(i = i), \
+			saveHist, displayHist)
 	return
 
 def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"):
@@ -901,34 +910,34 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	""" read matches found """
-	# list_of_patches = saveLoadPatch.loadPatchMatches( \
-	# 	upperPath + \
-	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
-	# 		testFolder = "testset7" + folder_suffix, \
-	# 		folderToSave = "GaussianWindowOnAWhole", \
-	# 		folder = "testset7", \
-	# 		file1 = "test1", \
-	# 		file2 = "test3", \
-	# 		i = sigma, \
-	# 		step = 0.5, \
-	# 		tf = True))
-	# for i in range(0, len(list_of_patches)):
-	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
-	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
-	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
+	list_of_patches = saveLoadPatch.loadPatchMatches( \
+		upperPath + \
+		"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+			testFolder = "testset7" + folder_suffix, \
+			folderToSave = "GaussianWindowOnAWhole", \
+			folder = "testset7", \
+			file1 = "test1", \
+			file2 = "test3", \
+			i = sigma, \
+			step = 0.5, \
+			tf = True))
+	for i in range(0, len(list_of_patches)):
+		print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+		matchesFound.append(list_of_patches[i][0]) # just append the best match
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	# checkHistogramOfTruthAndMatchesFound( \
-	# 	testPatches, \
-	# 	groundTruth, \
-	# 	matchesFound, \
-	# 	img, \
-	# 	imgToMatch, \
-	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
-	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
-	# 	True, \
-	# 	True)
+	checkHistogramOfTruthAndMatchesFound( \
+		testPatches, \
+		groundTruth, \
+		matchesFound, \
+		img, \
+		imgToMatch, \
+		"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+			upperPath = upperPath, folder_suffix = folder_suffix), \
+		True, \
+		True)
 
-	# raise ValueError ("purpose stop for checking hists")
+	raise ValueError ("purpose stop for checking hists")
   
 	listOfBestMatches = testDescriptorPerformance( \
 		"images", \
@@ -1170,7 +1179,7 @@ def main():
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
-	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_SaturationWeighted_Hue"
+	folder_suffix = "_eyeballed_unique_patches_histogram_2d"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable

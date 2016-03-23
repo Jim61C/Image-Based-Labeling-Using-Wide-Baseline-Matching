@@ -184,6 +184,10 @@ class Patch:
 		self.outer_hue_hist_scale_3_gaus_4_centre_paradigm = None
 		self.outer_saturation_hist_scale_3_gaus_4_centre_paradigm = None
 
+		# For 2d histograms, unnormalized
+		self.inner_hist_scale_3_gaus_4_centre_paradigm_2d = None
+		self.outer_hist_scale_3_gaus_4_centre_paradigm_2d = None
+
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
 		self.feature_weights = None
@@ -745,6 +749,19 @@ def klDivergence_mannual (pk, qk, base = None, normalize = True):
 	if base is not None:
 		S /= math.log(base)
 	return S
+
+def distanceBHATTACHARYYA(hist2d1, hist2d2):
+	assert (hist2d1.shape == hist2d2.shape), "Error in distanceBHATTACHARYYA: hist shape is not correct!" + \
+	"hist2d1.shape: {hist2d1_shape}, hist2d2.shape: {hist2d2_shape}".format(\
+		hist2d1_shape = hist2d1.shape, hist2d2_shape = hist2d2.shape)
+	if (np.sum(hist2d1) == 0 and np.sum(hist2d2) == 0):
+		return 0.0
+	elif(np.sum(hist2d1) == 0):
+		return np.sum(hist2d2)
+	elif(np.sum(hist2d2) == 0):
+		return np.sum(hist2d1)
+	else:
+		return cv2.compareHist(hist2d1, hist2d2, cv.CV_COMP_BHATTACHARYYA)
 
 def Jensen_Shannon_Divergence(hist1,hist2):
 	mean = (hist1 + hist2) / 2
@@ -1369,19 +1386,6 @@ def testFunc(hist1, hist2, metricFunc):
 	return metricFunc(hist1, hist2)
 
 def main():
-	### Test 2D histogram ###
-	# img = cv2.imread("images/testset7/test3.jpg", 1)
-	# img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
-	# img_hist_hue_saturation = cv2.calcHist([img_hsv], [0, 1], None, [36, 100], [0, 360.0, 0, 1.0]) # for 2D HS case
-	# print img_hist_hue_saturation.shape # row is hue, col is saturation
-	# plt.pcolormesh(np.arange(0,img_hist_hue_saturation.shape[1]),np.arange(0,img_hist_hue_saturation.shape[0]),img_hist_hue_saturation)
-	# plt.xlabel('Saturation')
-	# plt.ylabel('Hue')
-	# cbar = plt.colorbar()
-	# cbar.ax.set_ylabel('2D histogram Value')
-	# plt.show()
-	# raise ValueError("test 2D histogram")
-	
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
 	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
