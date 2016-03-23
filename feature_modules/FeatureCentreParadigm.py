@@ -109,13 +109,14 @@ class FeatureCentreParadigm(Feature):
 		"""compute border_hist"""
 		border_hist_hue_targetted = np.array([border_hist_hue[i % self.HISTBINNUM] \
 			for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX)])
-		if(np.sum(border_hist_hue_targetted) == 0 or \
-			np.sum(border_hist_saturation[self.SATURATION_FILTER_START_INDEX:self.SATURATION_FILTER_END_INDEX]) == 0):
-			border_hist = np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
-				len(range(self.SATURATION_FILTER_START_INDEX,self.SATURATION_FILTER_END_INDEX)))
-		else:
-			border_hist = np.concatenate((border_hist_hue_targetted, \
-				border_hist_saturation[self.SATURATION_FILTER_START_INDEX:self.SATURATION_FILTER_END_INDEX]), axis = 1)
+		border_hist = border_hist_hue_targetted
+		# if(np.sum(border_hist_hue_targetted) == 0 or \
+		# 	np.sum(border_hist_saturation[self.SATURATION_FILTER_START_INDEX:self.SATURATION_FILTER_END_INDEX]) == 0):
+		# 	border_hist = np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+		# 		len(range(self.SATURATION_FILTER_START_INDEX,self.SATURATION_FILTER_END_INDEX)))
+		# else:
+		# 	border_hist = np.concatenate((border_hist_hue_targetted, \
+		# 		border_hist_saturation[self.SATURATION_FILTER_START_INDEX:self.SATURATION_FILTER_END_INDEX]), axis = 1)
 			
 		"""compute border_hist alternative: make border hist to be target border_hue with target saturation filtered"""
 		# target_hue_bins = []
@@ -170,15 +171,13 @@ class FeatureCentreParadigm(Feature):
 		self.border_hist = border_hist
 		
 		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
-		# plotStatistics.plotOneGivenHist("","inner_hist_hue", inner_hist_hue, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("","inner_hist_hue weighted by saturation ", inner_hist_hue, save = False, show = True)
+		# plotStatistics.plotOneGivenHist("","border_hist_hue weighted by saturation ", border_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("","aggregated_inner_hist_hue", aggregated_inner_hist_hue, save = False, show = True)
-		# plotStatistics.plotOneGivenHist("","border_hist_hue", border_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "inner_hist_saturation", inner_hist_saturation, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "border_hist_saturation", border_hist_saturation, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
-		# plotStatistics.plotOneGivenHist("", "inner_hist_hue", inner_hist_hue, save = False, show = True)
-		# plotStatistics.plotOneGivenHist("", "border_hist_full", border_hist_full, save = False, show = True)
 		
 
 	def featureResponse(self, metric_func = DIST.euclidean):
@@ -261,8 +260,7 @@ class FeatureCentreParadigm(Feature):
 		self.FEATURE_MODEL = np.concatenate(( \
 			AGGREGATED_HUE_MODEL, \
 			normalize(self.FEATURE_MODEL_SATURATION, norm = 'l1')[0], \
-			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
-			len(range(self.SATURATION_FILTER_START_INDEX,self.SATURATION_FILTER_END_INDEX)))), axis = 1) # append the expected border response
+			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)))), axis = 1) # append the expected border response
 
 		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
