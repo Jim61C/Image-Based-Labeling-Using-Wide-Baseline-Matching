@@ -1088,7 +1088,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 
 	random_patches = extractRandomPatches(img, sigma, 800)
 	print "FEATURES:", FEATURES
-
+	
 	for i in range(0, len(testPatches)):
 		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, \
 			full_image_HueHist, full_image_SaturationHist, full_image_ValueHist, \

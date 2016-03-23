@@ -901,34 +901,34 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	""" read matches found """
-	# list_of_patches = saveLoadPatch.loadPatchMatches( \
-	# 	upperPath + \
-	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
-	# 		testFolder = "testset7" + folder_suffix, \
-	# 		folderToSave = "GaussianWindowOnAWhole", \
-	# 		folder = "testset7", \
-	# 		file1 = "test1", \
-	# 		file2 = "test3", \
-	# 		i = sigma, \
-	# 		step = 0.5, \
-	# 		tf = True))
-	# for i in range(0, len(list_of_patches)):
-	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
-	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
-	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
+	list_of_patches = saveLoadPatch.loadPatchMatches( \
+		upperPath + \
+		"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+			testFolder = "testset7" + folder_suffix, \
+			folderToSave = "GaussianWindowOnAWhole", \
+			folder = "testset7", \
+			file1 = "test1", \
+			file2 = "test3", \
+			i = sigma, \
+			step = 0.5, \
+			tf = True))
+	for i in range(0, len(list_of_patches)):
+		print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+		matchesFound.append(list_of_patches[i][0]) # just append the best match
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	# checkHistogramOfTruthAndMatchesFound( \
-	# 	testPatches, \
-	# 	groundTruth, \
-	# 	matchesFound, \
-	# 	img, \
-	# 	imgToMatch, \
-	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
-	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
-	# 	True, \
-	# 	True)
+	checkHistogramOfTruthAndMatchesFound( \
+		testPatches, \
+		groundTruth, \
+		matchesFound, \
+		img, \
+		imgToMatch, \
+		"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+			upperPath = upperPath, folder_suffix = folder_suffix), \
+		True, \
+		True)
 
-	# raise ValueError ("purpose stop for checking hists")
+	raise ValueError ("purpose stop for checking hists")
   
 	listOfBestMatches = testDescriptorPerformance( \
 		"images", \
@@ -1042,6 +1042,8 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 	# distinguishablePatches, feature_to_use, all_filtered_patches= comparePatches.findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict)
 	# # set the feature descriptor to use
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0
+	"""Set the FEATURES for comparePatches findDistinguishablePatchesAlgo3 process"""
+	comparePatches.FEATURES = copy.deepcopy(utils.ALL_FEATURE_IDS)
 	distinguishablePatches = comparePatches.findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict)
 	# imwrite/save the unique patches
 	imgToSave = comparePatches.drawPatchesOnImg(np.copy(img), distinguishablePatches, False, None, (0,0,255), True)
@@ -1180,12 +1182,16 @@ def main():
 	"""Necessary step to initialise the features constructed"""
 	utils.loadGeneratedFeatureParadigm()
 
+	"""Mannual Tests"""
 	# populate_testset_illuminance1(folder_suffix, "testAlgo3")
 	# populate_testset_illuminance2(folder_suffix)
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
 	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	
+	"""Test full automatic algorithm"""
+	# findDistinguishablePatchesAndExecuteMatching("images", "testset7", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
