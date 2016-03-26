@@ -140,7 +140,7 @@ class Patch:
 			# top left purple
 			self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
 			# Donut shape feature
-			self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
+			# self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
 			# neighbour bottom right blue feature
 			self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
 			# bottom right yellow feature
@@ -293,7 +293,10 @@ class Patch:
 		# Do just sub patches, no super patches
 		for i in xrange(-numberOfSubCircles, 0, 1):
 			newSize = getGaussianScale(self.size, scale, i)
-			if(self.x - newSize/2 >= 0 and self.x + newSize/2 < img.shape[0] and self.y - newSize/2 >=0 and self.y + newSize/2 < img.shape[1]):
+			if(self.x - newSize/2 >= 0 and \
+				self.x + newSize/2 < img.shape[0] and \
+				self.y - newSize/2 >=0 and \
+				self.y + newSize/2 < img.shape[1]):
 				newSubCirclePatch = Patch(self.x, self.y, newSize)
 				# print "new size{i}:".format(i = i), newSubCirclePatch.size
 				newSubGaussianWindow = gauss_kernels(newSubCirclePatch.size, newSubCirclePatch.size/6.0)
@@ -880,6 +883,28 @@ def removeDuplicates(sorted_patches, distance_thresh_dict, distancefunction = Je
 
 	return final_sorted_patches
 
+def featureSetToString(feature_set):
+	return "_".join(feature_set)
+
+def removeDuplicatesSameFeatureSet(sorted_patches):
+	"""
+	sorted_patches are in the order of highest LDAFeatureScore to Lowest LDAFeatureScore
+	"""
+	if (len(sorted_patches) == 0):
+		return sorted_patches
+	set_used = {}
+	final_sorted_patches = []
+	final_sorted_patches.append(sorted_patches[0])
+	set_used[featureSetToString(sorted_patches[0].feature_to_use)] = True
+	i = 1
+	while(i< len(sorted_patches)):
+		this_feature_set_str = featureSetToString(sorted_patches[i].feature_to_use)
+		if( not this_feature_set_str in set_used): # no feature using this set yet
+			final_sorted_patches.append(sorted_patches[i])
+			set_used[this_feature_set_str] = True
+		i += 1
+	return final_sorted_patches
+
 def findFeatureAttributeToUse(patches):
 	feature_attribute_scores = {}
 	# HSVScore score
@@ -979,12 +1004,13 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 		else:
 			i += 1
 	"""
-	3. remove duplicated patches that are very similar
+	3. remove duplicated patches that use the same set of feature_to_use
 	"""
 	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.LDAFeatureScore, reverse = True)
 
 	# return removeDuplicates(sorted_patches,remove_duplicate_thresh_dict)
-	return sorted_patches[0:20]
+	# return sorted_patches[0:20]
+	return removeDuplicatesSameFeatureSet(sorted_patches)[0:20]
 
 
 def getOnePatchFeatureSetScore(this_feature_set, this_feature_weights, patch):
@@ -1088,7 +1114,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 
 	random_patches = extractRandomPatches(img, sigma, 800)
 	print "FEATURES:", FEATURES
-	
+
 	for i in range(0, len(testPatches)):
 		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, \
 			full_image_HueHist, full_image_SaturationHist, full_image_ValueHist, \
@@ -1144,7 +1170,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	print "------------ Logging feature_sets_score for each testPatch ------------"
 	for i in range(0, len(testPatches)):
 		for j in range(0, len(all_feature_sets)):
-			print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " Score: ", feature_sets_score[j][i]
+			print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
 		print ""
 	return feature_sets_score
 
@@ -1211,7 +1237,7 @@ def populateTestFindDistinguishablePatchesAlgo2(folderName, imgName, sigma):
 	# cv2.waitKey(0)
 	# cv2.imwrite("testUniquePatches/UniquePatches_HSVthresh_{HSVthresh}_HOGthresh_{HOGthresh}_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")], HSVthresh = HSVthresh, HOGthresh = HOGthresh), img)
 
-def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images", custom_feature_sets = None):
+def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images", custom_feature_sets = None, custom_features_name = None):
 	# path = matchPatches.createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, suffix)
 	HSVthresh = 0.5
 	HOGthresh = 0.1
@@ -1241,32 +1267,36 @@ def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigm
 		print "" # spacing
 
 	result = drawPatchesOnImg(np.copy(img), sorted_patches, True, None, (0,0,255), True)
+	if (not custom_features_name is None):
+		features_names = custom_features_name
+	else:
+		features_names = "_".join(FEATURES)
 	cv2.imwrite("testUniquePatches/algo3/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format(\
-		features = "_".join(FEATURES), \
+		features = features_names, \
 		folder = test_folder_name, \
 		file = img_name[:img_name.find(".")], \
 		i = sigma), result)
 	saveLoadPatch.savePatchMatches(sorted_patches, 1, \
 		"{path}/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
-			features = "_".join(FEATURES), \
+			features = features_names, \
 			path = "testUniquePatches/algo3" , \
 			folder = test_folder_name, \
 			file = img_name[:img_name.find(".")], \
 			i = sigma))
 
-def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images"):
+def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images", custom_features_name = None):
 	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name), 1)
 	unique_patches = []
 	list_of_patches = saveLoadPatch.loadPatchMatches("{path}/UniquePatches_{features}_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
-		features = "_".join(FEATURES), \
+		features = (custom_features_name if (not custom_features_name is None ) else "_".join(FEATURES)), \
 		path = "testUniquePatches/algo3" , \
 		folder = test_folder_name, \
 		file = img_name[:img_name.find(".")], \
 		i = sigma))
-	for i in range(0, 1): # just append the best one found
+	for i in range(0, 10): # just append the best one found
 		unique_patches.append(list_of_patches[i][0])
 
-	unique_patches.append(Patch(608,781, 39))
+	# unique_patches.append(Patch(608,781, 39))
 
 	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 	for i in range(0, len(unique_patches)):
@@ -1371,7 +1401,8 @@ def testFunc(hist1, hist2, metricFunc):
 def main():
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
-	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+	# FEATURES = [utils.GENERATED_FEATURE_IDS[2]]
+	FEATURES = utils.ALL_FEATURE_IDS
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
@@ -1392,7 +1423,9 @@ def main():
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
 		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
+		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
 		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return

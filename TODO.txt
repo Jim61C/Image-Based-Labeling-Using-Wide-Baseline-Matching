@@ -1,2 +1,0 @@
-1. Try filtering with unormalized Jensen_Shannon_Divergence
-2. Try 2d histogram patch to patch Feature Based matching
