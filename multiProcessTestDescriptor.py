@@ -31,7 +31,7 @@ def dispatch_full_algorithm(args):
 	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
-	folder_suffix = "_full_algo_top20_unique_patches_response_based"
+	folder_suffix = "_full_algo_top20_unique_patches_response_based_no_neighbourblue"
 	if (test_folder_name == "testset7"):
 		matchPatches.findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")	
 	else:
@@ -84,7 +84,9 @@ def main():
 	("testset_rotation2", image_db), \
 	("testset4", image_db), \
 	("testset7", image_db), \
-	("testset1", image_db)]
+	("testset1", image_db), \
+	("testset8", image_db), \
+	]
 	
 	# test_folder_args = [ \
 	# 	("testset_illuminance1", [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]), \
