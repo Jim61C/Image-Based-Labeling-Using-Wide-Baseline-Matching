@@ -28,6 +28,8 @@ GENERATED_FEATURE_IDS = []
 
 GENERATED_FEATURE_PARADIGMS = []
 
+ALL_FEATURE_IDS = []
+
 def converScaleTo01(value, min, max):
 	"""
 	conver the value in min, max range scale to [0,1] range
@@ -56,3 +58,26 @@ def loadGeneratedFeatureParadigm():
 	
 	print "len(GENERATED_FEATURE_PARADIGMS):", len(GENERATED_FEATURE_PARADIGMS)
 	print "GENERATED_FEATURE_IDS:", GENERATED_FEATURE_IDS
+
+	"""put all feature id into a big array"""
+	loadAllFeatureIds()
+
+def loadAllFeatureIds():
+	global ALL_FEATURE_IDS
+	# auto generated feature from paradigms
+	for feature_id in GENERATED_FEATURE_IDS:
+		ALL_FEATURE_IDS.append(feature_id)
+	# customized feature
+	ALL_FEATURE_IDS.append(BOTTOM_RIGHT_GREEN_FEATURE_ID)
+	# ALL_FEATURE_IDS.append(BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID)
+	ALL_FEATURE_IDS.append(BOTTOM_RIGHT_YELLOW_FEATURE_ID)
+	# ALL_FEATURE_IDS.append(DONUT_SHAPE_FEATURE_ID)
+	ALL_FEATURE_IDS.append(TOP_LEFT_PURPLE_FEATURE_ID)
+	ALL_FEATURE_IDS.append(TOP_RIGHT_YELLOW_FEATURE_ID)
+	ALL_FEATURE_IDS.append(SHARP_HOG_FEATURE_ID)
+	ALL_FEATURE_IDS.append(BORDER_GREEN_FEATURE_ID)
+	ALL_FEATURE_IDS.append(CENTRE_YELLOW_FEATURE_ID)
+	ALL_FEATURE_IDS.append(CENTRE_BLUE_FEATURE_ID)
+	ALL_FEATURE_IDS.append(GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID)
+	print "ALL_FEATURE_IDS:", ALL_FEATURE_IDS
+

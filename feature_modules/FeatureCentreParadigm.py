@@ -37,9 +37,16 @@ class FeatureCentreParadigm(Feature):
 			 1: try seperate indexes used to filter hue bins that are wrongly categorized within target bins (now saturation range is very wide, may introduce noise)
 		     2: try change HISTBINNUM to 16
 		     3: If border saturation is concentrated, then add that as well.
+		     4: !try use Saturation * Hue as FEATURE_MODEL
+		     5: try 2D histogram -> leads to the problem of dissimilarity metric
+		     6: !try switch back to 36 bins, but for hue, widen up for border error detection
+		     7: !! if current one still wrongly match, try adjust border_hist weight and increase border_hist saturation range!!!!
 		"""
 		self.SATURATION_FILTER_START_INDEX = None
 		self.SATURATION_FILTER_END_INDEX = None
+
+		self.SATURATION_BORDER_FILTER_START_INDEX = None
+		self.SATURATION_BORDER_FILTER_END_INDEX = None
 		
 		self.FEATURE_MODEL_HUE = np.zeros(self.HISTBINNUM)
 		
@@ -97,17 +104,6 @@ class FeatureCentreParadigm(Feature):
 
 		border_hist_hue = outer_hist_hue - inner_hist_hue
 		border_hist_saturation = outer_hist_saturation - inner_hist_saturation
-
-		# model_constructor_inner_saturation = np.zeros(len(inner_hist_saturation))
-		# model_constructor_inner_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX] = \
-		# inner_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]
-		# print "model_constructor_inner_saturation:\n", model_constructor_inner_saturation
-
-		# model_constructor_inner_hue = np.zeros(len(inner_hist_hue))
-		# model_constructor_inner_hue[self.HUE_START_INDEX:self.HUE_END_INDEX] = \
-		# inner_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX]
-		# print model_constructor_hue
-		# print "model_constructor_inner_hue:\n", model_constructor_inner_saturation
 
 		"""compute border_hist"""
 		border_hist_hue_targetted = np.array([border_hist_hue[i % self.HISTBINNUM] \
@@ -317,6 +313,9 @@ class FeatureCentreParadigm(Feature):
 			# need two bins
 			self.HUE_START_INDEX = max_hue_bin
 			self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
+		if(self.HUE_START_INDEX >= self.HISTBINNUM):
+			self.HUE_START_INDEX = self.HUE_START_INDEX % self.HISTBINNUM
+			self.HUE_END_INDEX = self.HUE_END_INDEX % self.HISTBINNUM
 
 		"""Acquire Saturation Bin"""
 		target_hue_bins = []
@@ -324,9 +323,9 @@ class FeatureCentreParadigm(Feature):
 			target_hue_bins.append(i % self.HISTBINNUM)
 		"""
 		SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use
-		TODO: saturation range should still remain narrow, but when filtering, use a broder saturation range
 		"""
-		self.SATURATION_START_INDEX, self.SATURATION_END_INDEX = self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
+		self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
+		self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
 		plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
 		plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
 		
@@ -344,7 +343,9 @@ class FeatureCentreParadigm(Feature):
 		print "successfully constructed feature centre_paradigm, self.HUE_START_INDEX:", self.HUE_START_INDEX, \
 		"self.HUE_END_INDEX:", self.HUE_END_INDEX, \
 		"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
-		"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX
+		"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX, \
+		"self.SATURATION_FILTER_START_INDEX:", self.SATURATION_FILTER_START_INDEX, \
+		"self.SATURATION_FILTER_END_INDEX:", self.SATURATION_FILTER_END_INDEX
 
 		self.computeFeatureModel(inner_hue, inner_saturation)
 

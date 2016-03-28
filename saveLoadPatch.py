@@ -25,7 +25,7 @@ def savePatchMatches(patches, level, filename):
 	level: number of patches corresponding to the same testPatch (Default is 5)
 	"""
 	with open(filename, 'w') as csvfile:
-		fieldnames = ['x', 'y', 'size', 'correspondingPatchIndex', 'featureSet', 'LDAScore']
+		fieldnames = ['x', 'y', 'size', 'correspondingPatchIndex', 'featureSet', 'LDAScore', 'is_low_response']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		
 		writer.writeheader()
@@ -40,7 +40,8 @@ def savePatchMatches(patches, level, filename):
 					'size':patches[i*level + j].size, \
 					'correspondingPatchIndex':i, \
 					'featureSet': patches[i*level + j].feature_to_use, \
-					'LDAScore':patches[i*level + j].LDAFeatureScore})				
+					'LDAScore':patches[i*level + j].LDAFeatureScore, \
+					'is_low_response':patches[i*level + j].is_low_response})		
 	return
 
 
