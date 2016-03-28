@@ -1358,7 +1358,7 @@ def populateTestCombinatorialFeatureScore( \
 def main():
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
-	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+	FEATURES = [utils.GENERATED_FEATURE_IDS[1]]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
@@ -1378,8 +1378,8 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
 		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
 	return

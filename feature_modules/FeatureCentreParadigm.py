@@ -165,7 +165,7 @@ class FeatureCentreParadigm(Feature):
 		"""Try: normalizing border hist so that the weightage of border effect is comparable to that of the inner patch"""
 		# self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, normalize(border_hist, norm = "l1")[0]), axis = 1)
 		# self.hist = np.concatenate((filtered_inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
-		self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, border_hist), axis = 1)
+		self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
 		# self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, normalize(border_hist, norm = "l1")[0] * \
 		# 	np.sum(border_hist_hue)), axis = 1)
 		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
@@ -260,6 +260,7 @@ class FeatureCentreParadigm(Feature):
 		"""Here did not save saturation hist, if detection fail due to this, revert and adjust featureResponse method instead"""
 		self.FEATURE_MODEL = np.concatenate(( \
 			normalize(AGGREGATED_HUE_MODEL, norm = 'l1')[0], \
+			normalize(self.FEATURE_MODEL_SATURATION, norm = 'l1')[0], \
 			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
 		
