@@ -188,7 +188,7 @@ class FeatureCentreParadigm(Feature):
 
 		# print "self.HUE_START_INDEX: ", self.HUE_START_INDEX, "self.HUE_END_INDEX: ", self.HUE_END_INDEX
 		
-		comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
+		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
 		# plotStatistics.plotOneGivenHist("","inner_hist_hue", inner_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("","border_hist_hue", border_hist_hue, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "inner_hist_saturation", inner_hist_saturation, save = False, show = True)
