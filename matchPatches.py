@@ -871,7 +871,7 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	[utils.GENERATED_FEATURE_IDS[0]], \
 	[utils.GENERATED_FEATURE_IDS[1]], \
 	[utils.GENERATED_FEATURE_IDS[2]], \
-	[utils.GENERATED_FEATURE_IDS[3]]
+	# [utils.GENERATED_FEATURE_IDS[3]]
 	]
 
 	print "mannual feature to use:", MANUAL_FEATURE_TO_USE
@@ -917,7 +917,7 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	# groundTruth.append(comparePatches.Patch(344, 936, 23)) # heart orange, test3.jpg
 	# groundTruth.append(comparePatches.Patch(388, 904, 31)) # heart orange usually wrongly matched patch, test3.jpg
 
-	groundTruth.append(comparePatches.Patch(228,1010,23)) # red top left
+	# groundTruth.append(comparePatches.Patch(430,964,23)) # red top left
 
 	for i  in range(0, len(MANUAL_FEATURE_TO_USE)):
 		print "setting feature_to_use for groundTruth[{i}]".format(i = i)
@@ -1206,8 +1206,9 @@ def main():
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_SaturationWeighted_Hue"
-	folder_suffix = "_full_algo_top20_unique_patches_response_based"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
+	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_separateHS_descriptor"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable
 	start_time = time.time()
@@ -1218,14 +1219,14 @@ def main():
 
 	"""Mannual Tests"""
 	# populate_testset_illuminance1(folder_suffix, "testAlgo3")
-	# populate_testset_illuminance2(folder_suffix)
+	# populate_testset_illuminance2(pfolder_suffix)
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	findDistinguishablePatchesAndExecuteMatching("images", "testset4", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+	# findDistinguishablePatchesAndExecuteMatching("images", "testset4", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
