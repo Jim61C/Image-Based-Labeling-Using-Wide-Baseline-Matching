@@ -136,37 +136,37 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 	# 	(patchToMatch.feature_weights[patchToMatch.feature_to_use.index('HSV')] if ('HSV' in patchToMatch.feature_to_use) else 0.0) * color_distances**2 + \
 	# 	(patchToMatch.feature_weights[patchToMatch.feature_to_use.index('HOG')] if ('HOG' in patchToMatch.feature_to_use) else 0.0) * hog_distances**2)
 	"""Use patch to patch similarity of the features"""
-	# overall_distances = np.zeros(len(matchPatches))
-	# for i in range(0, len(overall_distances)):
-	# 	distance_vector = []
-	# 	for this_feature_id in patchToMatch.feature_to_use:
-	# 		# distance_vector.append( \
-	# 		# 	metricFunc( \
-	# 		# 	patchToMatch.getFeatureObject(this_feature_id).hist, \
-	# 		# 	matchPatches[i].getFeatureObject(this_feature_id).hist\
-	# 		# 	))
-	# 		distance_vector.append(patchToMatch.getFeatureObject(this_feature_id).dissimilarityWith(\
-	# 			matchPatches[i].getFeatureObject(this_feature_id)))
-	# 	distance_vector = np.asarray(distance_vector)
-	# 	assert (len(distance_vector) == len(patchToMatch.feature_weights)), "In findBestMatches: length of distance_vector must be the same as test patch feature_weights"
-	# 	overall_distances[i] = np.linalg.norm(np.multiply(distance_vector, patchToMatch.feature_weights), 2)
+	overall_distances = np.zeros(len(matchPatches))
+	for i in range(0, len(overall_distances)):
+		distance_vector = []
+		for this_feature_id in patchToMatch.feature_to_use:
+			# distance_vector.append( \
+			# 	metricFunc( \
+			# 	patchToMatch.getFeatureObject(this_feature_id).hist, \
+			# 	matchPatches[i].getFeatureObject(this_feature_id).hist\
+			# 	))
+			distance_vector.append(patchToMatch.getFeatureObject(this_feature_id).dissimilarityWith(\
+				matchPatches[i].getFeatureObject(this_feature_id)))
+		distance_vector = np.asarray(distance_vector)
+		assert (len(distance_vector) == len(patchToMatch.feature_weights)), "In findBestMatches: length of distance_vector must be the same as test patch feature_weights"
+		overall_distances[i] = np.linalg.norm(np.multiply(distance_vector, patchToMatch.feature_weights), 2)
 
-	# sortedIndex = np.argsort(overall_distances) # the lower the (distance) the better
+	sortedIndex = np.argsort(overall_distances) # the lower the (distance) the better
 
 	"""Use the rank of feature score, if test patch response < mean, choose the lowest score, else if > mean, choose the highest score"""
-	overall_scores = np.zeros(len(matchPatches))
-	for i in range(0, len(overall_scores)):
-		score_vector = []
-		for this_feature_id in patchToMatch.feature_to_use:
-			score_vector.append(matchPatches[i].getFeatureObject(this_feature_id).score)
-		score_vector = np.asarray(score_vector)
-		assert (len(score_vector) == len(patchToMatch.feature_weights)), "In findBestMatches: length of distance_vector must be the same as test patch feature_weights"
-		overall_scores[i] = np.sum(np.multiply(score_vector, patchToMatch.feature_weights))
+	# overall_scores = np.zeros(len(matchPatches))
+	# for i in range(0, len(overall_scores)):
+	# 	score_vector = []
+	# 	for this_feature_id in patchToMatch.feature_to_use:
+	# 		score_vector.append(matchPatches[i].getFeatureObject(this_feature_id).score)
+	# 	score_vector = np.asarray(score_vector)
+	# 	assert (len(score_vector) == len(patchToMatch.feature_weights)), "In findBestMatches: length of distance_vector must be the same as test patch feature_weights"
+	# 	overall_scores[i] = np.sum(np.multiply(score_vector, patchToMatch.feature_weights))
 	
-	if (patchToMatch.is_low_response):
-		sortedIndex = np.argsort(overall_scores) # get the lowest scores as possible
-	else:
-		sortedIndex = np.argsort(overall_scores)[::-1] # get the highest scores as possible
+	# if (patchToMatch.is_low_response):
+	# 	sortedIndex = np.argsort(overall_scores) # get the lowest scores as possible
+	# else:
+	# 	sortedIndex = np.argsort(overall_scores)[::-1] # get the highest scores as possible
 
 	# Return the best n matchPatches as a list
 	results = []
@@ -910,34 +910,34 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	""" read matches found """
-	list_of_patches = saveLoadPatch.loadPatchMatches( \
-		upperPath + \
-		"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
-			testFolder = "testset7" + folder_suffix, \
-			folderToSave = "GaussianWindowOnAWhole", \
-			folder = "testset7", \
-			file1 = "test1", \
-			file2 = "test3", \
-			i = sigma, \
-			step = 0.5, \
-			tf = True))
-	for i in range(0, len(list_of_patches)):
-		print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
-		matchesFound.append(list_of_patches[i][0]) # just append the best match
-	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
+	# list_of_patches = saveLoadPatch.loadPatchMatches( \
+	# 	upperPath + \
+	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+	# 		testFolder = "testset7" + folder_suffix, \
+	# 		folderToSave = "GaussianWindowOnAWhole", \
+	# 		folder = "testset7", \
+	# 		file1 = "test1", \
+	# 		file2 = "test3", \
+	# 		i = sigma, \
+	# 		step = 0.5, \
+	# 		tf = True))
+	# for i in range(0, len(list_of_patches)):
+	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
+	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	checkHistogramOfTruthAndMatchesFound( \
-		testPatches, \
-		groundTruth, \
-		matchesFound, \
-		img, \
-		imgToMatch, \
-		"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
-			upperPath = upperPath, folder_suffix = folder_suffix), \
-		True, \
-		True)
+	# checkHistogramOfTruthAndMatchesFound( \
+	# 	testPatches, \
+	# 	groundTruth, \
+	# 	matchesFound, \
+	# 	img, \
+	# 	imgToMatch, \
+	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
+	# 	True, \
+	# 	True)
 
-	raise ValueError ("purpose stop for checking hists")
+	# raise ValueError ("purpose stop for checking hists")
   
 	listOfBestMatches = testDescriptorPerformance( \
 		"images", \
@@ -1179,7 +1179,7 @@ def main():
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
-	folder_suffix = "_eyeballed_unique_patches_histogram_2d"
+	folder_suffix = "_eyeballed_unique_patches_histogram_2d_feature_comparison_based"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable
