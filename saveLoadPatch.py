@@ -47,7 +47,11 @@ def savePatchMatches(patches, level, filename):
 
 # will load patches in terms of original corresponding patches
 # return result is a list of list of patches: [[matches for patch0], [matches for patch1]...]
-def loadPatchMatches(filename):
+def loadPatchMatches(filename, initialize_features = True):
+	"""
+	load patches according to level from filename;
+	initialize_features: indicate whether initialize feature objects in the patch loaded
+	"""
 	patchMatches = []
 	with open(filename) as csvfile:
 		reader = csv.DictReader(csvfile)
@@ -64,7 +68,8 @@ def loadPatchMatches(filename):
 				patchMatches.append(patches)
 				patches = []
 
-			patches.append(comparePatches.Patch(int(row['x']),int(row['y']),int(row['size'])))
+			patches.append(comparePatches.Patch(int(row['x']),int(row['y']),int(row['size']),\
+				initialize_features = initialize_features))
 
 		if(len(patches) > 0):
 			patchMatches.append(patches)

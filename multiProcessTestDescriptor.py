@@ -46,10 +46,10 @@ def dispatch_matching_given_test_patches(args):
 	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	if (test_folder_name == "testset7"):
 		matchPatches.executeMatchingGivenDinstinguishablePatches(\
-			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")	
+			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)	
 	else:
 		matchPatches.executeMatchingGivenDinstinguishablePatches(\
-			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)
 
 
 def dispatch_feature_detection(args):
@@ -94,13 +94,13 @@ def main():
 	# test_folder_names = ["testset2", "testset3", "testset5"]
 	test_folder_args = [\
 	("testset_illuminance1", image_db), \
-	("testset_illuminance2", image_db), \
-	("testset_rotation1", image_db), \
-	("testset_rotation2", image_db), \
-	("testset4", image_db), \
-	("testset7", image_db), \
-	("testset1", image_db), \
-	("testset8", image_db), \
+	# ("testset_illuminance2", image_db), \
+	# ("testset_rotation1", image_db), \
+	# ("testset_rotation2", image_db), \
+	# ("testset4", image_db), \
+	# ("testset7", image_db), \
+	# ("testset1", image_db), \
+	# ("testset8", image_db), \
 	]
 	
 	# test_folder_args = [ \

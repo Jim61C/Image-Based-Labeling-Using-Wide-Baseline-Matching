@@ -253,7 +253,8 @@ def drawCombinedMatchView(thisImg, thisImgToMatch, thisTestPatches, thisListOfMa
 		thisMatchesFound.append(thisListOfMatches[j][0]) # just append the best match
 	return comparePatches.drawMatchesOnImg(thisImg, thisImgToMatch, thisTestPatches, thisMatchesFound, show)
 
-def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, testFolderName,  patchStep = 0.5, useGaussianWindow = True):
+def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, \
+	testFolderName,  patchStep = 0.5, useGaussianWindow = True, initialize_features = True):
 	"""Build image pyramid using opencv"""
 	level = 2
 	imgPyd = []
@@ -287,7 +288,8 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			if(newSize % 2 == 0): # if even newSize, make it odd
 				newSize += 1
 			newSize = adjustNewPatchSizeNewDimension(testPatches[j].x/(2**i), testPatches[j].y/(2**i), newSize, imgPyd[i].shape)
-			newPatch = comparePatches.Patch(testPatches[j].x/(2**i), testPatches[j].y/(2**i), newSize)
+			newPatch = comparePatches.Patch(testPatches[j].x/(2**i), testPatches[j].y/(2**i), newSize, \
+				initialize_features = initialize_features)
 			newPatch.setFeatureWeights(testPatches[j].feature_weights)
 			newPatch.setFeatureToUse(testPatches[j].feature_to_use)
 			thisLevelPatches.append(newPatch)
@@ -310,7 +312,8 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			thisListOfMatches = testDescriptorPerformanceWorker(thisTestPatches, \
 				thisImg, thisImgGray , \
 				thisImgToMatch, thisImgToMatchGray, \
-				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1)) # each gaussian 125 best matches
+				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1), \
+				initialize_features = initialize_features) # each gaussian 125 best matches
 			matchesFound = thisListOfMatches
 			"""draw the combined match view to check at this level"""
 			# drawCombinedMatchView(np.copy(thisImg), thisImgToMatch, thisTestPatches, matchesFound, True)
@@ -328,7 +331,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 							matchesFound[j][k].x*2,\
 							matchesFound[j][k].y*2,\
 							matchesFound[j][k].size*2 + 1, \
-							thisImg.shape))
+							thisImg.shape), initialize_features = initialize_features)
 					# compute Histogram for new potential match patch
 					# for this_feature in ALL_FEATURE_TO_COMPUTE:
 					# 	newPatch.getFeatureObject(this_feature).computeFeature(thisImgToMatch)
@@ -373,9 +376,10 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 	return matchesFound # a list of [list of good matches] for each test patch
 
 
-def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, testFolderName, k = 1, patchStep = 0.5, useGaussianWindow = True, metricFunc = comparePatches.Jensen_Shannon_Divergence):
+def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, testFolderName, k = 1, \
+	patchStep = 0.5, useGaussianWindow = True, metricFunc = comparePatches.Jensen_Shannon_Divergence, initialize_features = True):
 	#Extract match patches
-	matchPatches_origin = comparePatches.extractPatches(imgToMatch, sigma, patchStep)
+	matchPatches_origin = comparePatches.extractPatches(imgToMatch, sigma, patchStep, initialize_features = initialize_features)
 	print "length of matchPatches:", len(matchPatches_origin)
 	# scale = 8 # window pixel window for up and down scaling
 	gaussianScaleFactor = 1.2
@@ -386,7 +390,8 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgTo
 		if(level != 0):
 			# patchesArr.append(comparePatches.extractPatches(imgToMatch, sigma + scale * level, patchStep))
 			print "new sigma:", getGaussianScale(sigma, gaussianScaleFactor, level)
-			patchesArr.append(comparePatches.extractPatches(imgToMatch, getGaussianScale(sigma, gaussianScaleFactor, level), patchStep))
+			patchesArr.append(comparePatches.extractPatches(imgToMatch, getGaussianScale(sigma, gaussianScaleFactor, level), \
+				patchStep, initialize_features = initialize_features))
 	for i in range(0, len(patchesArr)):
 		print "len(patchesArr[{i}]):".format(i = i),len(patchesArr[i])
 
@@ -427,7 +432,8 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgTo
 
 
 
-def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMatchName,folderToSave,useGaussianWindow, suffix = "", sigma = 39, upperPath = "testPatchHSV"):
+def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMatchName,folderToSave, \
+	useGaussianWindow, suffix = "", sigma = 39, upperPath = "testPatchHSV", initialize_features = True):
 	"""
 	testDescriptorPerformance: given testPatches, run the descriptor matching process;
 	:number of gaussian: 5 (2 level down, 2 level up)
@@ -455,7 +461,8 @@ def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMat
  	# Move the window by 1/4 
  	patchStep = 0.5
 	# testPatchMatches = testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, folderName, patchStep)
-	testPatchMatches = testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, folderName, patchStep)
+	testPatchMatches = testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch, \
+		imgToMatch_gray, sigma, folderName, patchStep, initialize_features = initialize_features)
 	# Logging and Saving of match results
 	for testPatchIndex in range(0, len(testPatches)):
 		this_test_patch = testPatches[testPatchIndex]
@@ -1145,7 +1152,8 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 			matchesFound, \
 			show = False))
 
-def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
+def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test1_img_name, test2_img_name, \
+	folder_suffix, upperPath = "testMatches", initialize_features = True):
 	"""
 	image_db: image database folder to read source images from;
 	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
@@ -1158,6 +1166,7 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 		image_db = image_db, folder = test_folder_name, image = test1_img_name)))
 	img = cv2.imread("{image_db}/{folder}/{image}".format(\
 		image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
+	
 	testPatches = []
 	listOfTestPatches = saveLoadPatch.loadPatchMatches(\
 		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
@@ -1166,10 +1175,9 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 		testFolder = test_folder_name +folder_suffix, 
 		folder = test_folder_name, 
 		file = test1_img_name[:test1_img_name.find(".")], 
-		i = sigma))
+		i = sigma), initialize_features = initialize_features)
 	for i in range(0, len(listOfTestPatches)):
 		testPatches.append(listOfTestPatches[i][0])
-	comparePatches.drawPatchesOnImg(np.copy(img), testPatches, mark_sequence = True)
 
 	listOfMatches = testDescriptorPerformance(
 		image_db,
@@ -1181,7 +1189,9 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 		True,  
 		folder_suffix, 
 		sigma,
-		upperPath)
+		upperPath,
+		initialize_features)
+
 	matchesFound = []
 	for i in range(0, len(listOfMatches)):
 		matchesFound.append(listOfMatches[i][0]) # just append the best match

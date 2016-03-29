@@ -705,10 +705,11 @@ def extractRandomPatches(img, sigma, num):
 	return patches
 
 # step 1 means shift by half of the window size, step 2 means shift by one window size, and so on, (circular_expand_level = 2 for SubAndSuperHOG)
-def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expand_level = 0):
+def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expand_level = 0, initialize_features = True):
 	print "Step for extract patch:", int(sigma/2*step)
-	print img.shape[0]
-	print img.shape[1]
+	print "initialize_features?:", initialize_features
+	print "img.shape[0]:", img.shape[0]
+	print "img.shape[1]:", img.shape[1]
 	largest_patch_size = getGaussianScale(sigma, circular_expand_scale, circular_expand_level)
 	print "largest_patch_size:", largest_patch_size
 	patches = []
@@ -717,7 +718,7 @@ def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expan
 	for patch_centre_row_index in np.arange(largest_patch_size/2, img.shape[0]- largest_patch_size/2,int(sigma/2*step)):
 		for patch_centre_col_index in np.arange(largest_patch_size/2, img.shape[1]- largest_patch_size/2, int(sigma/2*step)):
 			# print "patch centre row index:", patch_centre_row_index, ";col index:", patch_centre_col_index 
-			thisPatch = Patch(patch_centre_row_index, patch_centre_col_index, sigma)
+			thisPatch = Patch(patch_centre_row_index, patch_centre_col_index, sigma, initialize_features = initialize_features)
 			patches.append(thisPatch)
 	return patches
 
