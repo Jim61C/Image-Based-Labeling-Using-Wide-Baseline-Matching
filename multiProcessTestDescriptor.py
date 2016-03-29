@@ -94,13 +94,13 @@ def main():
 	# test_folder_names = ["testset2", "testset3", "testset5"]
 	test_folder_args = [\
 	("testset_illuminance1", image_db), \
-	# ("testset_illuminance2", image_db), \
-	# ("testset_rotation1", image_db), \
-	# ("testset_rotation2", image_db), \
-	# ("testset4", image_db), \
-	# ("testset7", image_db), \
-	# ("testset1", image_db), \
-	# ("testset8", image_db), \
+	("testset_illuminance2", image_db), \
+	("testset_rotation1", image_db), \
+	("testset_rotation2", image_db), \
+	("testset4", image_db), \
+	("testset7", image_db), \
+	("testset1", image_db), \
+	("testset8", image_db), \
 	]
 	
 	# test_folder_args = [ \
