@@ -309,6 +309,16 @@ class FeatureCentreParadigm(Feature):
 
 		return True
 
+	def dissimilarityWith(self, feature_obj):
+		"""
+		override to use distanceBHATTACHARYYA for 2D histogram of feature.hist and feature.border_hist
+		"""
+		
+		h_s_distance = comparePatches.distanceBHATTACHARYYA(self.hist, feature_obj.hist)
+		border_distance = comparePatches.distanceBHATTACHARYYA(self.border_hist, feature_obj.border_hist)
+		
+		return np.linalg.norm([h_s_distance, border_distance], 2)
+
 	# def dissimilarityWith(self, feature_obj):
 	# 	"""
 	# 	return the customized dissimilarity measure with another feature_obj of the same type
