@@ -172,10 +172,15 @@ class FeatureCentreParadigm(Feature):
 				np.array([target_hue_sum]),\
 				filtered_inner_hist_hue[self.HUE_END_INDEX:]), axis = 1)
 
+		print "np.sum(outer_hist_hue): ", np.sum(outer_hist_hue)
+		print "np.sum(inner_hist_hue): ", np.sum(inner_hist_hue)
+		print "np.sum(border_hist_hue): ", np.sum(border_hist_hue)
+
 		"""Try: normalizing border hist so that the weightage of border effect is comparable to that of the inner patch"""
 		# self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, normalize(border_hist, norm = "l1")[0]), axis = 1)
 		# self.hist = np.concatenate((filtered_inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
-		self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, border_hist), axis = 1)
+		self.hist = np.concatenate((aggregated_filtered_inner_hist_hue * np.sum(outer_hist_hue)/np.sum(inner_hist_hue), \
+			border_hist * np.sum(outer_hist_hue)/ np.sum(border_hist_hue)), axis = 1)
 		# self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, normalize(border_hist, norm = "l1")[0] * \
 		# 	np.sum(border_hist_hue)), axis = 1)
 		
