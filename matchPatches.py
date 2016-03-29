@@ -195,6 +195,22 @@ def getGaussianScale(originalScale, factor, level):
 		newScale = newScale + 1  if (newScale % 2 == 0) else newScale
 	return newScale
 
+def adjustNewPatchSizeNewDimension(new_patch_x, new_patch_y, new_patch_size, new_dimension):
+	"""
+	new_patch_size: the target new new_patch_size
+	new_dimension: new_dimension[0] -> number of rows, new_dimension[1] -> number of columns
+	return: adjusted new_patch_size so that it fits in the dimension
+	"""
+	if (new_patch_x - new_patch_size/2 < 0):
+		new_patch_size = 2 * new_patch_x + 1
+	if (new_patch_y - new_patch_size/2 < 0):
+		new_patch_size = 2 * new_patch_y + 1
+	if (new_patch_x + new_patch_size/2 >= new_dimension[0]):
+		new_patch_size = (new_dimension[0] - new_patch_x) * 2 - 1
+	if (new_patch_y + new_patch_size/2 >= new_dimension[1]):
+		new_patch_size = (new_dimension[1] - new_patch_y) * 2 - 1
+	return new_patch_size
+
 def testFindOnePatchMatch(patchToMatch, patchesArr, k = 1, metricFunc = comparePatches.Jensen_Shannon_Divergence): # k : number of best patches to extract for a sigma level (for one patch array)
 	goodMatchesArr = []
 	for i in range(0, len(patchesArr)):		
@@ -265,6 +281,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			newSize = testPatches[j].size/(2**i)
 			if(newSize % 2 == 0): # if even newSize, make it odd
 				newSize += 1
+			newSize = adjustNewPatchSizeNewDimension(testPatches[j].x/(2**i), testPatches[j].y/(2**i), newSize, imgPyd[i].shape)
 			newPatch = comparePatches.Patch(testPatches[j].x/(2**i), testPatches[j].y/(2**i), newSize)
 			newPatch.setFeatureWeights(testPatches[j].feature_weights)
 			newPatch.setFeatureToUse(testPatches[j].feature_to_use)
@@ -300,7 +317,13 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			for j in range(0, len(matchesFound)):
 				matchesFoundNextLevelOnePatch = []
 				for k in range(0, len(matchesFound[j])):
-					newPatch = comparePatches.Patch(matchesFound[j][k].x*2,matchesFound[j][k].y*2, matchesFound[j][k].size*2 + 1)
+					"""populate down the imgPyd and create new patches"""
+					newPatch = comparePatches.Patch(matchesFound[j][k].x*2,matchesFound[j][k].y*2, \
+						adjustNewPatchSizeNewDimension(\
+							matchesFound[j][k].x*2,\
+							matchesFound[j][k].y*2,\
+							matchesFound[j][k].size*2 + 1, \
+							thisImg.shape))
 					# compute Histogram for new potential match patch
 					for this_feature in ALL_FEATURE_TO_COMPUTE:
 						newPatch.getFeatureObject(this_feature).computeFeature(thisImgToMatch)
@@ -1042,7 +1065,17 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 	# distinguishablePatches, feature_to_use, all_filtered_patches= comparePatches.findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict)
 	# # set the feature descriptor to use
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0
+	"""Set the FEATURES for comparePatches findDistinguishablePatchesAlgo3 process"""
+	comparePatches.FEATURES = copy.deepcopy(utils.ALL_FEATURE_IDS)
 	distinguishablePatches = comparePatches.findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict)
+	
+	"""Set the ALL_FEATURE_TO_COMPUTE"""
+	all_feature_to_compute_set = set()
+	for patch in distinguishablePatches:
+		all_feature_to_compute_set = all_feature_to_compute_set.union(set(patch.feature_to_use))
+	global ALL_FEATURE_TO_COMPUTE
+	ALL_FEATURE_TO_COMPUTE = list(all_feature_to_compute_set)
+
 	# imwrite/save the unique patches
 	imgToSave = comparePatches.drawPatchesOnImg(np.copy(img), distinguishablePatches, False, None, (0,0,255), True)
 	path = createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)
@@ -1180,12 +1213,16 @@ def main():
 	"""Necessary step to initialise the features constructed"""
 	utils.loadGeneratedFeatureParadigm()
 
+	"""Mannual Tests"""
 	# populate_testset_illuminance1(folder_suffix, "testAlgo3")
 	# populate_testset_illuminance2(folder_suffix)
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	
+	"""Test full automatic algorithm"""
+	findDistinguishablePatchesAndExecuteMatching("images", "testset4", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)

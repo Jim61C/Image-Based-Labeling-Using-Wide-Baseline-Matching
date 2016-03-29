@@ -178,7 +178,6 @@ class FeatureCentreParadigm(Feature):
 		self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, border_hist), axis = 1)
 		# self.hist = np.concatenate((aggregated_filtered_inner_hist_hue, normalize(border_hist, norm = "l1")[0] * \
 		# 	np.sum(border_hist_hue)), axis = 1)
-		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
 		
 		self.inner_hist_hue = normalize(inner_hist_hue, norm = 'l1')[0]
 		self.inner_hist_saturation = normalize(inner_hist_saturation, norm = 'l1')[0]
@@ -228,7 +227,7 @@ class FeatureCentreParadigm(Feature):
 
 	def computeScore(self):
 		if(self.score is None):
-			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence)
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Unnormalized)
 			# self.score = self.featureResponse()
 
 
@@ -291,7 +290,7 @@ class FeatureCentreParadigm(Feature):
 		"""
 		self.HUEFRACTION = 0.7
 		self.SATURATIONFRACTION_INVERSE = 0.1 # maximum border hist
-		self.SHRINK_HUE_BIN_FRACTION = 0.9
+		self.SHRINK_HUE_BIN_FRACTION = 0.99
 
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
@@ -328,6 +327,9 @@ class FeatureCentreParadigm(Feature):
 			# need two bins
 			self.HUE_START_INDEX = max_hue_bin
 			self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
+		if(self.HUE_START_INDEX >= self.HISTBINNUM):
+			self.HUE_START_INDEX = self.HUE_START_INDEX % self.HISTBINNUM
+			self.HUE_END_INDEX = self.HUE_END_INDEX % self.HISTBINNUM
 
 		"""Acquire Saturation Bin"""
 		target_hue_bins = []
