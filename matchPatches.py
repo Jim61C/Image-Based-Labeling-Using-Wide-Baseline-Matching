@@ -1145,6 +1145,55 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 			matchesFound, \
 			show = False))
 
+def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
+	"""
+	image_db: image database folder to read source images from;
+	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
+	test_folder_name: name of the test folder containing images of different view points;
+	folder_suffix: suffix to the folder to save specifying what kind of feature algorithm used;
+	test1_img_name: 'test1.jpg'(Default)
+	test2_img_name: 'test2.jpg'(Default)
+	"""
+	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(
+		image_db = image_db, folder = test_folder_name, image = test1_img_name)))
+	img = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
+	testPatches = []
+	listOfTestPatches = saveLoadPatch.loadPatchMatches(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix, 
+		folder = test_folder_name, 
+		file = test1_img_name[:test1_img_name.find(".")], 
+		i = sigma))
+	for i in range(0, len(listOfTestPatches)):
+		testPatches.append(listOfTestPatches[i][0])
+	comparePatches.drawPatchesOnImg(np.copy(img), testPatches, mark_sequence = True)
+
+	listOfMatches = testDescriptorPerformance(
+		image_db,
+		test_folder_name, 
+		testPatches, 
+		test1_img_name,
+		test2_img_name,
+		"GaussianWindowOnAWhole",
+		True,  
+		folder_suffix, 
+		sigma,
+		upperPath)
+	matchesFound = []
+	for i in range(0, len(listOfMatches)):
+		matchesFound.append(listOfMatches[i][0]) # just append the best match
+	# imwrite the combined match scene
+	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)+"/_combined_scene_match.jpg",\
+		comparePatches.drawMatchesOnImg(\
+			cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name), 1), \
+			cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test2_img_name), 1), \
+			testPatches, \
+			matchesFound, \
+			show = False))
+
 """
 TODO: complete populateFeatureMatchingStatistics after the Image DB is found
 """

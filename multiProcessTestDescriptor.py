@@ -33,9 +33,24 @@ def dispatch_full_algorithm(args):
 	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
 	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	if (test_folder_name == "testset7"):
-		matchPatches.findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")	
+		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
+			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")	
 	else:
-		matchPatches.findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
+			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+
+def dispatch_matching_given_test_patches(args):
+	test_folder_name, image_db = args
+	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
+	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	if (test_folder_name == "testset7"):
+		matchPatches.executeMatchingGivenDinstinguishablePatches(\
+			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")	
+	else:
+		matchPatches.executeMatchingGivenDinstinguishablePatches(\
+			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+
 
 def dispatch_feature_detection(args):
 	test_folder_name, image_db = args
@@ -114,8 +129,10 @@ def main():
 	# pool.map(dispatch_match_test, testNames)
 	# pool.map(dispatch_feature_detection, test_folder_args)
 	# pool.map(dispatch_feature_matching, test_folder_args)
-	pool.map(dispatch_full_algorithm, test_folder_args)
 	# pool.map(dispatch_feature_detection_algo3, test_folder_args)
+	# pool.map(dispatch_full_algorithm, test_folder_args)
+	pool.map(dispatch_matching_given_test_patches, test_folder_args)
+
 
 	pool.close()
 	pool.join()
