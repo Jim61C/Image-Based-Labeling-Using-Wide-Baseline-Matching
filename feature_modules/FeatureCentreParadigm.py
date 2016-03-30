@@ -196,26 +196,27 @@ class FeatureCentreParadigm(Feature):
 					# self.hist[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1), \
 				# np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
 					# self.FEATURE_MODEL[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1)))
-		return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
+		# return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
 
 		"""Seperate comparison of response"""
-		# assert (len(self.inner_hist_hue) == len(self.FEATURE_MODEL[:self.HISTBINNUM])), \
-		# "Seperate feature response, inner hist hue should have the same range"
-		# assert (len(self.inner_hist_saturation) == len(self.FEATURE_MODEL[self.HISTBINNUM: self.HISTBINNUM * 2])), \
-		# "Seperate feature response, inner hist saturation should have the same range"
-		# assert (len(self.border_hist) == len(self.FEATURE_MODEL[self.HISTBINNUM *2:])), \
-		# "Seperate feature response, border hist should have the same range"
+		inner_hist_hue_distance = metric_func(\
+			self.hist[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
+			self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)])
+		
+		inner_hist_saturation_distance = metric_func(\
+			self.hist[self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1): self.HISTBINNUM * 2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
+			self.FEATURE_MODEL[self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1): self.HISTBINNUM * 2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)])
 
-		# inner_hist_hue_distance = metric_func(self.inner_hist_hue, self.FEATURE_MODEL[:self.HISTBINNUM])
-		# inner_hist_saturation_distance = metric_func(self.inner_hist_saturation, self.FEATURE_MODEL[self.HISTBINNUM: self.HISTBINNUM * 2])
-		# """TODO: for border_distance can just use euclidean"""
-		# border_distance = metric_func(self.border_hist, self.FEATURE_MODEL[self.HISTBINNUM *2:])
+		"""TODO: for border_distance can just use euclidean"""
+		border_distance = metric_func(\
+			self.hist[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):], \
+			self.FEATURE_MODEL[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):])
 
-		# return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, inner_hist_saturation_distance, border_distance], 2))
+		return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, inner_hist_saturation_distance, border_distance], 2))
 
 	def computeScore(self):
 		if(self.score is None):
-			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Unnormalized)
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Hat)
 			# self.score = self.featureResponse()
 
 

@@ -757,6 +757,18 @@ def Jensen_Shannon_Divergence(hist1,hist2):
 	# print dist
 	return dist
 
+def Jensen_Shannon_Divergence_Hat(hist1,hist2):
+	"""
+	with penalty of |np.sum(hist) - np.sum(hist2)|
+	"""
+	mean = (hist1 + hist2) / 2
+	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
+	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = True) + \
+		klDivergence_mannual(hist2,mean, normalize = True))
+	# print dist
+	return dist + abs(np.sum(hist1) - np.sum(hist2))
+
+
 def Jensen_Shannon_Divergence_Unnormalized(hist1,hist2):
 	mean = (hist1 + hist2) / 2
 	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
@@ -1293,10 +1305,11 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 		folder = test_folder_name, \
 		file = img_name[:img_name.find(".")], \
 		i = sigma))
-	for i in range(0, 10): # just append the best one found
+	for i in range(0, 1): # just append the best one found
 		unique_patches.append(list_of_patches[i][0])
 
 	# unique_patches.append(Patch(608,781, 39))
+	# unique_patches.append(Patch(604,784, 39))
 
 	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 	for i in range(0, len(unique_patches)):
@@ -1422,9 +1435,9 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
-		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
 		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
 		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")
 	print "finished feature extraction in ", time.time() - start_time, "seconds"
