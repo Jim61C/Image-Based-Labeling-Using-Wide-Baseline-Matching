@@ -494,12 +494,13 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 		matchesFound[i].computeHOG(cv2.cvtColor(imgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int), True)
 
 		print "\nfor test patch ", i
-		plotStatistics.plotHOGHistCmp(path, \
-			"HOGhistCmp{i}".format(i = i), \
-			testPatches[i].HOG, "testPatch{i}".format(i = i), \
-			matchesFound[i].HOG, "matchFound{i}".format(i = i),\
-			groundTruth[i].HOG, "groundTruth{i}".format(i = i), \
-			saveHist, displayHist)
+		# plotStatistics.plotHOGHistCmp(path, \
+		# 	"HOGhistCmp{i}".format(i = i), \
+		# 	testPatches[i].HOG, "testPatch{i}".format(i = i), \
+		# 	matchesFound[i].HOG, "matchFound{i}".format(i = i),\
+		# 	groundTruth[i].HOG, "groundTruth{i}".format(i = i), \
+		# 	saveHist, displayHist)
+
 		plotStatistics.plotHSVSeperateHistCmp(path, \
 			"HSV Seperate Cmp_testPatch{i}".format(i = i), \
 			[testPatches[i].HueHist, testPatches[i].SaturationHist, testPatches[i].ValueHist], "testPatch{i}".format(i = i) , \
@@ -534,6 +535,45 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL, save = saveHist, show = displayHist)
 
 
+			"""DEBUGGING"""
+			plotStatistics.plotHOGHistCmp(path, \
+				"{feature} border patch HOGhistCmp{i}".format(i = i, feature = test_patch_feature), \
+				testPatches[i].getFeatureObject(test_patch_feature).border_HOG, "testPatch{i}".format(i = i), \
+				matchesFound[i].getFeatureObject(test_patch_feature).border_HOG, "matchFound{i}".format(i = i),\
+				groundTruth[i].getFeatureObject(test_patch_feature).border_HOG, "groundTruth{i}".format(i = i), \
+				saveHist, displayHist)
+
+			match_found_border_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
+					testPatches[i].getFeatureObject(test_patch_feature).border_HOG, \
+					matchesFound[i].getFeatureObject(test_patch_feature).border_HOG)
+			
+			match_found_inner_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
+					testPatches[i].getFeatureObject(test_patch_feature).inner_HOG, \
+					matchesFound[i].getFeatureObject(test_patch_feature).inner_HOG)
+
+			ground_truth_border_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
+					testPatches[i].getFeatureObject(test_patch_feature).border_HOG, \
+					groundTruth[i].getFeatureObject(test_patch_feature).border_HOG)
+
+			ground_truth_inner_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
+					testPatches[i].getFeatureObject(test_patch_feature).inner_HOG, \
+					groundTruth[i].getFeatureObject(test_patch_feature).inner_HOG)
+
+
+			match_found_hog_score = 1.0/(1.0 + \
+				np.linalg.norm([match_found_inner_dist, match_found_border_dist], 2))
+
+			ground_truth_hog_score = 1.0/(1.0 + \
+				np.linalg.norm([ground_truth_inner_dist, ground_truth_border_dist], 2))
+
+			print "testPatch {test_patch_feature} inner_HOG:\n".format(test_patch_feature = test_patch_feature), \
+			testPatches[i].getFeatureObject(test_patch_feature).inner_HOG
+			print "testPatch {test_patch_feature} border_HOG:\n".format(test_patch_feature = test_patch_feature), \
+			testPatches[i].getFeatureObject(test_patch_feature).border_HOG
+			print "ground_truth_hog_score:", ground_truth_hog_score
+			print "match_found_hog_score:", match_found_hog_score
+
+
 			"""print the score of dissimilarityWith"""
 			dissimilarity_ground_truth = testPatches[i].getFeatureObject(test_patch_feature).dissimilarityWith(\
 				groundTruth[i].getFeatureObject(test_patch_feature))
@@ -547,6 +587,13 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 			" dissimilarity_match_found:", dissimilarity_match_found, \
 			" matchesFound[{i}] actual feature score".format(i = i), matchesFound[i].getFeatureObject(test_patch_feature).score
 			print "testPatches[{i}] ".format(i = i), "match found is better? ", dissimilarity_match_found < dissimilarity_ground_truth	
+
+			print "groundTruth[{i}] score(added hog):".format(i = i), groundTruth[i].getFeatureObject(test_patch_feature).score + \
+			ground_truth_hog_score
+
+			print "matchesFound[{i}] score(added hog):".format(i = i), matchesFound[i].getFeatureObject(test_patch_feature).score + \
+			match_found_hog_score
+
 	return
 
 def populate_testset_illuminance1(folder_suffix = "", upperPath = "testPatchHSV"):
@@ -924,34 +971,34 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), groundTruth, mark_sequence = True)
 
 	""" read matches found """
-	# list_of_patches = saveLoadPatch.loadPatchMatches( \
-	# 	upperPath + \
-	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
-	# 		testFolder = "testset7" + folder_suffix, \
-	# 		folderToSave = "GaussianWindowOnAWhole", \
-	# 		folder = "testset7", \
-	# 		file1 = "test1", \
-	# 		file2 = "test3", \
-	# 		i = sigma, \
-	# 		step = 0.5, \
-	# 		tf = True))
-	# for i in range(0, len(list_of_patches)):
-	# 	print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
-	# 	matchesFound.append(list_of_patches[i][0]) # just append the best match
-	# comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
+	list_of_patches = saveLoadPatch.loadPatchMatches( \
+		upperPath + \
+		"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+			testFolder = "testset7" + folder_suffix, \
+			folderToSave = "GaussianWindowOnAWhole", \
+			folder = "testset7", \
+			file1 = "test1", \
+			file2 = "test3", \
+			i = sigma, \
+			step = 0.5, \
+			tf = True))
+	for i in range(0, len(list_of_patches)):
+		print "patch size of matchesFound[{i}] = ".format( i = i ), list_of_patches[i][0].size
+		matchesFound.append(list_of_patches[i][0]) # just append the best match
+	comparePatches.drawPatchesOnImg(np.copy(imgToMatch), matchesFound, mark_sequence = True)
 	
-	# checkHistogramOfTruthAndMatchesFound( \
-	# 	testPatches, \
-	# 	groundTruth, \
-	# 	matchesFound, \
-	# 	img, \
-	# 	imgToMatch, \
-	# 	"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
-	# 		upperPath = upperPath, folder_suffix = folder_suffix), \
-	# 	True, \
-	# 	True)
+	checkHistogramOfTruthAndMatchesFound( \
+		testPatches, \
+		groundTruth, \
+		matchesFound, \
+		img, \
+		imgToMatch, \
+		"./{upperPath}/GaussianWindowOnAWhole/testset7{folder_suffix}/hists".format(\
+			upperPath = upperPath, folder_suffix = folder_suffix), \
+		True, \
+		True)
 
-	# raise ValueError ("purpose stop for checking hists")
+	raise ValueError ("purpose stop for checking hists")
   
 	listOfBestMatches = testDescriptorPerformance( \
 		"images", \
@@ -1204,6 +1251,7 @@ def main():
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
 	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue"
+	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue_Heart_Contour"
 	# folder_suffix = "_full_algo_top20_unique_patches_response_based"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'

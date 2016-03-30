@@ -174,6 +174,20 @@ class FeatureCentreParadigm(Feature):
 		self.border_hist_hue = normalize(border_hist_hue, norm = 'l1')[0]
 		self.border_hist_saturation = normalize(border_hist_saturation, norm = 'l1')[0]
 		self.border_hist = border_hist
+
+
+		"""DEBUGGING inner patch HOG"""
+		"""inner patch HOG"""
+		self.patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), gaussian_window)
+		self.inner_HOG = inner_patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), inner_gaussian_window)
+		
+		"""border HOG"""
+		self.border_HOG = self.patch.HOG_Uncirculated - inner_patch.HOG_Uncirculated
+		max_ori = np.argmax(self.border_HOG) # use maximum
+		self.border_HOG =  np.array(list(self.border_HOG[max_ori:len(self.border_HOG)]) + \
+		list(self.border_HOG[0:max_ori])) # rotate circular hist
+		
+
 		
 		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
 		# plotStatistics.plotOneGivenHist("","inner_hist_hue weighted by saturation ", inner_hist_hue, save = False, show = True)
@@ -212,7 +226,8 @@ class FeatureCentreParadigm(Feature):
 			self.hist[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):], \
 			self.FEATURE_MODEL[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):])
 
-		return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, inner_hist_saturation_distance, border_distance], 2))
+		# return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, inner_hist_saturation_distance, border_distance], 2))
+		return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, border_distance], 2))
 
 	def computeScore(self):
 		if(self.score is None):
