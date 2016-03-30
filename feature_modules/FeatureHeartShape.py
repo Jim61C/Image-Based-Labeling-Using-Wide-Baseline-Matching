@@ -25,6 +25,7 @@ class FeatureHeartShape(Feature):
 		Feature.__init__(self, patch, id)
 
 		self.FEATURE_MODEL = utils.loadArray("FeatureHeartShapeContourModel.npz")
+		self.FEATURE_MODEL_NUM_CONTOURS = 2
 
 		self._checkRep()
 
@@ -39,7 +40,10 @@ class FeatureHeartShape(Feature):
 		# cv2.waitKey(0)
 		contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
-		"""Model Construction (find heart shape contour)"""
+		"""
+		Model Construction (find heart shape contour)
+		TODO: record feature model patch size, and scale (x,y) in contours to the targetted size when computing feature
+		"""
 		# print "number of contours found:", len(contours)
 		# if (len(contours) ==2):
 			# cv2.drawContours(roi, [contours[0]], 0, (0,255,0), 3)
@@ -65,7 +69,7 @@ class FeatureHeartShape(Feature):
 			this_dissimilarity = cv2.matchShapes(contour, self.FEATURE_MODEL, cv.CV_CONTOURS_MATCH_I3, 0)
 			if (this_dissimilarity < dissimilarity):
 				dissimilarity = this_dissimilarity
-		return 1.0 / (1.0 + dissimilarity)
+		return 1.0 / (1.0 + dissimilarity + abs(len(self.hist) - self.FEATURE_MODEL_NUM_CONTOURS))
 
 	def computeScore(self):
 		"""
