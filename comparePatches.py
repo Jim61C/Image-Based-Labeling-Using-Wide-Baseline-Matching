@@ -257,24 +257,27 @@ class Patch:
 	# 		self.computeHOG(img, useGaussianSmoothing)
 	# 	setattr(self, "HOG_BIN{i}".format(i = i), self.HOG_Uncirculated[(i-1)*9:i*9])
 
-	def computeHOG(self, img, useGaussianSmoothing = True):
+	def computeHOG(self, img, useGaussianSmoothing = True, given_gaussian_window = None):
 		"""
 		HOG with orietation assignment and circular histogram
 		img: gray scale
 		Instead of compute the 2*2 subpatch HOG, compute a 1) sub circle 2) super circle HOG
 		TODO: fine tune orientation, smooth the HOG hist + add more possible orietations (not just the maximum, 0.8 of the maximum as well) for considertaion in matching
 		"""
-		# Check if HOGArr is already computed
-		if(len(self.HOGArr) > 0):
+		# Check if HOGArr is already computed using the default gaussian window
+		if(len(self.HOGArr) > 0 and given_gaussian_window is None):
 			return
 		else:
 			self.HOGArr = []
 
-		gaussianSigma = self.size/6.0 # six sigma rule of thumb
-		if(useGaussianSmoothing):
-			gaussianWindow = gauss_kernels(self.size, gaussianSigma)
+		if (given_gaussian_window is None):
+			gaussianSigma = self.size/6.0 # six sigma rule of thumb
+			if(useGaussianSmoothing):
+				gaussianWindow = gauss_kernels(self.size, gaussianSigma)
+			else:
+				gaussianWindow = np.ones(shape = (self.size, self.size))
 		else:
-			gaussianWindow = np.ones(shape = (self.size, self.size))
+			gaussianWindow = given_gaussian_window
 		
 		fullPatchHOG = self.computeSinglePatchHOG(img,gaussianWindow)
 		self.HOG = fullPatchHOG
@@ -356,11 +359,12 @@ class Patch:
 
 				hist[HOG_bin] += gaussianWindow[i - ref_x][j - ref_y] * mag
 
-		self.HOG_Uncirculated = self.finalizeHOG(hist) # store the HOG_Uncirculated, it will be from -pi to pi, bin 0 corresponds to -pi
-		max_ori = np.argmax(hist) # use maximum
-		hist =  list(hist[max_ori:len(hist)]) + list(hist[0:max_ori]) # rotate circular hist
+		uncirculated_aggregated = self.finalizeHOG(hist)
+		self.HOG_Uncirculated = uncirculated_aggregated # store the HOG_Uncirculated, it will be from -pi to pi, bin 0 corresponds to -pi
+		max_ori = np.argmax(uncirculated_aggregated) # use maximum
+		circulated_aggregated =  list(uncirculated_aggregated[max_ori:len(uncirculated_aggregated)]) + list(uncirculated_aggregated[0:max_ori]) # rotate circular hist
 
-		return self.finalizeHOG(hist)
+		return np.array(circulated_aggregated)
 
 	def finalizeHOG(self,hist_360_bin):
 		"""
