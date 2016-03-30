@@ -34,10 +34,10 @@ def dispatch_full_algorithm(args):
 	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	if (test_folder_name == "testset7"):
 		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
-			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")	
+			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)	
 	else:
 		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
-			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)
 
 def dispatch_matching_given_test_patches(args):
 	test_folder_name, image_db = args
@@ -93,14 +93,16 @@ def main():
 	# test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
 	# test_folder_names = ["testset2", "testset3", "testset5"]
 	test_folder_args = [\
-	("testset_illuminance1", image_db), \
-	("testset_illuminance2", image_db), \
-	("testset_rotation1", image_db), \
-	("testset_rotation2", image_db), \
-	("testset4", image_db), \
-	("testset7", image_db), \
-	("testset1", image_db), \
+	# ("testset_illuminance1", image_db), \
+	# ("testset_illuminance2", image_db), \
+	# ("testset_rotation1", image_db), \
+	# ("testset_rotation2", image_db), \
+	# ("testset4", image_db), \
+	# ("testset7", image_db), \
+	# ("testset1", image_db), \
 	("testset8", image_db), \
+	# ("testset12", image_db), \
+	# ("testset13", image_db), \
 	]
 	
 	# test_folder_args = [ \
@@ -130,8 +132,8 @@ def main():
 	# pool.map(dispatch_feature_detection, test_folder_args)
 	# pool.map(dispatch_feature_matching, test_folder_args)
 	# pool.map(dispatch_feature_detection_algo3, test_folder_args)
-	# pool.map(dispatch_full_algorithm, test_folder_args)
-	pool.map(dispatch_matching_given_test_patches, test_folder_args)
+	pool.map(dispatch_full_algorithm, test_folder_args)
+	# pool.map(dispatch_matching_given_test_patches, test_folder_args)
 
 
 	pool.close()

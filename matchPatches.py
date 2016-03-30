@@ -1112,7 +1112,8 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 			i = sigma))
 	return distinguishablePatches
 
-def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches"):
+def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, test1_img_name, test2_img_name, \
+	folder_suffix, upperPath = "testMatches", initialize_features = True):
 	"""
 	image_db: image database folder to read source images from;
 	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
@@ -1139,7 +1140,8 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 		True,  
 		folder_suffix, 
 		sigma,
-		upperPath)
+		upperPath,
+		initialize_features)
 	matchesFound = []
 	for i in range(0, len(listOfMatches)):
 		matchesFound.append(listOfMatches[i][0]) # just append the best match
