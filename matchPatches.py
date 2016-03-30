@@ -534,46 +534,6 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL".format(i = i , feature = test_patch_feature), \
 				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL, save = saveHist, show = displayHist)
 
-
-			"""DEBUGGING"""
-			plotStatistics.plotHOGHistCmp(path, \
-				"{feature} border patch HOGhistCmp{i}".format(i = i, feature = test_patch_feature), \
-				testPatches[i].getFeatureObject(test_patch_feature).border_HOG, "testPatch{i}".format(i = i), \
-				matchesFound[i].getFeatureObject(test_patch_feature).border_HOG, "matchFound{i}".format(i = i),\
-				groundTruth[i].getFeatureObject(test_patch_feature).border_HOG, "groundTruth{i}".format(i = i), \
-				saveHist, displayHist)
-
-			match_found_border_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
-					testPatches[i].getFeatureObject(test_patch_feature).border_HOG, \
-					matchesFound[i].getFeatureObject(test_patch_feature).border_HOG)
-			
-			match_found_inner_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
-					testPatches[i].getFeatureObject(test_patch_feature).inner_HOG, \
-					matchesFound[i].getFeatureObject(test_patch_feature).inner_HOG)
-
-			ground_truth_border_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
-					testPatches[i].getFeatureObject(test_patch_feature).border_HOG, \
-					groundTruth[i].getFeatureObject(test_patch_feature).border_HOG)
-
-			ground_truth_inner_dist = comparePatches.Jensen_Shannon_Divergence_Hat(\
-					testPatches[i].getFeatureObject(test_patch_feature).inner_HOG, \
-					groundTruth[i].getFeatureObject(test_patch_feature).inner_HOG)
-
-
-			match_found_hog_score = 1.0/(1.0 + \
-				np.linalg.norm([match_found_inner_dist, match_found_border_dist], 2))
-
-			ground_truth_hog_score = 1.0/(1.0 + \
-				np.linalg.norm([ground_truth_inner_dist, ground_truth_border_dist], 2))
-
-			print "testPatch {test_patch_feature} inner_HOG:\n".format(test_patch_feature = test_patch_feature), \
-			testPatches[i].getFeatureObject(test_patch_feature).inner_HOG
-			print "testPatch {test_patch_feature} border_HOG:\n".format(test_patch_feature = test_patch_feature), \
-			testPatches[i].getFeatureObject(test_patch_feature).border_HOG
-			print "ground_truth_hog_score:", ground_truth_hog_score
-			print "match_found_hog_score:", match_found_hog_score
-
-
 			"""print the score of dissimilarityWith"""
 			dissimilarity_ground_truth = testPatches[i].getFeatureObject(test_patch_feature).dissimilarityWith(\
 				groundTruth[i].getFeatureObject(test_patch_feature))
@@ -587,12 +547,6 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 			" dissimilarity_match_found:", dissimilarity_match_found, \
 			" matchesFound[{i}] actual feature score".format(i = i), matchesFound[i].getFeatureObject(test_patch_feature).score
 			print "testPatches[{i}] ".format(i = i), "match found is better? ", dissimilarity_match_found < dissimilarity_ground_truth	
-
-			print "groundTruth[{i}] score(added hog):".format(i = i), groundTruth[i].getFeatureObject(test_patch_feature).score + \
-			ground_truth_hog_score
-
-			print "matchesFound[{i}] score(added hog):".format(i = i), matchesFound[i].getFeatureObject(test_patch_feature).score + \
-			match_found_hog_score
 
 	return
 
