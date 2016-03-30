@@ -205,11 +205,11 @@ class Feature(object):
 			sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], gaussian_window.shape[1] - newSize: gaussian_window.shape[1]]
 			sub_patch = comparePatches.Patch(self.patch.x + newLen/2, self.patch.y + newLen/2, newSize, initialize_features = False)
 
-		return sub_patch, sub_gaussian_window
+		return sub_patch, sub_gaussian_window, gaussian_window
 
 
 	def getSubPatchTargetHueFilteredBySaturation(self, img_hsv, sub_patch_index, target_hue_bins, target_saturation_bins):
-		sub_patch, sub_gaussian_window = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(sub_patch_index)
+		sub_patch, sub_gaussian_window, _ = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(sub_patch_index)
 		return self.targetHueFilteredBySaturation(img_hsv, sub_patch, sub_gaussian_window, target_hue_bins, target_saturation_bins)
 
 
