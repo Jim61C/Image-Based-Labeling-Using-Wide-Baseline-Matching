@@ -20,6 +20,7 @@ BORDER_GREEN_FEATURE_ID = "BORDER_GREEN"
 CENTRE_YELLOW_FEATURE_ID = "CENTRE_YELLOW"
 CENTRE_BLUE_FEATURE_ID = "CENTRE_BLUE"
 GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID = "GREEN_PATCH_BOTTOM_LEFT_BLUE"
+HEART_SHAPE_FEATURE_ID = "HEART_SHAPE"
 
 CENTRE_PARADIGM_FEATURE_PREFIX = "centre_paradigm_"
 SUBSQUARE_PARADIGM_FEATURE_PREFIX = "subsquare_paradigm_"
@@ -80,4 +81,11 @@ def loadAllFeatureIds():
 	ALL_FEATURE_IDS.append(CENTRE_BLUE_FEATURE_ID)
 	ALL_FEATURE_IDS.append(GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID)
 	print "ALL_FEATURE_IDS:", ALL_FEATURE_IDS
+
+def saveArray (array, filename):
+	np.savez(filename,data = array)
+
+def loadArray(filename):
+	loader = np.load(filename)
+	return np.array(loader['data'])
 

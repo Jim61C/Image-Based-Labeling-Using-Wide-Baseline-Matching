@@ -102,8 +102,8 @@ class FeatureSubSquareParadigm(Feature):
 
 	def computeScore(self):
 		if(self.score is None):
-			# self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence)
-			self.score = self.featureResponse()
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Hat)
+			# self.score = self.featureResponse()
 
 	def fitParadigm(self, img):
 		"""

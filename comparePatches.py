@@ -157,6 +157,9 @@ class Patch:
 			self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
 			# green patch bottom left blue
 			self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
+			# heart shape
+			self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
+
 			# load the auto generated feature objects
 			for feature in utils.GENERATED_FEATURE_PARADIGMS:
 				"""TODO: try not to do deepcopy rather, do initialization"""
@@ -1396,12 +1399,13 @@ def populateTestCombinatorialFeatureScore( \
 		print "\ntestPatches[{i}]:".format(i = i)
 		for this_feature in FEATURES:
 			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
-			plotStatistics.plotOneGivenHist(\
-				path, \
-				"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
-				testPatches[i].getFeatureObject(this_feature).hist, \
-				save = False, \
-				show = True)
+			if (this_feature != utils.HEART_SHAPE_FEATURE_ID):
+				plotStatistics.plotOneGivenHist(\
+					path, \
+					"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
+					testPatches[i].getFeatureObject(this_feature).hist, \
+					save = False, \
+					show = True)
 		
 
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
@@ -1414,8 +1418,9 @@ def testFunc(hist1, hist2, metricFunc):
 def main():
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
-	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 	# FEATURES = utils.ALL_FEATURE_IDS
+	FEATURES = [utils.HEART_SHAPE_FEATURE_ID]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
@@ -1426,11 +1431,11 @@ def main():
 	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
 	# Test combinatorial feature scores on a set of eyeballed patches
-	# for i in range(0, len(folderNames)):
-	# 	populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
-	# 		upperPath = "testAlgo3", \
-	# 		folder_suffix = "_eyeballed_unique_patches")
-	# raise ValueError("purpose stop for testing populating combinatorial score")
+	for i in range(0, len(folderNames)):
+		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
+			upperPath = "testAlgo3", \
+			folder_suffix = "_eyeballed_unique_patches")
+	raise ValueError("purpose stop for testing populating combinatorial score")
 
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
