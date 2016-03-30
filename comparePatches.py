@@ -1401,8 +1401,8 @@ def testFunc(hist1, hist2, metricFunc):
 def main():
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
-	# FEATURES = [utils.GENERATED_FEATURE_IDS[2]]
-	FEATURES = utils.ALL_FEATURE_IDS
+	FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+	# FEATURES = utils.ALL_FEATURE_IDS
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
@@ -1422,8 +1422,8 @@ def main():
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
-		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
+		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
 		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
 		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
 		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")

@@ -77,16 +77,17 @@ def main():
 	# testNames = ["populate_testset_rotation1","populate_testset_rotation2", "populate_testset7"]
 	# test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
 	# test_folder_names = ["testset2", "testset3", "testset5"]
-	test_folder_args = [\
-	("testset_illuminance1", image_db), \
-	("testset_illuminance2", image_db), \
-	("testset_rotation1", image_db), \
-	("testset_rotation2", image_db), \
-	("testset4", image_db), \
-	("testset7", image_db), \
-	("testset1", image_db), \
-	("testset8", image_db), \
-	]
+	
+	# test_folder_args = [\
+	# ("testset_illuminance1", image_db), \
+	# ("testset_illuminance2", image_db), \
+	# ("testset_rotation1", image_db), \
+	# ("testset_rotation2", image_db), \
+	# ("testset4", image_db), \
+	# ("testset7", image_db), \
+	# ("testset1", image_db), \
+	# ("testset8", image_db), \
+	# ]
 	
 	# test_folder_args = [ \
 	# 	("testset_illuminance1", [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]), \
@@ -98,24 +99,24 @@ def main():
 	# ]
 
 
-	# test_folder_args = [ \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test1.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test3.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test1.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test3.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test1.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test3.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test1.jpg"), \
-	# 	("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test3.jpg") \
-	# ]
+	test_folder_args = [ \
+		("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test1.jpg"), \
+		("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test3.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test1.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[1]], "test3.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test1.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[2]], "test3.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test1.jpg"), \
+		# ("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test3.jpg") \
+	]
 
 	start_time = time.time()
 	pool = Pool(cpu_count())
 	# pool.map(dispatch_match_test, testNames)
 	# pool.map(dispatch_feature_detection, test_folder_args)
 	# pool.map(dispatch_feature_matching, test_folder_args)
-	pool.map(dispatch_full_algorithm, test_folder_args)
-	# pool.map(dispatch_feature_detection_algo3, test_folder_args)
+	# pool.map(dispatch_full_algorithm, test_folder_args)
+	pool.map(dispatch_feature_detection_algo3, test_folder_args)
 
 	pool.close()
 	pool.join()
