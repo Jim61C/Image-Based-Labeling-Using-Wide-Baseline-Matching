@@ -1147,14 +1147,17 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 """
 TODO: complete populateFeatureMatchingStatistics after the Image DB is found
 """
-def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name, test2_img_name, folder_suffix, upperPath = "testPatchHSV"):
+def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name, test2_img_name, \
+	folder_suffix, upperPath = "testPatchHSV"):
 	sigma = 39
 	level = 5
 	testPatches = []
 	groundTruth = []
 	matchesFound = []
+
 	# read testPatches
-	listOfTestPatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+	listOfTestPatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
 		upperPath = upperPath,
 		folderToSave = "GaussianWindowOnAWhole", 
 		testFolder = test_folder_name +folder_suffix, 
@@ -1162,27 +1165,66 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 		file = test1_img_name[:test1_img_name.find(".")], 
 		i = sigma))
 	for i in range(0, len(listOfTestPatches)):
-		testPatches.append(listOfTestPatches[i][0])
+		testPatches.append(listOfTestPatches[i])
+		print listOfTestPatches[i].is_low_response
+
 	# read matchesFound
-	testPatchMatches = saveLoadPatch.loadPatchMatches("{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+	testPatchMatches = saveLoadPatch.loadPatchMatches(\
+		"{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
 		upperPath = upperPath,
 		folderToSave = "GaussianWindowOnAWhole", 
 		testFolder = test_folder_name +folder_suffix,  
 		folder = test_folder_name, 
-		file1 = "test1", 
-		file2 = "test2", 
+		file1 = test1_img_name[:test1_img_name.find(".")], 
+		file2 = test2_img_name[:test2_img_name.find(".")], 
 		i = sigma, 
 		step = 0.5, 
 		tf = True))
 	for i in range(0, len(testPatchMatches)):
 		matchesFound.append(testPatchMatches[i][0])
 	
+	print "read groundTruth"
 	# read groundTruth
+	listOfGroundTruth = saveLoadPatch.loadPatchMatches(\
+		"{upperPath}/{folderToSave}/{testFolder}/GroundTruth_{folder}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix, 
+		folder = test_folder_name, 
+		file1 = test1_img_name[:test1_img_name.find(".")], 
+		file2 = test2_img_name[:test2_img_name.find(".")], 
+		i = sigma))
+	for i in range(0, len(listOfGroundTruth)):
+		groundTruth.append(listOfGroundTruth[i][0])
 
+	correct_color = (0,0,255)
+	wrong_color = (255,0,0)
+	custom_colors = []
+	for i in range(0, len(groundTruth)):
+		if (utils.isGoodMatch(matchesFound[i], groundTruth[i])):
+			custom_colors.append(correct_color)
+		else:
+			custom_colors.append(wrong_color)
+		### DEBUGGING ###
+		if (i == 13):
+			print matchesFound[i].x, matchesFound[i].y, matchesFound[i].size 
+			print groundTruth[i].x, groundTruth[i].y
+	print custom_colors
 	# read test1_img_name to img
-	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
+	img = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
 	# read test2_img_name to imgToMatch
-	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test2_img_name), 1)
+	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test2_img_name), 1)
+
+	comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), testPatches, matchesFound, \
+		show = True, custom_colors = custom_colors)
+
+	comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), testPatches, groundTruth, \
+		show = True)
+	
+	raise ValueError ("purpose stop for drawing using different color")
+
 	# plot the statistics
 	checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, \
 		"./{upperPath}/{folderToSave}/{testFolder}/hists".format(\
@@ -1204,9 +1246,10 @@ def main():
 	# folder_suffix = "_seperateHS_earthMoverHueSpecial"
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
-	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue"
+	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue_Heart_Contour"
 	# folder_suffix = "_full_algo_top20_unique_patches_response_based"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable
@@ -1222,12 +1265,12 @@ def main():
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
 	# findDistinguishablePatchesAndExecuteMatching("images", "testset4", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
-	# populateFeatureMatchingStatistics("testset_rotation1", "test1.jpg", "test2.jpg","_DistinguishablePatches_HOG_Jensen_Shannon_Divergence")
+	populateFeatureMatchingStatistics("images", "testset8", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
 

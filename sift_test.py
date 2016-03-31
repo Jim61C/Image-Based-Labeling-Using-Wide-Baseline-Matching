@@ -2,6 +2,9 @@ import cv2
 from cv2 import cv
 import numpy as np 
 import drawMatches
+import comparePatches
+import saveLoadPatch
+import utils
 
 def filter_matches(matches, ratio=0.75):
 		"""
@@ -18,8 +21,41 @@ def filter_matches(matches, ratio=0.75):
 
 		return filtered_matches
 
+def populateFeatureMatchingStatistics(test_folder_name, test1_img_name, test2_img_name):
+	sigma = 39
+	img, imgToMatch, test_patches, matches_found = runSIFT(test_folder_name, test1_img_name, test2_img_name)
+	ground_truth = []
+	listOfGroundTruth = saveLoadPatch.loadPatchMatches(\
+		"{path}/GroundTruth_{folder}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		path = "testSIFT",
+		folder = test_folder_name, 
+		file1 = test1_img_name[:test1_img_name.find(".")], 
+		file2 = test2_img_name[:test2_img_name.find(".")], 
+		i = sigma))
+	for i in range(0, len(listOfGroundTruth)):
+		ground_truth.append(listOfGroundTruth[i][0])
+
+	correct_color = (0,0,255)
+	wrong_color = (255,0,0)
+	custom_colors = []
+	for i in range(0, len(ground_truth)):
+		if (utils.isGoodMatch(matches_found[i], ground_truth[i])):
+			custom_colors.append(correct_color)
+		else:
+			custom_colors.append(wrong_color)
+
+	distinguished_match = comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), test_patches, matches_found, \
+		show = True, custom_colors = custom_colors)
+	cv2.imwrite("testSIFT/{savefilename}.jpg".format(\
+		savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + \
+		test2_img_name[0:test2_img_name.find(".")]), distinguished_match)
+
+	# comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), test_patches, ground_truth, \
+	# 	show = True)
+
 
 def runSIFT(test_folder_name, test1_img_name, test2_img_name):
+	NUM_GOOD_MATCH = 20
 	img = cv2.imread("images/{test_folder_name}/{test1_img_name}".format(test_folder_name = test_folder_name, test1_img_name = test1_img_name), 1)
 	img_gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 	imgToMatch = cv2.imread("images/{test_folder_name}/{test2_img_name}".format(test_folder_name = test_folder_name, test2_img_name = test2_img_name), 1)
@@ -50,10 +86,33 @@ def runSIFT(test_folder_name, test1_img_name, test2_img_name):
 	print "len(features1)",len(features1)
 	print "len(features2)", len(features2)
 
-	match_img = drawMatches.drawMatches(img,features1,imgToMatch,features2,matches[:20], draw_size = True)
+	test_patches = []
+	matches_found = []
+	for i in range(0, NUM_GOOD_MATCH):
+		img1_idx = matches[i].queryIdx
+		img2_idx = matches[i].trainIdx
+		# x is col, y is row
+		(x1,y1) = features1[img1_idx].pt
+		(x2,y2) = features2[img2_idx].pt
+
+		size1 = features1[img1_idx].size
+		size2 = features2[img2_idx].size
+
+		this_test_patch = comparePatches.Patch(int(y1), int(x1), int(size1), initialize_features = False)
+		test_patches.append(this_test_patch)
+
+		this_match_found = comparePatches.Patch(int(y2), int(x2), int(size2), initialize_features = False)
+		matches_found.append(this_match_found)
+
+	img_with_test_patches = comparePatches.drawPatchesOnImg(np.copy(img), test_patches, mark_sequence = True)
+	cv2.imwrite("testSIFT/test_patches_{savefilename}.jpg".format(\
+		savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + test2_img_name[0:test2_img_name.find(".")]), img_with_test_patches)
+	
+	match_img = drawMatches.drawMatches(np.copy(img),features1,np.copy(imgToMatch),features2,matches[:NUM_GOOD_MATCH], draw_size = True)
 	cv2.imshow("match_img", match_img)
 	cv2.waitKey(0)
 	cv2.imwrite("testSIFT/{savefilename}.jpg".format(savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + test2_img_name[0:test2_img_name.find(".")]), match_img)
+	return img, imgToMatch, test_patches, matches_found
 
 
 def main():
@@ -62,7 +121,8 @@ def main():
 	# runSIFT("testset_rotation1", "test1.jpg", "test2.jpg")
 	# runSIFT("testset_rotation2", "test1.jpg", "test2.jpg")
 	# runSIFT("testset4", "test1.jpg", "test2.jpg")
-	runSIFT("testset8", "test1.jpg", "test2.jpg")
+	# runSIFT("testset8", "test1.jpg", "test2.jpg")
+	populateFeatureMatchingStatistics("testset8", "test1.jpg", "test2.jpg")
 
 if __name__ == "__main__":
 	main()

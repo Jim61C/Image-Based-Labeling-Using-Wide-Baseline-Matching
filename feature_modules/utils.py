@@ -90,3 +90,21 @@ def loadArray(filename):
 	loader = np.load(filename)
 	return np.array(loader['data'])
 
+def isGoodMatch(match_found, ground_truth):
+	dist_thresh = 10
+	patch_neighbour_hood = 10
+	dx = match_found.x - ground_truth.x
+	dy = match_found.y - ground_truth.y
+
+	if (np.linalg.norm([dx, dy], 2) < dist_thresh):
+		return True
+	if (ground_truth.x <= match_found.x + match_found.size /2 + patch_neighbour_hood and \
+		ground_truth.x >= match_found.x - match_found.size/2  - patch_neighbour_hood and \
+		ground_truth.y <= match_found.y + match_found.size/2 + patch_neighbour_hood and \
+		ground_truth.y >= match_found.y - match_found.size/2 - patch_neighbour_hood):
+		return True
+
+	return False
+
+
+

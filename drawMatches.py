@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def drawMatches(img1, kp1, img2, kp2, matches, draw_size = False):
+def drawMatches(img1, kp1, img2, kp2, matches, draw_size = False, custom_colors = None):
     """
     My own implementation of cv2.drawMatches as OpenCV 2.4.9
     does not have this function available but it's supported in
@@ -43,7 +43,15 @@ def drawMatches(img1, kp1, img2, kp2, matches, draw_size = False):
 
     # For each pair of points we have between both images
     # draw circles, then connect a line between them
-    for mat in matches:
+    if (not custom_colors is None):
+        assert (len(custom_colors) == len(matches)),  "length of provided custom color array must be the same as matches"
+    
+    for i in range(0, len(matches)):
+        mat = matches[i]
+        if(custom_colors is None):
+            this_color = (0, 0, 255)
+        else:
+            this_color = custom_colors[i]
 
         # Get the matching keypoints for each of the images
         img1_idx = mat.queryIdx
@@ -62,16 +70,16 @@ def drawMatches(img1, kp1, img2, kp2, matches, draw_size = False):
         # colour blue
         # thickness = 1
         if (not draw_size):
-            cv2.circle(out, (int(x1),int(y1)), 4, (0, 0, 255), 1)   
-            cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (0, 0, 255), 1)
+            cv2.circle(out, (int(x1),int(y1)), 4, this_color, 1)   
+            cv2.circle(out, (int(x2)+cols1,int(y2)), 4, this_color, 1)
         else:
-            cv2.circle(out, (int(x1),int(y1)), int(kp1[img1_idx].size), (0, 0, 255), 1)   
-            cv2.circle(out, (int(x2)+cols1,int(y2)), int(kp2[img2_idx].size), (0, 0, 255), 1)
+            cv2.circle(out, (int(x1),int(y1)), int(kp1[img1_idx].size), this_color, 1)   
+            cv2.circle(out, (int(x2)+cols1,int(y2)), int(kp2[img2_idx].size), this_color, 1)
 
         # Draw a line in between the two points
         # thickness = 1
         # colour blue
-        cv2.line(out, (int(x1),int(y1)), (int(x2)+cols1,int(y2)), (0, 0, 255), 1)
+        cv2.line(out, (int(x1),int(y1)), (int(x2)+cols1,int(y2)), this_color, 1)
 
 
     # # Show the image

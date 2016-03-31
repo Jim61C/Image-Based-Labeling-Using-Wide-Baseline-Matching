@@ -193,6 +193,9 @@ class Patch:
 		self.LDAFeatureScore = None # measure for the uniqueness of the feature sets
 		self.is_low_response = False # flag for if it is unique due to high response or low response, by default is due to high response
 
+	def setIsLowResponse(self, is_low_response):
+		self.is_low_response = is_low_response
+
 	def setIsDueToLowResponse(self):
 		self.is_low_response = True
 
@@ -1219,7 +1222,7 @@ def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,25
 		cv2.waitKey(0)
 	return img
 
-def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True):
+def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colors = None):
 	drawPatchesOnImg(img, patches,show = False, mark_sequence = True)
 	drawPatchesOnImg(imgToMatch, matches, show = False, mark_sequence = True)
 
@@ -1232,7 +1235,7 @@ def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True):
 	match_indexes = []
 	for i in range(0, len(patches)):
 		match_indexes.append(cv2.DMatch(i,i,i)) # since patch_key_points[i] -> match_key_points[match_indexes[i]], here patch_key_points[i] -> match_key_points[i]
-	matched_img = drawMatches.drawMatches(img, patch_key_points, imgToMatch, match_key_points, match_indexes)
+	matched_img = drawMatches.drawMatches(img, patch_key_points, imgToMatch, match_key_points, match_indexes, custom_colors = custom_colors)
 	if(show):
 		cv2.imshow("matched_img", matched_img)
 		cv2.waitKey(0)
