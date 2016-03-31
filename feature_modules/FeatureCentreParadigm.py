@@ -133,7 +133,7 @@ class FeatureCentreParadigm(Feature):
 		# 		border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]), axis = 1)
 
 		"""
-		filter the inner hist hue based the target bins for saturation as well
+		filter the inner hist hue based the target bins for saturation as well, this version using tight saturation filter range
 		"""
 		filtered_inner_hist_hue = self.computeHueHistFilterOffHueWithWrongSaturation(\
 			img_hsv, \
@@ -169,7 +169,7 @@ class FeatureCentreParadigm(Feature):
 		# self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, normalize(border_hist, norm = "l1")[0]), axis = 1)
 		# self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
 		self.hist = np.concatenate((\
-			aggregated_inner_hist_hue, \
+			aggregated_inner_hist_hue * np.sum(outer_hist_hue)/ np.sum(inner_hist_hue), \
 			hue_filtered_inner_hist_saturation * np.sum(outer_hist_saturation)/ np.sum(inner_hist_saturation), \
 			border_hist * np.sum(outer_hist_saturation)/np.sum(border_hist_saturation)), axis = 1)
 		# self.hist = np.concatenate((aggregated_inner_hist_hue, normalize(border_hist, norm = "l1")[0] * \
@@ -209,19 +209,19 @@ class FeatureCentreParadigm(Feature):
 		# 	np.concatenate((self.hist[:self.HISTBINNUM], self.hist[self.HISTBINNUM*2:]), axis = 1), \
 		# 	np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM], self.FEATURE_MODEL[self.HISTBINNUM*2:]), axis = 1)))
 
-		"""Seperate comparison of response"""
-		inner_hist_hue_distance = metric_func(\
-			self.hist[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
-			self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)])
+		# """Seperate comparison of response"""
+		# inner_hist_hue_distance = metric_func(\
+		# 	self.hist[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
+		# 	self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)])
 		
-		inner_hist_saturation_distance = metric_func(\
-			self.hist[self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1): self.HISTBINNUM * 2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
-			self.FEATURE_MODEL[self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1): self.HISTBINNUM * 2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)])
+		# inner_hist_saturation_distance = metric_func(\
+		# 	self.hist[self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1): self.HISTBINNUM * 2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
+		# 	self.FEATURE_MODEL[self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1): self.HISTBINNUM * 2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)])
 
-		"""TODO: for border_distance can just use euclidean"""
-		border_distance = metric_func(\
-			self.hist[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):], \
-			self.FEATURE_MODEL[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):])
+		# """TODO: for border_distance can just use euclidean"""
+		# border_distance = metric_func(\
+		# 	self.hist[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):], \
+		# 	self.FEATURE_MODEL[self.HISTBINNUM *2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):])
 
 		# return 1.0 / (1.0 + np.linalg.norm([inner_hist_hue_distance, inner_hist_saturation_distance, border_distance], 2))
 
@@ -274,8 +274,6 @@ class FeatureCentreParadigm(Feature):
 			normalize(self.FEATURE_MODEL_SATURATION, norm = 'l1')[0], \
 			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
-		
-		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
