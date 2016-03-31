@@ -55,7 +55,8 @@ class FeatureSubSquareParadigm(Feature):
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
-		sub_patch, sub_gaussian_window = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(self.SUBPATCH_OF_INTEREST_INDEX)
+		sub_patch, sub_gaussian_window , full_patch_gaussian_window = \
+		self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(self.SUBPATCH_OF_INTEREST_INDEX)
 		target_hue_bins, target_saturation_bins = self.getTargetHueAndSaturationBins()
 
 		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
@@ -71,8 +72,15 @@ class FeatureSubSquareParadigm(Feature):
 			target_hue_bins, \
 			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX))
 
-		self.hist = np.concatenate((filtered_hue_of_interest, \
-			self.patch.SaturationHistArr[self.SUBPATCH_OF_INTEREST_INDEX]), axis = 1)
+		filtered_saturation_of_interest = computeSaturationHistFilterOffSaturationWithWrongHue(\
+			img_hsv, \
+			sub_patch, \
+			sub_gaussian_window, \
+			target_hue_bins, \
+			target_saturation_bins)
+
+		self.hist = np.concatenate((filtered_hue_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window), \
+			filtered_saturation_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window)), axis = 1)
 		
 		for i in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
 			if(i != self.SUBPATCH_OF_INTEREST_INDEX):
@@ -91,8 +99,6 @@ class FeatureSubSquareParadigm(Feature):
 
 				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
 
-		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
-
 	def featureResponse(self, metric_func = DIST.euclidean):
 		assert (not self.hist is None), "Error in FeatureSubSquareParadigm: calling computeScore before the feature hist is computed!"
 		assert (len(self.hist) == len(self.FEATURE_MODEL)), "Error in FeatureSubSquareParadigm: hist length is not correct!" + \
@@ -102,8 +108,8 @@ class FeatureSubSquareParadigm(Feature):
 
 	def computeScore(self):
 		if(self.score is None):
-			# self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence)
-			self.score = self.featureResponse()
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Hat)
+			# self.score = self.featureResponse()
 
 	def fitParadigm(self, img):
 		"""
@@ -253,7 +259,6 @@ class FeatureSubSquareParadigm(Feature):
 			normalize(self.FEATURE_MODEL_SATURATION, norm = 'l1')[0], \
 			np.zeros( 3 *(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 			len(range(self.SATURATION_FILTER_START_INDEX,self.SATURATION_FILTER_END_INDEX))) )), axis = 1) # append the expected border response
-		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
 		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 

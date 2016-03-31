@@ -134,6 +134,25 @@ class Feature(object):
 					hist[target_hue_bins.index(this_hue_bin)] += 1 * gaussian_window[i - ref_x][j - ref_y]
 		return hist
 
+	def computeSaturationHistFilterOffSaturationWithWrongHue(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
+		"""Do not add to Hue Hist if the hue is in target_saturation_bins but not in the target_saturation_bins"""
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+				if (this_hue_bin == self.HISTBINNUM):
+					this_hue_bin = self.HISTBINNUM - 1
+				this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
+				if (this_saturation_bin == self.HISTBINNUM):
+					this_saturation_bin = self.HISTBINNUM - 1
+
+				"""If in target_saturation_bins but not correct hue, ignore"""
+				if (not (this_saturation_bin in target_saturation_bins and (not this_hue_bin in target_hue_bins))):
+					hist[this_saturation_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+		return hist
+
 	def computeHueHistFilterOffHueWithWrongSaturation(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
 		"""Do not add to Hue Hist if the hue is in target_saturation_bins but not in the target_saturation_bins"""
 		hist = np.zeros(self.HISTBINNUM)
@@ -186,11 +205,11 @@ class Feature(object):
 			sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], gaussian_window.shape[1] - newSize: gaussian_window.shape[1]]
 			sub_patch = comparePatches.Patch(self.patch.x + newLen/2, self.patch.y + newLen/2, newSize, initialize_features = False)
 
-		return sub_patch, sub_gaussian_window
+		return sub_patch, sub_gaussian_window, gaussian_window
 
 
 	def getSubPatchTargetHueFilteredBySaturation(self, img_hsv, sub_patch_index, target_hue_bins, target_saturation_bins):
-		sub_patch, sub_gaussian_window = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(sub_patch_index)
+		sub_patch, sub_gaussian_window, _ = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(sub_patch_index)
 		return self.targetHueFilteredBySaturation(img_hsv, sub_patch, sub_gaussian_window, target_hue_bins, target_saturation_bins)
 
 

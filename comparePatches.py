@@ -157,6 +157,9 @@ class Patch:
 			self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
 			# green patch bottom left blue
 			self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
+			# heart shape
+			# self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
+
 			# load the auto generated feature objects
 			for feature in utils.GENERATED_FEATURE_PARADIGMS:
 				"""TODO: try not to do deepcopy rather, do initialization"""
@@ -189,6 +192,9 @@ class Patch:
 		self.feature_weights = None
 		self.LDAFeatureScore = None # measure for the uniqueness of the feature sets
 		self.is_low_response = False # flag for if it is unique due to high response or low response, by default is due to high response
+
+	def setIsLowResponse(self, is_low_response):
+		self.is_low_response = is_low_response
 
 	def setIsDueToLowResponse(self):
 		self.is_low_response = True
@@ -254,24 +260,27 @@ class Patch:
 	# 		self.computeHOG(img, useGaussianSmoothing)
 	# 	setattr(self, "HOG_BIN{i}".format(i = i), self.HOG_Uncirculated[(i-1)*9:i*9])
 
-	def computeHOG(self, img, useGaussianSmoothing = True):
+	def computeHOG(self, img, useGaussianSmoothing = True, given_gaussian_window = None):
 		"""
 		HOG with orietation assignment and circular histogram
 		img: gray scale
 		Instead of compute the 2*2 subpatch HOG, compute a 1) sub circle 2) super circle HOG
 		TODO: fine tune orientation, smooth the HOG hist + add more possible orietations (not just the maximum, 0.8 of the maximum as well) for considertaion in matching
 		"""
-		# Check if HOGArr is already computed
-		if(len(self.HOGArr) > 0):
+		# Check if HOGArr is already computed using the default gaussian window
+		if(len(self.HOGArr) > 0 and given_gaussian_window is None):
 			return
 		else:
 			self.HOGArr = []
 
-		gaussianSigma = self.size/6.0 # six sigma rule of thumb
-		if(useGaussianSmoothing):
-			gaussianWindow = gauss_kernels(self.size, gaussianSigma)
+		if (given_gaussian_window is None):
+			gaussianSigma = self.size/6.0 # six sigma rule of thumb
+			if(useGaussianSmoothing):
+				gaussianWindow = gauss_kernels(self.size, gaussianSigma)
+			else:
+				gaussianWindow = np.ones(shape = (self.size, self.size))
 		else:
-			gaussianWindow = np.ones(shape = (self.size, self.size))
+			gaussianWindow = given_gaussian_window
 		
 		fullPatchHOG = self.computeSinglePatchHOG(img,gaussianWindow)
 		self.HOG = fullPatchHOG
@@ -353,11 +362,12 @@ class Patch:
 
 				hist[HOG_bin] += gaussianWindow[i - ref_x][j - ref_y] * mag
 
-		self.HOG_Uncirculated = self.finalizeHOG(hist) # store the HOG_Uncirculated, it will be from -pi to pi, bin 0 corresponds to -pi
-		max_ori = np.argmax(hist) # use maximum
-		hist =  list(hist[max_ori:len(hist)]) + list(hist[0:max_ori]) # rotate circular hist
+		uncirculated_aggregated = self.finalizeHOG(hist)
+		self.HOG_Uncirculated = uncirculated_aggregated # store the HOG_Uncirculated, it will be from -pi to pi, bin 0 corresponds to -pi
+		max_ori = np.argmax(uncirculated_aggregated) # use maximum
+		circulated_aggregated =  list(uncirculated_aggregated[max_ori:len(uncirculated_aggregated)]) + list(uncirculated_aggregated[0:max_ori]) # rotate circular hist
 
-		return self.finalizeHOG(hist)
+		return np.array(circulated_aggregated)
 
 	def finalizeHOG(self,hist_360_bin):
 		"""
@@ -757,6 +767,18 @@ def Jensen_Shannon_Divergence(hist1,hist2):
 		klDivergence_mannual(hist2,mean, normalize = True))
 	# print dist
 	return dist
+
+def Jensen_Shannon_Divergence_Hat(hist1,hist2):
+	"""
+	with penalty of |np.sum(hist) - np.sum(hist2)|
+	"""
+	mean = (hist1 + hist2) / 2
+	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
+	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = True) + \
+		klDivergence_mannual(hist2,mean, normalize = True))
+	# print dist
+	return dist + abs(np.sum(hist1) - np.sum(hist2))
+
 
 def Jensen_Shannon_Divergence_Unnormalized(hist1,hist2):
 	mean = (hist1 + hist2) / 2
@@ -1201,7 +1223,7 @@ def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,25
 		cv2.waitKey(0)
 	return img
 
-def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True):
+def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colors = None):
 	drawPatchesOnImg(img, patches,show = False, mark_sequence = True)
 	drawPatchesOnImg(imgToMatch, matches, show = False, mark_sequence = True)
 
@@ -1214,7 +1236,7 @@ def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True):
 	match_indexes = []
 	for i in range(0, len(patches)):
 		match_indexes.append(cv2.DMatch(i,i,i)) # since patch_key_points[i] -> match_key_points[match_indexes[i]], here patch_key_points[i] -> match_key_points[i]
-	matched_img = drawMatches.drawMatches(img, patch_key_points, imgToMatch, match_key_points, match_indexes)
+	matched_img = drawMatches.drawMatches(img, patch_key_points, imgToMatch, match_key_points, match_indexes, custom_colors = custom_colors)
 	if(show):
 		cv2.imshow("matched_img", matched_img)
 		cv2.waitKey(0)
@@ -1294,10 +1316,11 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 		folder = test_folder_name, \
 		file = img_name[:img_name.find(".")], \
 		i = sigma))
-	for i in range(0, 10): # just append the best one found
+	for i in range(0, 1): # just append the best one found
 		unique_patches.append(list_of_patches[i][0])
 
 	# unique_patches.append(Patch(608,781, 39))
+	# unique_patches.append(Patch(604,784, 39))
 
 	drawPatchesOnImg(np.copy(img), unique_patches, True, None, (0,0,255), True)
 	for i in range(0, len(unique_patches)):
@@ -1384,12 +1407,13 @@ def populateTestCombinatorialFeatureScore( \
 		print "\ntestPatches[{i}]:".format(i = i)
 		for this_feature in FEATURES:
 			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
-			plotStatistics.plotOneGivenHist(\
-				path, \
-				"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
-				testPatches[i].getFeatureObject(this_feature).hist, \
-				save = False, \
-				show = True)
+			if (this_feature != utils.HEART_SHAPE_FEATURE_ID):
+				plotStatistics.plotOneGivenHist(\
+					path, \
+					"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
+					testPatches[i].getFeatureObject(this_feature).hist, \
+					save = False, \
+					show = True)
 		
 
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
@@ -1402,8 +1426,9 @@ def testFunc(hist1, hist2, metricFunc):
 def main():
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
-	# FEATURES = [utils.GENERATED_FEATURE_IDS[2]]
-	FEATURES = utils.ALL_FEATURE_IDS
+	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
+	# FEATURES = utils.ALL_FEATURE_IDS
+	FEATURES = [utils.GENERATED_FEATURE_IDS[1]]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
@@ -1414,18 +1439,18 @@ def main():
 	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
 	# Test combinatorial feature scores on a set of eyeballed patches
-	# for i in range(0, len(folderNames)):
-	# 	populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
-	# 		upperPath = "testAlgo3", \
-	# 		folder_suffix = "_eyeballed_unique_patches")
-	# raise ValueError("purpose stop for testing populating combinatorial score")
+	for i in range(0, len(folderNames)):
+		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
+			upperPath = "testAlgo3", \
+			folder_suffix = "_eyeballed_unique_patches")
+	raise ValueError("purpose stop for testing populating combinatorial score")
 
 	### Test Algo3 in finding distinguishable patches ###
 	start_time = time.time()
 	for i in range(0, len(folderNames)):
 		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
-		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39)
+		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
+		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
 		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
 		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")
 	print "finished feature extraction in ", time.time() - start_time, "seconds"

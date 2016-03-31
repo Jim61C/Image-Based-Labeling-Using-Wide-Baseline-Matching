@@ -20,8 +20,10 @@ BORDER_GREEN_FEATURE_ID = "BORDER_GREEN"
 CENTRE_YELLOW_FEATURE_ID = "CENTRE_YELLOW"
 CENTRE_BLUE_FEATURE_ID = "CENTRE_BLUE"
 GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID = "GREEN_PATCH_BOTTOM_LEFT_BLUE"
+HEART_SHAPE_FEATURE_ID = "HEART_SHAPE"
 
 CENTRE_PARADIGM_FEATURE_PREFIX = "centre_paradigm_"
+CENTRE_HOG_PARADIGM_FEATURE_PREFIX = "centre_hog_paradigm_"
 SUBSQUARE_PARADIGM_FEATURE_PREFIX = "subsquare_paradigm_"
 # GENERATED_FEATURE_IDS = ["centre_paradigm_0", "centre_paradigm_1", "centre_paradigm_2", "subsquare_paradigm_0"]
 GENERATED_FEATURE_IDS = []
@@ -80,4 +82,29 @@ def loadAllFeatureIds():
 	ALL_FEATURE_IDS.append(CENTRE_BLUE_FEATURE_ID)
 	ALL_FEATURE_IDS.append(GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID)
 	print "ALL_FEATURE_IDS:", ALL_FEATURE_IDS
+
+def saveArray (array, filename):
+	np.savez(filename,data = array)
+
+def loadArray(filename):
+	loader = np.load(filename)
+	return np.array(loader['data'])
+
+def isGoodMatch(match_found, ground_truth):
+	dist_thresh = 10
+	patch_neighbour_hood = 10
+	dx = match_found.x - ground_truth.x
+	dy = match_found.y - ground_truth.y
+
+	if (np.linalg.norm([dx, dy], 2) < dist_thresh):
+		return True
+	if (ground_truth.x <= match_found.x + match_found.size /2 + patch_neighbour_hood and \
+		ground_truth.x >= match_found.x - match_found.size/2  - patch_neighbour_hood and \
+		ground_truth.y <= match_found.y + match_found.size/2 + patch_neighbour_hood and \
+		ground_truth.y >= match_found.y - match_found.size/2 - patch_neighbour_hood):
+		return True
+
+	return False
+
+
 

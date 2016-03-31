@@ -20,6 +20,7 @@ class clickRecorder(object):
 
 	centre_feature_count = 0
 	subsquare_paradigm_count = 0
+	centre_hog_feature_count = 0
 	# update centre_feature_count to be the next index
 	for feature_pkl in os.listdir(utils.FEATURES_GENERATED_FOLDER):
 		if (feature_pkl.find(utils.CENTRE_PARADIGM_FEATURE_PREFIX) != -1):
@@ -32,9 +33,18 @@ class clickRecorder(object):
 				len(utils.SUBSQUARE_PARADIGM_FEATURE_PREFIX):feature_pkl.find(".")])
 			if (idx >= subsquare_paradigm_count):
 				subsquare_paradigm_count = idx + 1
+		elif (feature_pkl.find(utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX) != -1):
+			idx = int(feature_pkl[feature_pkl.find(utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX)+ \
+				len(utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX):feature_pkl.find(".")])
+			if (idx >= centre_hog_feature_count):
+				centre_hog_feature_count = idx + 1
 
 	print "centre_feature_count:", centre_feature_count
 	path = None
+	detect_shape = False
+
+	def setDetectShape(self, detect_shape):
+		self.detect_shape = detect_shape
 
 	def msgBox(self, message, height = 200, width = 800):
 		blank_image = np.zeros((int(height),int(width),3), np.uint8)
@@ -48,6 +58,21 @@ class clickRecorder(object):
 		path = upperPath + "/GaussianWindowOnAWhole/" + test_folder_name + folder_suffix
 		print path
 		self.path = path
+
+	def setDirectPath(self, path):
+		"""
+		Directly set to the given path parameter
+		"""
+		self.path = path
+
+	def addDummyPatches(self, n):
+		for i in range(0, n):
+			self.testPatches.append(comparePatches.Patch(19,19,39, initialize_features = False))
+
+	def plotBaseImgWithLabels(self, path_to_img):
+		img = cv2.imread(path_to_img, 1)
+		cv2.imshow("Base Img:", img)
+		cv2.waitKey(0)
 
 	def plotBaseImgWithPatches(self, test_folder_name, folder_suffix, upperPath):	
 		img = cv2.imread("{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
@@ -116,22 +141,29 @@ class clickRecorder(object):
 		self.undoLoop()
 		print "number of patches clicked on base image: ", len(self.groundTruth)
 
-	def plotTargetImg(self, test_folder_name, image_db):
-		self.imgToMatch = cv2.imread("{image_db}/{test_folder_name}/test2.jpg".format(image_db = image_db, test_folder_name = test_folder_name), 1)
+	def plotTargetImg(self, test_folder_name, image_db, target_img_name = "test2.jpg"):
+		self.imgToMatch = cv2.imread("{image_db}/{test_folder_name}/{target_img_name}".format(\
+			image_db = image_db, test_folder_name = test_folder_name, target_img_name = target_img_name), 1)
 		cv2.imshow("targetImage", self.imgToMatch)
 		cv2.setMouseCallback("targetImage", self.mouseEventCallback)
 		self.undoLoop()
 		print "number of patches clicked on target image: ", len(self.groundTruth)
 
-	def saveGroundTruth(self, test_folder_name):
+	def saveGroundTruth(self, test_folder_name, base_img_name = "test1.jpg", target_img_name = "test2.jpg"):
 		if(len(self.groundTruth) == len(self.testPatches)):
 			print "path to save the groundTruth:",self.path
+			cv2.imwrite("{path}/_ground_truth_{folder}_{file1}_{file2}_sigma{i}_GaussianWindowOnAWhole.jpg".format(\
+				path = self.path, \
+				folder = test_folder_name, \
+				file1 = base_img_name[:base_img_name.find(".")], \
+				file2 = target_img_name[:target_img_name.find(".")], \
+				i = self.sigma), self.imgToMatch)
 			saveLoadPatch.savePatchMatches(self.groundTruth, 1, \
 			"{path}/GroundTruth_{folder}_{file1}_{file2}_simga{i}_GaussianWindowOnAWhole.csv".format( \
 				path = self.path , \
 				folder = test_folder_name, \
-				file1 = "test1", \
-				file2 = "test2", \
+				file1 = base_img_name[:base_img_name.find(".")], \
+				file2 = target_img_name[:target_img_name.find(".")], \
 				i = self.sigma))
 		else:
 			self.msgBox("Please make sure number of clicks match the number of patches on base image!")
@@ -184,12 +216,25 @@ class clickRecorder(object):
 				print "successfully constructed FeatureSubSquareParadigm for patch ", i, " clicked"
 				self.saveFeature(potential_subsquare_paradigm_feature, potential_subsquare_paradigm_id)
 
+			if (self.detect_shape):
+				"""centre_hog_paradigm"""
+				potential_centre_hog_feature_id = "{centre_hog_paradigm}{count}".format( \
+					centre_hog_paradigm = utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX, \
+					count = self.centre_hog_feature_count)
+				potential_centre_hog_feature = feature_modules.FeatureCentreHOGParadigm(patch, potential_centre_hog_feature_id)
+				if(potential_centre_hog_feature.fitParadigm(self.imgToMatchOrigin)):
+					self.centre_hog_feature_count = self.centre_hog_feature_count + 1
+					print "successfully constructed feature centre_hog_paradigm for patch ", i, " clicked"
+					self.saveFeature(potential_centre_hog_feature, potential_centre_hog_feature_id)
 
 
 def main():
 	"""For clicking on target image for groundTruth"""
 	# test_folder_name = raw_input("Please input the testset name: ")
-	# folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
+	# base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
+	# target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
+	# # folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	# upperPath = "testAlgo3"
 	# image_db = "images"
 	# my_click_recorder = clickRecorder()
@@ -198,9 +243,33 @@ def main():
 	# # plot the distinguishable patches on base image
 	# my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
 	# # plot the target image for user to click
-	# my_click_recorder.plotTargetImg(test_folder_name, image_db)
+	# my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
 	# # save the groundTruth if validated
-	# my_click_recorder.saveGroundTruth(test_folder_name)
+	# my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
+
+	# raise ValueError("purpose stop for clicking groundTruth my algorithm only")
+
+	"""For clicking on target image for groundTruth (SIFT)"""
+	# test_folder_name = raw_input("Please input the testset name: ")
+	# base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
+	# target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
+	# image_db = "images"
+
+	# my_click_recorder = clickRecorder()
+	# # set path
+	# my_click_recorder.setDirectPath("testSIFT")
+	# # plot the distinguishable patches on base image
+	# my_click_recorder.plotBaseImgWithLabels(path_to_img =  "testSIFT/test_patches_{savefilename}.jpg".format(\
+	# 	savefilename = test_folder_name + base_img_name[0:base_img_name.find(".")] + target_img_name[0:target_img_name.find(".")]))
+	# # add the dummy patches (20 for SIFT)
+	# my_click_recorder.addDummyPatches(20)
+	# # plot the target image for user to click
+	# my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
+	# # save the groundTruth if validated
+	# my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
+
+	# raise ValueError("purpose stop for clicking groundTruth SIFT only")
+
 
 	"""For clicking on base image for unique patches"""
 	test_folder_name = raw_input("Please input the testset name: ")
@@ -209,6 +278,12 @@ def main():
 	upperPath = "testAlgo3"
 	folder_suffix = "_eyeballed_unique_patches_feature_construction"
 	my_click_recorder = clickRecorder()
+	detect_shape = raw_input("detect shape? (y/n)")
+	if (detect_shape == "y"):
+		my_click_recorder.setDetectShape(True)
+	else:
+		my_click_recorder.setDetectShape(False)
+
 	my_click_recorder.plotBaseImg(test_folder_name, image_db, base_img_name)
 	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
 	my_click_recorder.fitFeatures(test_folder_name, folder_suffix, upperPath)

@@ -53,7 +53,7 @@ def loadPatchMatches(filename, initialize_features = True):
 	initialize_features: indicate whether initialize feature objects in the patch loaded
 	"""
 	patchMatches = []
-	with open(filename) as csvfile:
+	with open(filename, 'rU') as csvfile:
 		reader = csv.DictReader(csvfile)
 
 		patches = []
@@ -78,13 +78,18 @@ def loadPatchMatches(filename, initialize_features = True):
 
 def loadUniquePatchesWithFeatureSet(filename):
 	patches = []
-	with open(filename) as csvfile:
+	with open(filename, 'rU') as csvfile:
 		reader = csv.DictReader(csvfile)
 		for row in reader:
 			this_patch_to_read = comparePatches.Patch(int(row['x']),int(row['y']),int(row['size']))
 			this_patch_to_read.setFeatureToUse([item[item.find("'") + 1 : item.find("'", -1)] \
 				for item in row['featureSet'][1:-1].split(",")])
 			this_patch_to_read.setFeatureWeights(np.ones(len(this_patch_to_read.feature_to_use)))
+			if (row['is_low_response'] == "False"):
+				is_low_response = False
+			else:
+				is_low_response = True
+			this_patch_to_read.setIsLowResponse(is_low_response)
 			patches.append(this_patch_to_read)
 	return patches
 
