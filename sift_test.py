@@ -104,7 +104,7 @@ def runSIFT(test_folder_name, test1_img_name, test2_img_name):
 		this_match_found = comparePatches.Patch(int(y2), int(x2), int(size2), initialize_features = False)
 		matches_found.append(this_match_found)
 
-	img_with_test_patches = comparePatches.drawPatchesOnImg(np.copy(img), test_patches, mark_sequence = True)
+	img_with_test_patches = comparePatches.drawPatchesOnImg(np.copy(img), test_patches, mark_sequence = True, show = False)
 	cv2.imwrite("testSIFT/test_patches_{savefilename}.jpg".format(\
 		savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + test2_img_name[0:test2_img_name.find(".")]), img_with_test_patches)
 	
@@ -122,7 +122,11 @@ def main():
 	# runSIFT("testset_rotation2", "test1.jpg", "test2.jpg")
 	# runSIFT("testset4", "test1.jpg", "test2.jpg")
 	# runSIFT("testset8", "test1.jpg", "test2.jpg")
-	populateFeatureMatchingStatistics("testset8", "test1.jpg", "test2.jpg")
+	# runSIFT("testset15", "test1.jpg", "test2.jpg")
+	# populateFeatureMatchingStatistics("testset8", "test1.jpg", "test2.jpg")
+	for i in range(1, 14):
+		test_set_name = "testset_flower{i}".format(i = i)
+		runSIFT(test_set_name, "test1.jpg", "test3.jpg")
 
 if __name__ == "__main__":
 	main()
