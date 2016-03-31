@@ -1424,7 +1424,7 @@ def main():
 	global FEATURES
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 	# FEATURES = utils.ALL_FEATURE_IDS
-	FEATURES = [utils.HEART_SHAPE_FEATURE_ID]
+	FEATURES = [utils.GENERATED_FEATURE_IDS[1]]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]

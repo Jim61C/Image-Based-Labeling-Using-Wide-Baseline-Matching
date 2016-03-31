@@ -20,6 +20,7 @@ class clickRecorder(object):
 
 	centre_feature_count = 0
 	subsquare_paradigm_count = 0
+	centre_hog_feature_count = 0
 	# update centre_feature_count to be the next index
 	for feature_pkl in os.listdir(utils.FEATURES_GENERATED_FOLDER):
 		if (feature_pkl.find(utils.CENTRE_PARADIGM_FEATURE_PREFIX) != -1):
@@ -32,9 +33,18 @@ class clickRecorder(object):
 				len(utils.SUBSQUARE_PARADIGM_FEATURE_PREFIX):feature_pkl.find(".")])
 			if (idx >= subsquare_paradigm_count):
 				subsquare_paradigm_count = idx + 1
+		elif (feature_pkl.find(utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX) != -1):
+			idx = int(feature_pkl[feature_pkl.find(utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX)+ \
+				len(utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX):feature_pkl.find(".")])
+			if (idx >= centre_hog_feature_count):
+				centre_hog_feature_count = idx + 1
 
 	print "centre_feature_count:", centre_feature_count
 	path = None
+	detect_shape = False
+
+	def setDetectShape(self, detect_shape):
+		self.detect_shape = detect_shape
 
 	def msgBox(self, message, height = 200, width = 800):
 		blank_image = np.zeros((int(height),int(width),3), np.uint8)
@@ -184,6 +194,16 @@ class clickRecorder(object):
 				print "successfully constructed FeatureSubSquareParadigm for patch ", i, " clicked"
 				self.saveFeature(potential_subsquare_paradigm_feature, potential_subsquare_paradigm_id)
 
+			if (self.detect_shape):
+				"""centre_hog_paradigm"""
+				potential_centre_hog_feature_id = "{centre_hog_paradigm}{count}".format( \
+					centre_hog_paradigm = utils.CENTRE_HOG_PARADIGM_FEATURE_PREFIX, \
+					count = self.centre_hog_feature_count)
+				potential_centre_hog_feature = feature_modules.FeatureCentreHOGParadigm(patch, potential_centre_hog_feature_id)
+				if(potential_centre_hog_feature.fitParadigm(self.imgToMatchOrigin)):
+					self.centre_hog_feature_count = self.centre_hog_feature_count + 1
+					print "successfully constructed feature centre_hog_paradigm for patch ", i, " clicked"
+					self.saveFeature(potential_centre_hog_feature, potential_centre_hog_feature_id)
 
 
 def main():
@@ -209,6 +229,12 @@ def main():
 	upperPath = "testAlgo3"
 	folder_suffix = "_eyeballed_unique_patches_feature_construction"
 	my_click_recorder = clickRecorder()
+	detect_shape = raw_input("detect shape? (y/n)")
+	if (detect_shape == "y"):
+		my_click_recorder.setDetectShape(True)
+	else:
+		my_click_recorder.setDetectShape(False)
+
 	my_click_recorder.plotBaseImg(test_folder_name, image_db, base_img_name)
 	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
 	my_click_recorder.fitFeatures(test_folder_name, folder_suffix, upperPath)
