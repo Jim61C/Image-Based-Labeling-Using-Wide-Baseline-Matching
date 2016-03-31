@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def drawMatches(img1, kp1, img2, kp2, matches):
+def drawMatches(img1, kp1, img2, kp2, matches, draw_size = False):
     """
     My own implementation of cv2.drawMatches as OpenCV 2.4.9
     does not have this function available but it's supported in
@@ -61,8 +61,12 @@ def drawMatches(img1, kp1, img2, kp2, matches):
         # radius 4
         # colour blue
         # thickness = 1
-        cv2.circle(out, (int(x1),int(y1)), 4, (0, 0, 255), 1)   
-        cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (0, 0, 255), 1)
+        if (not draw_size):
+            cv2.circle(out, (int(x1),int(y1)), 4, (0, 0, 255), 1)   
+            cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (0, 0, 255), 1)
+        else:
+            cv2.circle(out, (int(x1),int(y1)), int(kp1[img1_idx].size), (0, 0, 255), 1)   
+            cv2.circle(out, (int(x2)+cols1,int(y2)), int(kp2[img2_idx].size), (0, 0, 255), 1)
 
         # Draw a line in between the two points
         # thickness = 1
