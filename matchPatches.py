@@ -530,8 +530,23 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 				groundTruth[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
 			plotStatistics.plotOneGivenHist(path,"matchesFound[{i}]_{feature}".format(i = i, feature = test_patch_feature), \
 				matchesFound[i].getFeatureObject(test_patch_feature).hist, save = saveHist, show = displayHist)
+
+
 			"""plot out this feature model"""
-			plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL".format(i = i , feature = test_patch_feature), \
+			if(test_patch_feature.find("centre_hog_paradigm_") != -1):
+				plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_inner_HOG".format(i = i , feature = test_patch_feature), \
+				testPatches[i].getFeatureObject(test_patch_feature).inner_HOG, save = saveHist, show = displayHist)
+				plotStatistics.plotOneGivenHist(path,"groundTruth[{i}]_{feature}_inner_HOG".format(i = i , feature = test_patch_feature), \
+				groundTruth[i].getFeatureObject(test_patch_feature).inner_HOG, save = saveHist, show = displayHist)
+				plotStatistics.plotOneGivenHist(path,"matchesFound[{i}]_{feature}_inner_HOG".format(i = i, feature = test_patch_feature), \
+				matchesFound[i].getFeatureObject(test_patch_feature).inner_HOG, save = saveHist, show = displayHist)
+
+				plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL_INNER".format(i = i , feature = test_patch_feature), \
+				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL_INNER, save = saveHist, show = displayHist)
+				plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL_BORDER".format(i = i , feature = test_patch_feature), \
+				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL_BORDER, save = saveHist, show = displayHist)
+			else:
+				plotStatistics.plotOneGivenHist(path,"testPatches[{i}]_{feature}_FEATURE_MODEL".format(i = i , feature = test_patch_feature), \
 				testPatches[i].getFeatureObject(test_patch_feature).FEATURE_MODEL, save = saveHist, show = displayHist)
 
 			"""print the score of dissimilarityWith"""
@@ -929,7 +944,7 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	# 	upperPath + \
 	# 	"/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
 	# 		testFolder = "testset7" + folder_suffix, \
-	# 		folderToSave = "GausspianWindowOnAWhole", \
+	# 		folderToSave = "GaussianWindowOnAWhole", \
 	# 		folder = "testset7", \
 	# 		file1 = "test1", \
 	# 		file2 = "test3", \
@@ -1249,7 +1264,8 @@ def main():
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue_Heart_Contour"
 	# folder_suffix = "_full_algo_top20_unique_patches_response_based"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Hat_Response_Based_SaturationWeighted_Hue_with_Shape"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# feature_to_use = 'HOG'
 	# FEATURE_WEIGHTING[feature_to_use] = 1.0 # no need to use global marker, since not reassigning the global variable

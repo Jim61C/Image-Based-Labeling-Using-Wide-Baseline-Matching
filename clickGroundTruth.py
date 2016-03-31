@@ -250,25 +250,25 @@ def main():
 	# raise ValueError("purpose stop for clicking groundTruth my algorithm only")
 
 	"""For clicking on target image for groundTruth (SIFT)"""
-	test_folder_name = raw_input("Please input the testset name: ")
-	base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
-	target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
-	image_db = "images"
+	# test_folder_name = raw_input("Please input the testset name: ")
+	# base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
+	# target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
+	# image_db = "images"
 
-	my_click_recorder = clickRecorder()
-	# set path
-	my_click_recorder.setDirectPath("testSIFT")
-	# plot the distinguishable patches on base image
-	my_click_recorder.plotBaseImgWithLabels(path_to_img =  "testSIFT/test_patches_{savefilename}.jpg".format(\
-		savefilename = test_folder_name + base_img_name[0:base_img_name.find(".")] + target_img_name[0:target_img_name.find(".")]))
-	# add the dummy patches (20 for SIFT)
-	my_click_recorder.addDummyPatches(20)
-	# plot the target image for user to click
-	my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
-	# save the groundTruth if validated
-	my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
+	# my_click_recorder = clickRecorder()
+	# # set path
+	# my_click_recorder.setDirectPath("testSIFT")
+	# # plot the distinguishable patches on base image
+	# my_click_recorder.plotBaseImgWithLabels(path_to_img =  "testSIFT/test_patches_{savefilename}.jpg".format(\
+	# 	savefilename = test_folder_name + base_img_name[0:base_img_name.find(".")] + target_img_name[0:target_img_name.find(".")]))
+	# # add the dummy patches (20 for SIFT)
+	# my_click_recorder.addDummyPatches(20)
+	# # plot the target image for user to click
+	# my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
+	# # save the groundTruth if validated
+	# my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
 
-	raise ValueError("purpose stop for clicking groundTruth SIFT only")
+	# raise ValueError("purpose stop for clicking groundTruth SIFT only")
 
 
 	"""For clicking on base image for unique patches"""

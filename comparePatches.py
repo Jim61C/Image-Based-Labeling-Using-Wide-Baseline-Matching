@@ -158,7 +158,7 @@ class Patch:
 			# green patch bottom left blue
 			self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
 			# heart shape
-			self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
+			# self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
 
 			# load the auto generated feature objects
 			for feature in utils.GENERATED_FEATURE_PARADIGMS:

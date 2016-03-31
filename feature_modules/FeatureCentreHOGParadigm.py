@@ -29,7 +29,7 @@ class FeatureCentreHOGParadigm(Feature):
 			
 		self.inner_HOG = None
 		self.border_HOG = None
-		self.GAUSSIAN_SCALE = 3
+		self.GAUSSIAN_SCALE = 2
 		self.GAUSSIAN_WINDOW_LENGTH_SIGMA = 4.0 # used for border feature case, window length = 4 sigma
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
@@ -55,8 +55,27 @@ class FeatureCentreHOGParadigm(Feature):
 		list(self.border_HOG[0:max_ori])) # rotate circular hist
 
 		self.hist = np.concatenate((self.inner_HOG, self.border_HOG), axis = 1)
+		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
 		return
 
+	def circularComparison(self, hist, model, metric_func):
+		POTENTIAL_ORI_RESPONSE_FRACTION = 0.8
+		max_response = np.max(hist)
+		other_oris_start_bin = [] # store the starting bins of other possible orientations
+		for i in range(0, len(hist)):
+			if (hist[i] >= POTENTIAL_ORI_RESPONSE_FRACTION * max_response):
+				other_oris_start_bin.append(i)
+
+		dissimilarity = metric_func(hist, model)
+		for other_start_bin in other_oris_start_bin:
+			rotated_hist = np.array(list(hist[other_start_bin:len(hist)]) + \
+		list(hist[0:other_start_bin]))
+			other_dissimilarity = metric_func(rotated_hist, model)
+			if(other_dissimilarity < dissimilarity):
+				dissimilarity = other_dissimilarity
+				print "bin {k} is used for comparison (better)!".format(k = other_start_bin)
+
+		return dissimilarity
 
 	def featureResponse(self):
 		assert (not self.hist is None), "Error in FeatureCentreHOGParadigm: calling computeScore before the feature hist is computed!"
@@ -65,9 +84,10 @@ class FeatureCentreHOGParadigm(Feature):
 		
 		assert (len(self.inner_HOG) == len(self.FEATURE_MODEL_INNER)), "Error in FeatureCentreHOGParadigm: inner HOG length is not correct!"
 		assert (len(self.border_HOG) == len(self.FEATURE_MODEL_BORDER)), "Error in FeatureCentreHOGParadigm: border HOG length is not correct!"
-		dissimilarity_inner = comparePatches.Jensen_Shannon_Divergence_Hat(self.inner_HOG, self.FEATURE_MODEL_INNER)
+		dissimilarity_inner = self.circularComparison(self.inner_HOG, self.FEATURE_MODEL_INNER, comparePatches.Jensen_Shannon_Divergence)
+		# dissimilarity_inner = comparePatches.Jensen_Shannon_Divergence(self.inner_HOG, self.FEATURE_MODEL_INNER)
 		dissimilarity_border = comparePatches.Jensen_Shannon_Divergence_Hat(self.border_HOG, self.FEATURE_MODEL_BORDER)
-		return 1.0 / (1.0 + np.linalg.norm([dissimilarity_inner, dissimilarity_border], 2))
+		return 1.0 / (1.0 + np.linalg.norm([dissimilarity_inner], 2))
 		# return np.sum(self.hist) # if all HOG degree are at the cutted HOG bins, response will be 1.0
 
 	def computeScore(self):
