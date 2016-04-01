@@ -930,8 +930,8 @@ def removeDuplicatesSameFeatureSet(sorted_patches):
 ### Start of Algo3 for feature detection:
 ### 1. Low pass filter of Harris Corner score.
 ### 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations
-### harris_thresh_pass normally = 0.0005, for flower sets is higher = 
-def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.1, LDA_thresh = 1.0, step = 0.5):
+### harris_thresh_pass normally = 0.0005, for flower sets is higher = 0.0005
+def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.0005, LDA_thresh = 1.0, step = 0.5):
 	"""
 	sigma, step: used for patch extraction
 	harris_thresh_pass: threshhold for filtering the initial set of good patches
