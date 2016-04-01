@@ -1004,8 +1004,8 @@ def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_pa
 	# make the distribution to be np array
 	random_patches_response = np.asarray(random_patches_response)
 
-	print "random_patches_response mean:", np.mean(random_patches_response), ", random_patches_response var:", np.var(random_patches_response)
-	print "test_patch_response:", test_patch_response
+	# print "random_patches_response mean:", np.mean(random_patches_response), ", random_patches_response var:", np.var(random_patches_response)
+	# print "test_patch_response:", test_patch_response
 
 	# plot the distribution and the testPatch response
 	if(plotHist):
@@ -1072,10 +1072,14 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	print "FEATURES:", FEATURES
 
 	for i in range(0, len(testPatches)):
+		start_time = time.time()
 		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow)
+		print "time spent for set all features for testPatches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} testPatches done".format(count = len(testPatches))
 	for i in range(0, len(random_patches)):
+		start_time = time.time()
 		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow)
+		print "time spent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} random_patches done".format(count = len(random_patches))
 
 
@@ -1119,11 +1123,11 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 			testPatches[i].setIsDueToHighResponse()
 
 	# Log out the feature_sets_score for each testPatch
-	print "------------ Logging feature_sets_score for each testPatch ------------"
-	for i in range(0, len(testPatches)):
-		for j in range(0, len(all_feature_sets)):
-			print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
-		print ""
+	# print "------------ Logging feature_sets_score for each testPatch ------------"
+	# for i in range(0, len(testPatches)):
+	# 	for j in range(0, len(all_feature_sets)):
+	# 		print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
+	# 	print ""
 	return feature_sets_score
 
 
