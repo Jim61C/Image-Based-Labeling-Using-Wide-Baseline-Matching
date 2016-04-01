@@ -1071,9 +1071,12 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 	# read the img with proper name and folder
 	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test_img_name), 1)
 	
+	detect_start_time = time.time()
+	print "start detecting: ", detect_start_time
 	"""Set the FEATURES for comparePatches findDistinguishablePatchesAlgo3 process"""
 	comparePatches.FEATURES = copy.deepcopy(utils.ALL_FEATURE_IDS)
 	distinguishablePatches = comparePatches.findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict)
+	print "feature detection spent time: ", time.time() - detect_start_time
 	
 	"""Set the ALL_FEATURE_TO_COMPUTE"""
 	all_feature_to_compute_set = set()
@@ -1399,10 +1402,10 @@ def main():
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	# findDistinguishablePatchesAndExecuteMatching("images", "testset4", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+	findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset8", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
-	mannalPruning("images", "testset_flower10", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
+	# mannalPruning("images", "testset_flower10", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
 

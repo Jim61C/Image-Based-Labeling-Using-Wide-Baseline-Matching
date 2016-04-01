@@ -945,7 +945,7 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
 	# positions = [(patch.x, patch.y) for patch in filtered_patches]
 	print "len(filtered_patches):", len(filtered_patches)
-	drawPatchesOnImg(np.copy(img), filtered_patches)
+	# drawPatchesOnImg(np.copy(img), filtered_patches)
 	"""
 	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
 	"""
