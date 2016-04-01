@@ -119,6 +119,8 @@ class FeatureSubSquareParadigm(Feature):
 		self.SATURATIONFRACTION_INVERSE = 0.1 # maximum noise in other hists
 		self.SHRINK_HUE_BIN_FRACTION = 0.9
 		self.HISTBINNUM = 16
+		MINIMUM_VALUE_CHANNEL_BIN = 4
+		MAX_FIRST_BIN_SATURATION_PERCENT = 0.5
 
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
@@ -187,38 +189,50 @@ class FeatureSubSquareParadigm(Feature):
 				target_hue_bins = []
 				for j in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
 					target_hue_bins.append(j % self.HISTBINNUM)
-				"""SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use"""
-				self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, \
-				self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
-				self.findSaturationRangeForTargetHueBin( \
-					img_hsv, this_patch, target_hue_bins, this_sub_gaussian_window)
-				
-				"""Check other three hists, should not contain targeted hue"""
-				target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
-				# filtered_other_hue have the same size of target_hue_bins, which only contain bins of interest
-				filtered_other_hue = np.zeros(len(target_hue_bins))
-				other_hue = np.zeros(self.HISTBINNUM)
-				for j in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
-					if (j != i):
-						one_other_hue = self.computeHueHist(img_hsv, sub_patches[j - 1] , sub_gaussian_windows[j - 1])
-						other_hue = other_hue + one_other_hue
-						
-						one_filtered_other_hue = self.targetHueFilteredBySaturation( \
-							img_hsv, sub_patches[j - 1], sub_gaussian_windows[j - 1], target_hue_bins, target_saturation_bins)
-						filtered_other_hue = filtered_other_hue + one_filtered_other_hue
 
-				# print "filtered_other_hue:", filtered_other_hue
-				# print "np.sum(filtered_other_hue):", np.sum(filtered_other_hue)
-				# print "np.sum(other_hue):", np.sum(other_hue)
 
-				# plotStatistics.plotOneGivenHist("", "filtered_other_hue", filtered_other_hue, save = False, show = True)
-				# plotStatistics.plotOneGivenHist("", "other_hue", other_hue, save = False, show = True)
+				value_for_target_hue_bins = self.findValueHistForTargetHueBin(\
+				img_hsv, this_patch, this_sub_gaussian_window, target_hue_bins)
 
-				if (np.sum(filtered_other_hue)/ np.sum(other_hue) <= self.SATURATIONFRACTION_INVERSE):
-					"""Found feature patch, break and return True"""
-					found_feature_patch_flag = True
-					self.SUBPATCH_OF_INTEREST_INDEX = i
-					break
+				saturation_for_target_hue_bins = self.findSaturationHistForTargetHueBin(\
+				img_hsv, this_patch, this_sub_gaussian_window, target_hue_bins)
+
+				"""Value Channel of the interest sub patch must have minimum thresh"""
+				if (np.argmax(value_for_target_hue_bins) > MINIMUM_VALUE_CHANNEL_BIN and \
+					saturation_for_target_hue_bins[0]/ np.sum(saturation_for_target_hue_bins) < MAX_FIRST_BIN_SATURATION_PERCENT):
+
+					"""SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use"""
+					self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, \
+					self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
+					self.findSaturationRangeForTargetHueBin( \
+						img_hsv, this_patch, target_hue_bins, this_sub_gaussian_window)
+					
+					"""Check other three hists, should not contain targeted hue"""
+					target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
+					# filtered_other_hue have the same size of target_hue_bins, which only contain bins of interest
+					filtered_other_hue = np.zeros(len(target_hue_bins))
+					other_hue = np.zeros(self.HISTBINNUM)
+					for j in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
+						if (j != i):
+							one_other_hue = self.computeHueHist(img_hsv, sub_patches[j - 1] , sub_gaussian_windows[j - 1])
+							other_hue = other_hue + one_other_hue
+							
+							one_filtered_other_hue = self.targetHueFilteredBySaturation( \
+								img_hsv, sub_patches[j - 1], sub_gaussian_windows[j - 1], target_hue_bins, target_saturation_bins)
+							filtered_other_hue = filtered_other_hue + one_filtered_other_hue
+
+					# print "filtered_other_hue:", filtered_other_hue
+					# print "np.sum(filtered_other_hue):", np.sum(filtered_other_hue)
+					# print "np.sum(other_hue):", np.sum(other_hue)
+
+					# plotStatistics.plotOneGivenHist("", "filtered_other_hue", filtered_other_hue, save = False, show = True)
+					# plotStatistics.plotOneGivenHist("", "other_hue", other_hue, save = False, show = True)
+
+					if (np.sum(filtered_other_hue)/ np.sum(other_hue) <= self.SATURATIONFRACTION_INVERSE):
+						"""Found feature patch, break and return True"""
+						found_feature_patch_flag = True
+						self.SUBPATCH_OF_INTEREST_INDEX = i
+						break
 
 		if (found_feature_patch_flag):
 			print "successfully constructed FeatureSubSquareParadigm, self.HUE_START_INDEX:", self.HUE_START_INDEX, \
