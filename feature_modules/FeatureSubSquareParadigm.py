@@ -72,7 +72,7 @@ class FeatureSubSquareParadigm(Feature):
 			target_hue_bins, \
 			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX))
 
-		filtered_saturation_of_interest = computeSaturationHistFilterOffSaturationWithWrongHue(\
+		filtered_saturation_of_interest = self.computeSaturationHistFilterOffSaturationWithWrongHue(\
 			img_hsv, \
 			sub_patch, \
 			sub_gaussian_window, \

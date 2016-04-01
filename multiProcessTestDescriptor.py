@@ -37,7 +37,7 @@ def dispatch_full_algorithm(args):
 			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)	
 	else:
 		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
-			image_db, test_folder_name, "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)
+			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)
 
 def dispatch_matching_given_test_patches(args):
 	test_folder_name, image_db = args
@@ -100,9 +100,17 @@ def main():
 	# ("testset4", image_db), \
 	# ("testset7", image_db), \
 	# ("testset1", image_db), \
-	("testset8", image_db), \
+	# ("testset8", image_db), \
 	# ("testset12", image_db), \
 	# ("testset13", image_db), \
+	("testset_flower1", image_db), \
+	("testset_flower2", image_db), \
+	("testset_flower3", image_db), \
+	("testset_flower5", image_db), \
+	("testset_flower6", image_db), \
+	("testset_flower7", image_db), \
+	("testset_flower9", image_db), \
+	("testset_flower10", image_db), \
 	]
 	
 	# test_folder_args = [ \
