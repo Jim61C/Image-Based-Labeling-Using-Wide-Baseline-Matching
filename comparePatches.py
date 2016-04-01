@@ -928,78 +928,10 @@ def removeDuplicatesSameFeatureSet(sorted_patches):
 		i += 1
 	return final_sorted_patches
 
-def findFeatureAttributeToUse(patches):
-	feature_attribute_scores = {}
-	# HSVScore score
-	# print "In findFeatureAttributeToUse, normalized HSV distribution:\n", normalize([patch.HSVScore for patch in patches], norm='l1')
-	feature_attribute_scores['HSVScore'] = np.std(normalize([patch.HSVScore for patch in patches], norm='l1')[0]) # l1/l2/max, l2 is default
-	# HOGScore score
-	# print "In findFeatureAttributeToUse, normalized HOG distribution:\n", normalize([patch.HOGScore for patch in patches], norm='l1')
-	feature_attribute_scores['HOGScore'] = np.std(normalize([patch.HOGScore for patch in patches], norm='l1')[0])
-
-	print "In findFeatureAttributeToUse, feature_attribute_scores:", feature_attribute_scores
-
-	return max(feature_attribute_scores.iteritems(), key=operator.itemgetter(1))[0]
-
-### Start of Algo2 for feature detection: Find one feature that makes the distribution of the low pass filtered patches to be of shape of spikes ###
-def findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict, thresh_pass = 0.005, step = 1):
-	"""
-	thresh_pass: low threshold used for Harris Corner Filtering
-	HSVthresh: used for removing similar patches for HSV unique patches
-	HOGthresh: used for removing similar patches for HOG unique patches
-	"""
-
-	patches = extractPatches(img, sigma,step)
-	"""
-	Low Pass using Harris Corner to get inital set of potential good patches
-	"""
-	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
-	filtered_patches = cornerResponse.filter_patches(patches, thresh_pass, cornerResponseMatrix, maxCornerResponse)
-	# drawPatchesOnImg(np.copy(img), filtered_patches)
-
-	"""
-	Hue Saturation response: Jensen_Shannon_Divergence of patches compared to full image
-	"""
-	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist = computeFullImageHSVHistogram(img)
-	gaussianWindow = gauss_kernels(sigma, sigma/6.0)
-	for i in range(0, len(filtered_patches)):
-		filtered_patches[i].computeSinglePatchHSVHistogram(img, gaussianWindow, True)
-		filtered_patches[i].HueHist = filtered_patches[i].HueHistArr[0]
-		filtered_patches[i].SaturationHist = filtered_patches[i].SaturationHistArr[0]
-		filtered_patches[i].ValueHist = filtered_patches[i].ValueHistArr[0]
-		filtered_patches[i].setHSVScore(compareSeperateHSVHists(filtered_patches[i], full_image_HueHist, full_image_SaturationHist, full_image_ValueHist))
-	
-	"""
-	HOG response
-	"""
-	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
-	for i in range(0, len(filtered_patches)):
-		filtered_patches[i].computeHOG(img_gray, True)
-		filtered_patches[i].setHOGScore(HOGResponse(filtered_patches[i].HOG))
-
-	feature_attr_to_use = findFeatureAttributeToUse(filtered_patches)
-	# feature_attr_to_use = "HSVScore"
-	# sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HSVScore, reverse=True)
-	# img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HSV", HSVthresh)[0:10],False, None, (255,0,0)) # Blue for Uniqueness on HSV
-	
-	# sorted_patches = sorted(filtered_patches, key = lambda patch: patch.HOGScore, reverse=True)
-	# img = drawPatchesOnImg(img, removeDuplicates(sorted_patches, "HOG", HOGthresh)[0:10],False, None, (0,0,255)) # Red for Uniqueness on HOG
-
-	sorted_patches = sorted(filtered_patches, key = lambda patch: getattr(patch, feature_attr_to_use), reverse=True)
-	print "check sorted patches score:"
-	for i in range(0, len(sorted_patches)):
-		# print sorted_patches[i].HSVScore
-		sorted_patches[i].setFeatureToUse([feature_attr_to_use[0:feature_attr_to_use.find('Score')]])
-		print getattr(sorted_patches[i], feature_attr_to_use)
-
-	return removeDuplicates(sorted_patches,\
-	remove_duplicate_thresh_dict),  feature_attr_to_use[0:feature_attr_to_use.find('Score')], filtered_patches # return sorted_patches using the most distinguishable attributes
-	# return removeDuplicates(sorted_patches, "HOG", HOGthresh) # return sorted_patches using HOG
-	# return filtered_patches
-
 ### Start of Algo3 for feature detection:
 ### 1. Low pass filter of Harris Corner score.
 ### 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations
+### harris_thresh_pass normally = 0.0005, for flower sets is higher = 0.0005
 def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.0005, LDA_thresh = 1.0, step = 0.5):
 	"""
 	sigma, step: used for patch extraction
@@ -1012,7 +944,8 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	maxCornerResponse, cornerResponseMatrix = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sigma, step)
 	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
 	# positions = [(patch.x, patch.y) for patch in filtered_patches]
-	# drawPatchesOnImg(np.copy(img), filtered_patches)
+	print "len(filtered_patches):", len(filtered_patches)
+	drawPatchesOnImg(np.copy(img), filtered_patches)
 	"""
 	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
 	"""
@@ -1090,16 +1023,13 @@ def generateAllFeatureSets(features):
 	return all_sets
 
 
-def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, \
-	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist, \
-	max_corner_response):
+def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow):
 	# HSV Feature
 	# patch.computeSinglePatchHSVHistogram(img, gaussianWindow, True)
 	# patch.HueHist = patch.HueHistArr[0]
 	# patch.SaturationHist = patch.SaturationHistArr[0]
 	# patch.ValueHist = patch.ValueHistArr[0]
 	patch.computeHSVHistogram(img)
-	patch.setHSVScore(compareSeperateHSVHists(patch, full_image_HueHist, full_image_SaturationHist, full_image_ValueHist))
 
 	# HOG Feature
 	patch.computeHOG(img_gray, True)
@@ -1108,10 +1038,7 @@ def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, \
 	# compute feature and set score for each feature object in feature_arr
 	for feature_obj in patch.feature_arr:
 		# start_time = time.time()
-		if (isinstance(feature_obj, feature_modules.FeatureCornerness)):
-			feature_obj.computeFeature(img, max_corner_response)
-		else:
-			feature_obj.computeFeature(img)
+		feature_obj.computeFeature(img)
 		feature_obj.computeScore()
 		# print "compute ", feature_obj.id, " spent time:", time.time() - start_time
 	# print "\n"
@@ -1132,21 +1059,15 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	"""
 	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
 	gaussianWindow = gauss_kernels(sigma, sigma/6.0)
-	full_image_HueHist, full_image_SaturationHist, full_image_ValueHist = computeFullImageHSVHistogram(img)
-	max_corner_response, _ = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), windowSize = sigma, _step = step)
 
 	random_patches = extractRandomPatches(img, sigma, 800)
 	print "FEATURES:", FEATURES
 
 	for i in range(0, len(testPatches)):
-		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, \
-			full_image_HueHist, full_image_SaturationHist, full_image_ValueHist, \
-			max_corner_response)
+		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow)
 	print "set score for all features for {count} testPatches done".format(count = len(testPatches))
 	for i in range(0, len(random_patches)):
-		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow, \
-			full_image_HueHist, full_image_SaturationHist, full_image_ValueHist, \
-			max_corner_response)
+		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow)
 	print "set score for all features for {count} random_patches done".format(count = len(random_patches))
 
 
@@ -1241,24 +1162,6 @@ def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colo
 		cv2.imshow("matched_img", matched_img)
 		cv2.waitKey(0)
 	return matched_img
-
-
-def populateTestFindDistinguishablePatchesAlgo2(folderName, imgName, sigma):
-	img = cv2.imread("images/{folder}/{name}".format(folder = folderName,  name = imgName), 1)
-	HSVthresh = 0.5
-	HOGthresh = 0.1
-	normalize_approach = "l1"
-	sorted_patches, feature_to_use, all_filtered_patches = findDistinguishablePatchesAlgo2(img, sigma, {'HSV': HSVthresh, 'HOG':HOGthresh})
-	print "End of Find distinguishable patches, feature_to_use:", feature_to_use
-	plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
-		"HSV_distribution_{folderName}_{imgName}{normalized}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")], normalized = "" if (normalize_approach == "") else "_normalized" + normalize_approach), \
-		all_filtered_patches, "HSV", normalize_approach)
-	plotStatistics.plotUniquenessDistribution("testUniquePatches/graphs", \
-		"HOG_distribution_{folderName}_{imgName}{normalized}".format(folderName = folderName, imgName = imgName[0:imgName.find(".")], normalized = "" if (normalize_approach == "") else "_normalized" + normalize_approach), \
-		all_filtered_patches, "HOG", normalize_approach)
-	# cv2.imshow("after the process, img:", drawPatchesOnImg(img, sorted_patches,False, None))
-	# cv2.waitKey(0)
-	# cv2.imwrite("testUniquePatches/UniquePatches_HSVthresh_{HSVthresh}_HOGthresh_{HOGthresh}_{folder}_{img}_sigma{i}.jpg".format(folder = folderName, i = sigma, img = imgName[0:imgName.find(".")], HSVthresh = HSVthresh, HOGthresh = HOGthresh), img)
 
 def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images", custom_feature_sets = None, custom_features_name = None):
 	# path = matchPatches.createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, suffix)
@@ -1433,10 +1336,6 @@ def main():
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
 	folderNames = ["testset7"]
-	### Test Algo2 in finding distinguishable patches ###
-	# for i in range(0, len(folderNames)):
-	# 	populateTestFindDistinguishablePatchesAlgo2(folderNames[i], "test1.jpg", 39)
-	# raise ValueError ("stop for test findDistinguishablePatchesAlgo2")
 
 	# Test combinatorial feature scores on a set of eyeballed patches
 	for i in range(0, len(folderNames)):

@@ -1070,10 +1070,7 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 	}
 	# read the img with proper name and folder
 	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test_img_name), 1)
-	# find unique patches
-	# distinguishablePatches, feature_to_use, all_filtered_patches= comparePatches.findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict)
-	# # set the feature descriptor to use
-	# FEATURE_WEIGHTING[feature_to_use] = 1.0
+	
 	"""Set the FEATURES for comparePatches findDistinguishablePatchesAlgo3 process"""
 	comparePatches.FEATURES = copy.deepcopy(utils.ALL_FEATURE_IDS)
 	distinguishablePatches = comparePatches.findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict)
@@ -1294,6 +1291,79 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 			folderToSave = "GaussianWindowOnAWhole", \
 			testFolder = test_folder_name +folder_suffix), True, True)
 
+
+def mannalPruning(image_db, test_folder_name, test1_img_name, test2_img_name, \
+	folder_suffix, upperPath = "testPatchHSV"):
+	sigma = 39
+	level = 5
+	test_patches = []
+	ground_truth = []
+	matches_found = []
+
+	# read test_patches
+	list_of_test_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix, 
+		folder = test_folder_name, 
+		file = test1_img_name[:test1_img_name.find(".")], 
+		i = sigma))
+	for i in range(0, len(list_of_test_patches)):
+		test_patches.append(list_of_test_patches[i])
+		print list_of_test_patches[i].is_low_response
+
+	# read matches_found
+	test_patch_matches = saveLoadPatch.loadPatchMatches(\
+		"{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix,  
+		folder = test_folder_name, 
+		file1 = test1_img_name[:test1_img_name.find(".")], 
+		file2 = test2_img_name[:test2_img_name.find(".")], 
+		i = sigma, 
+		step = 0.5, 
+		tf = True))
+	for i in range(0, len(test_patch_matches)):
+		matches_found.append(test_patch_matches[i][0])
+
+	# read test1_img_name to img
+	img = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
+	# read test2_img_name to imgToMatch
+	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test2_img_name), 1)
+
+	comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), test_patches, matches_found, \
+		show = True)
+
+	matches_to_keep = []
+	index = raw_input("please specify the good match indexes(hit enter to exit):")
+	while(index != ""):
+		matches_to_keep.append(int(index))
+		index = raw_input("please specify the good match indexes(hit enter to exit):")
+
+	print matches_to_keep
+		
+	test_patches_keep = []
+	matches_found_keep = []
+	for i in matches_to_keep:
+		test_patches_keep.append(test_patches[i])
+		matches_found[i].setFeatureToUse(test_patches[i].feature_to_use)
+		matches_found[i].setFeatureWeights(test_patches[i].feature_weights)
+		matches_found[i].setIsLowResponse(test_patches[i].is_low_response)
+		matches_found_keep.append(matches_found[i])
+
+	pruned_match = comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), test_patches_keep, matches_found_keep, \
+		show = True)
+	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)+"/_combined_scene_match_pruned.jpg",\
+		pruned_match)
+
+	return	
+
+
+
 def main():
 	# ---------------------------------TEST DESCRIPTOR PERFORMANCE-----------------------------------
 	# folder_suffix = "_HOG_Jensen_Shannon_Divergence"
@@ -1326,12 +1396,13 @@ def main():
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
 	# findDistinguishablePatchesAndExecuteMatching("images", "testset4", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset8", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
+	mannalPruning("images", "testset_flower10", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
 
