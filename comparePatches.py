@@ -180,6 +180,14 @@ class Patch:
 		self.outer_hue_hist_scale_3_gaus_4 = None
 		self.outer_saturation_hist_scale_3_gaus_4 = None
 
+		self.outer_hs_2d = None
+		self.inner_hs_2d_scale_3_gaus_4 = None
+
+		self.hs_2d_arr = [] # self.hs_2d_arr[0] (reference) == self.outer_hs_2d
+
+		# For FeatureCentreParadigm
+		self.inner_hue_hist_scale_3_gaus_4_centre_paradigm = None 
+		self.inner_saturation_hist_scale_3_gaus_4_centre_paradigm = None
 		# For HISTHUM = 36
 		self.inner_hue_hist_scale_3_gaus_4_hist_36 = None 
 		self.inner_saturation_hist_scale_3_gaus_4_hist_36 = None

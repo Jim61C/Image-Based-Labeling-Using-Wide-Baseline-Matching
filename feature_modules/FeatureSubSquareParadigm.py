@@ -65,20 +65,17 @@ class FeatureSubSquareParadigm(Feature):
 			self.patch.ValueHistArr = []
 			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
 
-		filtered_hue_of_interest = self.computeHueHistFilterOffHueWithWrongSaturation(\
-			img_hsv, \
-			sub_patch, \
-			sub_gaussian_window, \
-			target_hue_bins, \
-			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX))
+		if (not len(self.patch.hs_2d_arr) == 5):
+			self.computeHS2DArr(img_hsv, self.patch, full_patch_gaussian_window)
 
-		filtered_saturation_of_interest = self.computeSaturationHistFilterOffSaturationWithWrongHue(\
-			img_hsv, \
-			sub_patch, \
-			sub_gaussian_window, \
-			target_hue_bins, \
-			target_saturation_bins)
+		"""broder hue range used for filtering hue than filtering saturation"""
+		filtered_hue_of_interest = self.deriveHueHistFilterOffHueWithWrongSaturationFrom2D(\
+			self.patch.hs_2d_arr[self.SUBPATCH_OF_INTEREST_INDEX], \
+			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX), target_hue_bins)
 
+		filtered_saturation_of_interest = self.deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(\
+			self.patch.hs_2d_arr[self.SUBPATCH_OF_INTEREST_INDEX], target_saturation_bins, target_hue_bins)
+		
 		self.hist = np.concatenate((filtered_hue_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window), \
 			filtered_saturation_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window)), axis = 1)
 		
