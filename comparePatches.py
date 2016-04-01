@@ -180,6 +180,11 @@ class Patch:
 		self.outer_hue_hist_scale_3_gaus_4 = None
 		self.outer_saturation_hist_scale_3_gaus_4 = None
 
+		self.outer_hs_2d = None
+		self.inner_hs_2d_scale_3_gaus_4 = None
+
+		self.hs_2d_arr = [] # self.hs_2d_arr[0] (reference) == self.outer_hs_2d
+
 		# For FeatureCentreParadigm
 		self.inner_hue_hist_scale_3_gaus_4_centre_paradigm = None 
 		self.inner_saturation_hist_scale_3_gaus_4_centre_paradigm = None
@@ -1330,7 +1335,7 @@ def main():
 	global FEATURES
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 	# FEATURES = utils.ALL_FEATURE_IDS
-	FEATURES = [utils.GENERATED_FEATURE_IDS[1]]
+	FEATURES = [utils.GENERATED_FEATURE_IDS[2]]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]

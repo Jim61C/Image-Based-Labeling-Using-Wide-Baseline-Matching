@@ -134,6 +134,117 @@ class Feature(object):
 					hist[target_hue_bins.index(this_hue_bin)] += 1 * gaussian_window[i - ref_x][j - ref_y]
 		return hist
 
+	def computeHS2DArr(self, img_hsv, patch, gaussian_window):
+		"""
+		patch: instance of patch to set its hs_2d_arr
+		"""
+		if (patch.outer_hs_2d is None):
+			patch.outer_hs_2d = self.computeHS2DWithGaussianWindow(img_hsv, patch, gaussian_window)
+		patch.hs_2d_arr.append(patch.outer_hs_2d)
+
+		newLen = (patch.size+1)/2
+		if(newLen % 2 == 0):
+			newSize = newLen -1
+		else:
+			newSize = newLen
+
+		# TOP_LEFT_INDEX  patch.outer_hs_2d[1]
+		sub_gaussian_window = gaussian_window[0:newSize,0:newSize]
+		sub_patch = comparePatches.Patch(patch.x - newLen/2, patch.y - newLen/2, newSize, initialize_features = False)
+		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
+		# TOP_RIGHT_INDEX  patch.outer_hs_2d[2]
+		sub_gaussian_window = gaussian_window[0:newSize, gaussian_window.shape[1] - newSize:gaussian_window.shape[1]]
+		sub_patch = comparePatches.Patch(patch.x - newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
+		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
+		# BOTTOM_LEFT_INDEX patch.outer_hs_2d[3]
+		sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], 0:newSize]
+		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y - newLen/2, newSize, initialize_features = False)
+		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
+		# BOTTOM_RIGHT_INDEX patch.outer_hs_2d[4]
+		sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], gaussian_window.shape[1] - newSize: gaussian_window.shape[1]]
+		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
+		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
+
+	def computeHS2DWithGaussianWindow(self, img_hsv, patch, gaussian_window):
+		"""
+		default is 16 * 16, unless self.HISTBINNUM is being extended by subclasses
+		"""
+		assert (patch.size == len(gaussian_window)), \
+		"In computeHS2DWithGaussianWindow, passed in patch size mush match gaussian_window, however, patch.size =={a}, len(gaussian_window) == {b}".format(\
+			a = patch.size, b = len(gaussian_window))
+		hist = np.zeros(shape = (self.HISTBINNUM, self.HISTBINNUM))
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+				if (this_hue_bin == self.HISTBINNUM):
+					this_hue_bin = self.HISTBINNUM - 1
+				this_saturation_bin = int(img_hsv[i][j][1]/1.0 * self.HISTBINNUM)
+				if (this_saturation_bin == self.HISTBINNUM):
+					this_saturation_bin = self.HISTBINNUM - 1
+
+				hist[this_hue_bin][this_saturation_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+		return hist
+
+	def derive1DSaturationFrom2D(self, hist_2d):
+		"""
+		hist_2d is of shape (Hue bin length, Saturation bin length)
+		"""
+		assert (self.HISTBINNUM == len(hist_2d)), \
+		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
+			a = len(hist_2d), b = self.HISTBINNUM)
+		hist = np.zeros(self.HISTBINNUM)
+		# saturation is col
+		for i in range(0, len(hist)):
+			hist[i] = np.sum(hist_2d[:,i])
+		return hist
+
+	def derive1DHueFrom2D(self, hist_2d):
+		"""
+		hist_2d is of shape (Hue bin length, Saturation bin length)
+		"""
+		assert (self.HISTBINNUM == len(hist_2d)), \
+		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
+			a = len(hist_2d), b = self.HISTBINNUM)
+		hist = np.zeros(self.HISTBINNUM)
+		# hue is row
+		for i in range(0, len(hist)):
+			hist[i] = np.sum(hist_2d[i,])
+		return hist
+
+	def deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(self, hist_2d, target_saturation_bins, target_hue_bins):
+		"""
+		hist_2d is of shape (Hue bin length, Saturation bin length)
+		"""
+		assert (self.HISTBINNUM == len(hist_2d)), \
+		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
+			a = len(hist_2d), b = self.HISTBINNUM)
+		hist = np.zeros(self.HISTBINNUM)
+		# saturation is col
+		for i in range(0, len(hist)):
+			if (not i in target_saturation_bins):
+				hist[i] = np.sum(hist_2d[:,i])
+			else:
+				hist[i] = np.sum(hist_2d[target_hue_bins,i])
+		return hist
+
+	def deriveHueHistFilterOffHueWithWrongSaturationFrom2D(self, hist_2d, target_saturation_bins, target_hue_bins):
+		"""
+		hist_2d is of shape (Hue bin length, Saturation bin length)
+		"""
+		assert (self.HISTBINNUM == len(hist_2d)), \
+		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
+			a = len(hist_2d), b = self.HISTBINNUM)
+		hist = np.zeros(self.HISTBINNUM)
+		# hue is row
+		for i in range(0, len(hist)):
+			if (not i in target_hue_bins):
+				hist[i] = np.sum(hist_2d[i,])
+			else:
+				hist[i] = np.sum(hist_2d[i,target_saturation_bins])
+		return hist
+
 	def computeSaturationHistFilterOffSaturationWithWrongHue(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
 		"""Do not add to Hue Hist if the hue is in target_saturation_bins but not in the target_saturation_bins"""
 		hist = np.zeros(self.HISTBINNUM)
