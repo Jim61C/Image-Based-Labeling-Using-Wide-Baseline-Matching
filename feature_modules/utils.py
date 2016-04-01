@@ -25,6 +25,7 @@ HEART_SHAPE_FEATURE_ID = "HEART_SHAPE"
 CENTRE_PARADIGM_FEATURE_PREFIX = "centre_paradigm_"
 CENTRE_HOG_PARADIGM_FEATURE_PREFIX = "centre_hog_paradigm_"
 SUBSQUARE_PARADIGM_FEATURE_PREFIX = "subsquare_paradigm_"
+BORDER_PARADIGM_FEATURE_PREFIX = "border_paradigm_"
 # GENERATED_FEATURE_IDS = ["centre_paradigm_0", "centre_paradigm_1", "centre_paradigm_2", "subsquare_paradigm_0"]
 GENERATED_FEATURE_IDS = []
 

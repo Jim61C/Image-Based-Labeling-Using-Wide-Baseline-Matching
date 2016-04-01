@@ -185,6 +185,8 @@ class Patch:
 
 		self.hs_2d_arr = [] # self.hs_2d_arr[0] is full patch hs with gaussian window of 6 sigma
 
+		self.gaus_scale_to_inner_hs_2d_dict = {} # key is "4_3", meaning 4 sigma gaussian window and inner patch is scale down 3
+
 		# For FeatureCentreParadigm
 		self.inner_hue_hist_scale_3_gaus_4_centre_paradigm = None 
 		self.inner_saturation_hist_scale_3_gaus_4_centre_paradigm = None
@@ -1340,6 +1342,7 @@ def main():
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
 	folderNames = ["testset7"]
+	# folderNames = ["testset_rotation1"]
 
 	# Test combinatorial feature scores on a set of eyeballed patches
 	for i in range(0, len(folderNames)):
