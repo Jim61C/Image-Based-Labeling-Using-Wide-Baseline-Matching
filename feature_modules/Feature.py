@@ -360,19 +360,27 @@ class Feature(object):
 					hist[this_saturation_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
 		return hist
 
-	def findSaturationRangeForTargetHueBin(self, img_hsv, inner_patch, target_hue_bins, inner_gaussian_window):
-		"""return: the saturation range of the given target_hue_bins"""
+	def findBorderValueHistForTargetHueBin(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins):
+		"""For border: find the value hist when hue lies in the target hue bins"""
+		hist = np.zeros(self.HISTBINNUM)
+		ref_x = patch.x - patch.size/2
+		ref_y = patch.y - patch.size/2
+		for i in range(patch.x - patch.size/2, patch.x + patch.size/2 + 1):
+			for j in range(patch.y - patch.size/2, patch.y + patch.size/2 + 1):
+				if (not self.withinPatch(inner_patch, i, j)): # only check the border pixels
+					this_hue_bin = int(img_hsv[i][j][0]/360.0 * self.HISTBINNUM)
+					if (this_hue_bin == self.HISTBINNUM):
+						this_hue_bin = self.HISTBINNUM - 1
+					this_value_bin = int(img_hsv[i][j][2]/255.0 * self.HISTBINNUM)
+					if (this_value_bin == self.HISTBINNUM):
+						this_value_bin = self.HISTBINNUM - 1
 
-		hist = self.findSaturationHistForTargetHueBin(img_hsv, inner_patch, inner_gaussian_window, target_hue_bins)
+					if (this_hue_bin in target_hue_bins):
+						hist[this_value_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+		return hist
 
-		return self.acquireSaturationWorker(hist)
-
-	def findBorderSaturationRangeForTargetHueBin(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins):
-		"""
-		img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-255
-		inner_patch: square inner patch with a smaller window size than patch
-		return: hist of length equal to self.HISTBINNUM for the targetHueFilteredBySaturation
-		"""
+	def findBorderSaturationHistForTargetHueBin(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins):
+		"""For border: find the saturation hist when hue lies in the target hue bins"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -388,6 +396,23 @@ class Feature(object):
 
 					if (this_hue_bin in target_hue_bins):
 						hist[this_saturation_bin] += 1 * gaussian_window[i - ref_x][j - ref_y]
+		return hist
+
+
+	def findSaturationRangeForTargetHueBin(self, img_hsv, inner_patch, target_hue_bins, inner_gaussian_window):
+		"""return: the saturation range of the given target_hue_bins"""
+
+		hist = self.findSaturationHistForTargetHueBin(img_hsv, inner_patch, inner_gaussian_window, target_hue_bins)
+
+		return self.acquireSaturationWorker(hist)
+
+	def findBorderSaturationRangeForTargetHueBin(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins):
+		"""
+		img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-255
+		inner_patch: square inner patch with a smaller window size than patch
+		return: hist of length equal to self.HISTBINNUM for the targetHueFilteredBySaturation
+		"""
+		hist = self.findBorderSaturationHistForTargetHueBin(img_hsv, patch, inner_patch, gaussian_window, target_hue_bins)
 
 		return self.acquireSaturationWorker(hist)
 	

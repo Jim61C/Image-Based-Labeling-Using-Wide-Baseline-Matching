@@ -98,11 +98,13 @@ class FeatureCentreParadigm(Feature):
 		if (self.patch.outer_hs_2d_gaus_4 is None):
 			self.patch.outer_hs_2d_gaus_4 = self.computeHS2DWithGaussianWindow(img_hsv, self.patch, gaussian_window)
 
-		if (self.patch.inner_hs_2d_scale_3_gaus_4 is None):
-			self.patch.inner_hs_2d_scale_3_gaus_4 = self.computeHS2DWithGaussianWindow(img_hsv, inner_patch, inner_gaussian_window)
+		key = "{gaus}_{scale}".format(gaus = int(self.GAUSSIAN_WINDOW_LENGTH_SIGMA), scale = int(self.GAUSSIAN_SCALE))
+		if (not key in self.patch.gaus_scale_to_inner_hs_2d_dict):
+		 self.patch.gaus_scale_to_inner_hs_2d_dict[key] = self.computeHS2DWithGaussianWindow(\
+		 	img_hsv, inner_patch, inner_gaussian_window)
 		
 		inner_hist_hue = self.patch.inner_hue_hist_scale_3_gaus_4_centre_paradigm
-		inner_hist_saturation = self.derive1DSaturationFrom2D(self.patch.inner_hs_2d_scale_3_gaus_4)
+		inner_hist_saturation = self.derive1DSaturationFrom2D(self.patch.gaus_scale_to_inner_hs_2d_dict[key])
 
 		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm
 		outer_hist_saturation = self.derive1DSaturationFrom2D(self.patch.outer_hs_2d_gaus_4)
@@ -158,7 +160,7 @@ class FeatureCentreParadigm(Feature):
 
 		"""Hue filtered inner_hist_saturation"""
 		hue_filtered_inner_hist_saturation = self.deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(\
-			self.patch.inner_hs_2d_scale_3_gaus_4, target_saturation_bins, target_hue_bins)
+			self.patch.gaus_scale_to_inner_hs_2d_dict[key], target_saturation_bins, target_hue_bins)
 
 		"""
 		Try: normalizing border hist so that the weightage of border effect is comparable to that of the inner patch
@@ -291,75 +293,82 @@ class FeatureCentreParadigm(Feature):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
 
-		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -self.GAUSSIAN_SCALE)
-		inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
-		inner_gaussian_window = gaussian_window[ \
-		gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\
-		gaussian_window.shape[1]/2 - inner_patch.size/2: gaussian_window.shape[1]/2 + inner_patch.size/2 + 1]
+		success_flag = False
 
-		outer_hue = self.computeHueHistSaturationWeighted(img_hsv, self.patch, gaussian_window)
-		outer_saturation = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
+		for scale in xrange(3,0,-1):
+			self.GAUSSIAN_SCALE = scale
+			print "current gaussian scale in centre_paradigm detection:", self.GAUSSIAN_SCALE
+			inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -self.GAUSSIAN_SCALE)
+			inner_patch = comparePatches.Patch(self.patch.x, self.patch.y, inner_patch_size)
+			inner_gaussian_window = gaussian_window[ \
+			gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\
+			gaussian_window.shape[1]/2 - inner_patch.size/2: gaussian_window.shape[1]/2 + inner_patch.size/2 + 1]
 
-		inner_hue = self.computeHueHistSaturationWeighted(img_hsv, inner_patch, inner_gaussian_window)
-		inner_saturation = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
+			outer_hue = self.computeHueHistSaturationWeighted(img_hsv, self.patch, gaussian_window)
+			outer_saturation = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
 
-		inner_hue_density = np.zeros(self.HISTBINNUM)
-		for i in range(0, self.HISTBINNUM):
-			inner_hue_density[i] = inner_hue[i] + inner_hue[((i+1)%self.HISTBINNUM)]
-		max_hue_bin = np.argmax(inner_hue_density)
-		if(inner_hue_density[max_hue_bin] < self.HUEFRACTION * np.sum(inner_hue)):
-			return False
+			inner_hue = self.computeHueHistSaturationWeighted(img_hsv, inner_patch, inner_gaussian_window)
+			inner_saturation = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
 
-		"""shrink hue bin, assign HUE_START_INDEX, HUE_END_INDEX, note that these two indexes need to mod self.HISTBINNUM before use"""
-		if (inner_hue[max_hue_bin]/inner_hue_density[max_hue_bin] > self.SHRINK_HUE_BIN_FRACTION):
-			# max_hue_bin itself is prominent
-			self.HUE_START_INDEX = max_hue_bin
-			self.HUE_END_INDEX = max_hue_bin + 1
-		elif (inner_hue[((max_hue_bin + 1) % self.HISTBINNUM)]/inner_hue_density[max_hue_bin] > self.SHRINK_HUE_BIN_FRACTION):
-			# max_hue_bin + 1 itself is prominent
-			self.HUE_START_INDEX = (max_hue_bin + 1)
-			self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
-		else:
-			# need two bins
-			self.HUE_START_INDEX = max_hue_bin
-			self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
-		if(self.HUE_START_INDEX >= self.HISTBINNUM):
-			self.HUE_START_INDEX = self.HUE_START_INDEX % self.HISTBINNUM
-			self.HUE_END_INDEX = self.HUE_END_INDEX % self.HISTBINNUM
+			inner_hue_density = np.zeros(self.HISTBINNUM)
+			for i in range(0, self.HISTBINNUM):
+				inner_hue_density[i] = inner_hue[i] + inner_hue[((i+1)%self.HISTBINNUM)]
+			max_hue_bin = np.argmax(inner_hue_density)
+			if(inner_hue_density[max_hue_bin] < self.HUEFRACTION * np.sum(inner_hue)):
+				continue
 
-		"""Acquire Saturation Bin"""
-		target_hue_bins = []
-		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
-			target_hue_bins.append(i % self.HISTBINNUM)
-		"""
-		SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use
-		"""
-		self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
-		self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
-		plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
-		plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
-		
-		"""Check border hist, should not contain targeted hue"""
-		target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
-		filtered_border_hue = self.borderTargetHueFilteredBySaturation(img_hsv, self.patch, inner_patch, gaussian_window, target_hue_bins, target_saturation_bins)
-		border_hue = outer_hue - inner_hue
+			"""shrink hue bin, assign HUE_START_INDEX, HUE_END_INDEX, note that these two indexes need to mod self.HISTBINNUM before use"""
+			if (inner_hue[max_hue_bin]/inner_hue_density[max_hue_bin] > self.SHRINK_HUE_BIN_FRACTION):
+				# max_hue_bin itself is prominent
+				self.HUE_START_INDEX = max_hue_bin
+				self.HUE_END_INDEX = max_hue_bin + 1
+			elif (inner_hue[((max_hue_bin + 1) % self.HISTBINNUM)]/inner_hue_density[max_hue_bin] > self.SHRINK_HUE_BIN_FRACTION):
+				# max_hue_bin + 1 itself is prominent
+				self.HUE_START_INDEX = (max_hue_bin + 1)
+				self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
+			else:
+				# need two bins
+				self.HUE_START_INDEX = max_hue_bin
+				self.HUE_END_INDEX = (max_hue_bin + 1 + 1)
+			if(self.HUE_START_INDEX >= self.HISTBINNUM):
+				self.HUE_START_INDEX = self.HUE_START_INDEX % self.HISTBINNUM
+				self.HUE_END_INDEX = self.HUE_END_INDEX % self.HISTBINNUM
 
-		plotStatistics.plotOneGivenHist("", "filtered_border_hue", filtered_border_hue, save = False, show = True)
-		plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
+			"""Acquire Saturation Bin"""
+			target_hue_bins = []
+			for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+				target_hue_bins.append(i % self.HISTBINNUM)
+			"""
+			SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use
+			"""
+			self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
+			self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
+			plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
+			plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
+			
+			"""Check border hist, should not contain targeted hue"""
+			target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
+			filtered_border_hue = self.borderTargetHueFilteredBySaturation(img_hsv, self.patch, inner_patch, gaussian_window, target_hue_bins, target_saturation_bins)
+			border_hue = outer_hue - inner_hue
 
-		if (np.sum(filtered_border_hue)/ np.sum(border_hue) > self.SATURATIONFRACTION_INVERSE):
-			return False
+			plotStatistics.plotOneGivenHist("", "filtered_border_hue", filtered_border_hue, save = False, show = True)
+			plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
 
-		print "successfully constructed feature centre_paradigm, self.HUE_START_INDEX:", self.HUE_START_INDEX, \
-		"self.HUE_END_INDEX:", self.HUE_END_INDEX, \
-		"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
-		"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX, \
-		"self.SATURATION_FILTER_START_INDEX:", self.SATURATION_FILTER_START_INDEX, \
-		"self.SATURATION_FILTER_END_INDEX:", self.SATURATION_FILTER_END_INDEX
+			if (np.sum(filtered_border_hue)/ np.sum(border_hue) > self.SATURATIONFRACTION_INVERSE):
+				continue
 
-		self.computeFeatureModel(inner_hue, inner_saturation)
+			print "successfully constructed feature centre_paradigm, self.HUE_START_INDEX:", self.HUE_START_INDEX, \
+			"self.HUE_END_INDEX:", self.HUE_END_INDEX, \
+			"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
+			"self.SATURATION_END_INDEX:", self.SATURATION_END_INDEX, \
+			"self.SATURATION_FILTER_START_INDEX:", self.SATURATION_FILTER_START_INDEX, \
+			"self.SATURATION_FILTER_END_INDEX:", self.SATURATION_FILTER_END_INDEX
 
-		return True
+			self.computeFeatureModel(inner_hue, inner_saturation)
+			success_flag = True
+			break
+
+		return success_flag
 
 	# def dissimilarityWith(self, feature_obj):
 	# 	"""
