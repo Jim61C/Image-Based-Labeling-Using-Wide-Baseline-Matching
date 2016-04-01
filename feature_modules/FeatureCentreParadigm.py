@@ -95,8 +95,8 @@ class FeatureCentreParadigm(Feature):
 			# self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm = self.computeHueHist(img_hsv, self.patch, gaussian_window)
 			self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm = self.computeHueHistSaturationWeighted(img_hsv, self.patch, gaussian_window)
 		
-		if (self.patch.outer_hs_2d is None):
-			self.patch.outer_hs_2d = self.computeHS2DWithGaussianWindow(img_hsv, self.patch, gaussian_window)
+		if (self.patch.outer_hs_2d_gaus_4 is None):
+			self.patch.outer_hs_2d_gaus_4 = self.computeHS2DWithGaussianWindow(img_hsv, self.patch, gaussian_window)
 
 		if (self.patch.inner_hs_2d_scale_3_gaus_4 is None):
 			self.patch.inner_hs_2d_scale_3_gaus_4 = self.computeHS2DWithGaussianWindow(img_hsv, inner_patch, inner_gaussian_window)
@@ -105,7 +105,7 @@ class FeatureCentreParadigm(Feature):
 		inner_hist_saturation = self.derive1DSaturationFrom2D(self.patch.inner_hs_2d_scale_3_gaus_4)
 
 		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4_centre_paradigm
-		outer_hist_saturation = self.derive1DSaturationFrom2D(self.patch.outer_hs_2d)
+		outer_hist_saturation = self.derive1DSaturationFrom2D(self.patch.outer_hs_2d_gaus_4)
 
 		border_hist_hue = outer_hist_hue - inner_hist_hue
 		border_hist_saturation = outer_hist_saturation - inner_hist_saturation

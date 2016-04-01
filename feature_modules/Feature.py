@@ -138,9 +138,8 @@ class Feature(object):
 		"""
 		patch: instance of patch to set its hs_2d_arr
 		"""
-		if (patch.outer_hs_2d is None):
-			patch.outer_hs_2d = self.computeHS2DWithGaussianWindow(img_hsv, patch, gaussian_window)
-		patch.hs_2d_arr.append(patch.outer_hs_2d)
+		full_patch_hs = self.computeHS2DWithGaussianWindow(img_hsv, patch, gaussian_window)
+		patch.hs_2d_arr.append(full_patch_hs) # full_patch_hs is supposed to be using 6 sigma gaussian window
 
 		newLen = (patch.size+1)/2
 		if(newLen % 2 == 0):
@@ -148,19 +147,19 @@ class Feature(object):
 		else:
 			newSize = newLen
 
-		# TOP_LEFT_INDEX  patch.outer_hs_2d[1]
+		# TOP_LEFT_INDEX  patch.hs_2d_arr[1]
 		sub_gaussian_window = gaussian_window[0:newSize,0:newSize]
 		sub_patch = comparePatches.Patch(patch.x - newLen/2, patch.y - newLen/2, newSize, initialize_features = False)
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
-		# TOP_RIGHT_INDEX  patch.outer_hs_2d[2]
+		# TOP_RIGHT_INDEX  patch.hs_2d_arr[2]
 		sub_gaussian_window = gaussian_window[0:newSize, gaussian_window.shape[1] - newSize:gaussian_window.shape[1]]
 		sub_patch = comparePatches.Patch(patch.x - newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
-		# BOTTOM_LEFT_INDEX patch.outer_hs_2d[3]
+		# BOTTOM_LEFT_INDEX patch.hs_2d_arr[3]
 		sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], 0:newSize]
 		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y - newLen/2, newSize, initialize_features = False)
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
-		# BOTTOM_RIGHT_INDEX patch.outer_hs_2d[4]
+		# BOTTOM_RIGHT_INDEX patch.hs_2d_arr[4]
 		sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], gaussian_window.shape[1] - newSize: gaussian_window.shape[1]]
 		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
