@@ -1077,10 +1077,7 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 	}
 	# read the img with proper name and folder
 	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test_img_name), 1)
-	# find unique patches
-	# distinguishablePatches, feature_to_use, all_filtered_patches= comparePatches.findDistinguishablePatchesAlgo2(img, sigma, remove_duplicate_thresh_dict)
-	# # set the feature descriptor to use
-	# FEATURE_WEIGHTING[feature_to_use] = 1.0
+	
 	"""Set the FEATURES for comparePatches findDistinguishablePatchesAlgo3 process"""
 	comparePatches.FEATURES = copy.deepcopy(utils.ALL_FEATURE_IDS)
 	distinguishablePatches = comparePatches.findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict)
