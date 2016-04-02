@@ -1127,7 +1127,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 		"""TODO: may need to adjust the weight based what features there are in the set"""
 		this_feature_weights = np.ones(len(this_feature_set))
 		all_feature_set_weights.append(this_feature_weights)
-		print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
+		# print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
 		
 		# get the distribution of random patch response under this_feature_set
 		random_patches_response = []
@@ -1159,9 +1159,9 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	# Log out the feature_sets_score for each testPatch
 	# print "------------ Logging feature_sets_score for each testPatch ------------"
 	# for i in range(0, len(testPatches)):
-	# 	for j in range(0, len(all_feature_sets)):
-	# 		print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
-	# 	print ""
+		# for j in range(0, len(all_feature_sets)):
+			# print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
+		# print ""
 	return feature_sets_score
 
 
@@ -1332,12 +1332,12 @@ def populateTestCombinatorialFeatureScore( \
 	path = upperPath + "/GaussianWindowOnAWhole/" + test_folder_name + folder_suffix
 	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name), 1)
 	# turn on if need to write as black and white
-	cv2.imwrite("{path}/{folder}_{file}_simga{i}_{suffix}_bw.jpg".format( \
-			path = path , \
-			folder = test_folder_name, \
-			file = "test1", \
-			i = sigma, \
-			suffix = folder_suffix), cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.uint8))
+	# cv2.imwrite("{path}/{folder}_{file}_simga{i}_{suffix}_bw.jpg".format( \
+	# 		path = path , \
+	# 		folder = test_folder_name, \
+	# 		file = "test1", \
+	# 		i = sigma, \
+	# 		suffix = folder_suffix), cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.uint8))
 
 	testPatches = []
 	listOfPatches = saveLoadPatch.loadPatchMatches( \
@@ -1356,11 +1356,19 @@ def populateTestCombinatorialFeatureScore( \
 		print "\ntestPatches[{i}]:".format(i = i)
 		for this_feature in FEATURES:
 			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
+			testPatches[i].getFeatureObject(this_feature).computeScore()
+			print "testPatches[{i}]".format( i = i), "actual feature score: ", testPatches[i].getFeatureObject(this_feature).score
 			if (this_feature != utils.HEART_SHAPE_FEATURE_ID):
 				plotStatistics.plotOneGivenHist(\
 					path, \
 					"testPatches[{i}] feature {this_feature}".format(i = i, this_feature = this_feature), \
 					testPatches[i].getFeatureObject(this_feature).hist, \
+					save = False, \
+					show = True)
+				plotStatistics.plotOneGivenHist(\
+					path, \
+					"testPatches[{i}] FEATURE_MODEL {this_feature}".format(i = i, this_feature = this_feature), \
+					testPatches[i].getFeatureObject(this_feature).FEATURE_MODEL, \
 					save = False, \
 					show = True)
 		
@@ -1377,18 +1385,21 @@ def main():
 	global FEATURES
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 	# FEATURES = utils.ALL_FEATURE_IDS
-	FEATURES = [utils.GENERATED_FEATURE_IDS[1]]
+	FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
-	folderNames = ["testset7"]
+	# folderNames = ["testset7"]
 	# folderNames = ["testset_rotation1"]
+	folderNames = ["testset_flower2"]
 
 	# Test combinatorial feature scores on a set of eyeballed patches
 	for i in range(0, len(folderNames)):
 		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
 			upperPath = "testAlgo3", \
-			folder_suffix = "_eyeballed_unique_patches")
+			# folder_suffix = "_eyeballed_unique_patches"\
+			folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+			)
 	raise ValueError("purpose stop for testing populating combinatorial score")
 
 	### Test Algo3 in finding distinguishable patches ###
