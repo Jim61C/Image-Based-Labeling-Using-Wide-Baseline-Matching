@@ -31,7 +31,7 @@ def dispatch_full_algorithm(args):
 	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
 	if (test_folder_name == "testset7"):
 		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
 			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)	
@@ -103,14 +103,25 @@ def main():
 	# ("testset8", image_db), \
 	# ("testset12", image_db), \
 	# ("testset13", image_db), \
-	("testset_flower1", image_db), \
 	("testset_flower2", image_db), \
 	("testset_flower3", image_db), \
+	("testset_flower4", image_db), \
 	("testset_flower5", image_db), \
 	("testset_flower6", image_db), \
 	("testset_flower7", image_db), \
 	("testset_flower9", image_db), \
 	("testset_flower10", image_db), \
+	("testset_flower11", image_db), \
+	("testset_flower12", image_db), \
+	("testset_flower13", image_db), \
+	("testset_flower15", image_db), \
+	("testset_flower16", image_db), \
+	("testset_flower19", image_db), \
+	("testset_flower21", image_db), \
+	("testset_flower23", image_db), \
+	("testset_flower24", image_db), \
+	("testset_flower25", image_db), \
+	("testset_flower26", image_db), \
 	]
 	
 	# test_folder_args = [ \
