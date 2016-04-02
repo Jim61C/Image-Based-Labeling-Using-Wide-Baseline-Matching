@@ -2,6 +2,7 @@ import numpy as np
 import math
 import os
 import pickle
+import plotStatistics
 
 MIN_RAW_EUCLIDEAN_SCORE = 1/(1+ math.sqrt(2.0))
 MAX_RAW_EUCLIDEAN_SCORE = 1.0
@@ -61,6 +62,13 @@ def loadGeneratedFeatureParadigm():
 	
 	print "len(GENERATED_FEATURE_PARADIGMS):", len(GENERATED_FEATURE_PARADIGMS)
 	print "GENERATED_FEATURE_IDS:", GENERATED_FEATURE_IDS
+
+	"""Examining of features constructed"""
+	# for feature_paradigm in GENERATED_FEATURE_PARADIGMS:
+	# 	plotStatistics.plotOneGivenHist("",feature_paradigm.id, feature_paradigm.FEATURE_MODEL, save = False, show = True)
+	# 	feature_id = feature_paradigm.id
+	# 	if (feature_id.find(SUBSQUARE_PARADIGM_FEATURE_PREFIX) != -1):
+	# 		print feature_id, ": " ,feature_paradigm.SUBPATCH_OF_INTEREST_INDEX
 
 	"""put all feature id into a big array"""
 	loadAllFeatureIds()
