@@ -887,8 +887,8 @@ def populate_testset7(folder_suffix = "", base_img_name = "test1.jpg", target_im
 	global MANUAL_FEATURE_TO_USE
 	MANUAL_FEATURE_TO_USE = [ \
 	[utils.GENERATED_FEATURE_IDS[2]], \
-	[utils.GENERATED_FEATURE_IDS[3], utils.GENERATED_FEATURE_IDS[0]], \
-	[utils.GENERATED_FEATURE_IDS[4], utils.GENERATED_FEATURE_IDS[1]] \
+	[utils.GENERATED_FEATURE_IDS[3]], \
+	[utils.GENERATED_FEATURE_IDS[4]] \
 	]
 
 	print "mannual feature to use:", MANUAL_FEATURE_TO_USE
@@ -1351,10 +1351,10 @@ def main():
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
-	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
+	populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
+	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset8", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# mannalPruning("images", "testset_flower10", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
