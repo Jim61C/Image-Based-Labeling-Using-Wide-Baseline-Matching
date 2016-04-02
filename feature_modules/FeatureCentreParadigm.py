@@ -265,7 +265,7 @@ class FeatureCentreParadigm(Feature):
 			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
 
-		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
+		plotStatistics.plotOneGivenHist("", "Centre Paradigm FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
 
 	def fitParadigm(self, img):
@@ -332,16 +332,16 @@ class FeatureCentreParadigm(Feature):
 			"""
 			self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
 			self.findSaturationRangeForTargetHueBin(img_hsv, inner_patch, target_hue_bins, inner_gaussian_window)
-			plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
-			plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
 			
 			"""Check border hist, should not contain targeted hue"""
 			target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
 			filtered_border_hue = self.borderTargetHueFilteredBySaturation(img_hsv, self.patch, inner_patch, gaussian_window, target_hue_bins, target_saturation_bins)
 			border_hue = outer_hue - inner_hue
 
-			plotStatistics.plotOneGivenHist("", "filtered_border_hue", filtered_border_hue, save = False, show = True)
-			plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "filtered_border_hue", filtered_border_hue, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
 
 			if (np.sum(filtered_border_hue)/ np.sum(border_hue) > self.SATURATIONFRACTION_INVERSE):
 				continue

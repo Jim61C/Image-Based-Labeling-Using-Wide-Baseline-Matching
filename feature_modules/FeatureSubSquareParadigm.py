@@ -271,7 +271,7 @@ class FeatureSubSquareParadigm(Feature):
 			np.zeros( 3 *(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 			len(range(self.SATURATION_FILTER_START_INDEX,self.SATURATION_FILTER_END_INDEX))) )), axis = 1) # append the expected border response
 
-		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
+		plotStatistics.plotOneGivenHist("", "Sub Square Paradigm FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
 
 

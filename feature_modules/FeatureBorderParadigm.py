@@ -212,7 +212,7 @@ class FeatureBorderParadigm(Feature):
 			np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
 			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
 
-		plotStatistics.plotOneGivenHist("", "FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
+		plotStatistics.plotOneGivenHist("", "Border Paradigm FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
 
 	def fitParadigm(self, img):
@@ -256,8 +256,8 @@ class FeatureBorderParadigm(Feature):
 			max_hue_bin = np.argmax(border_hue_density)
 
 			# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
-			plotStatistics.plotOneGivenHist("", "border_saturation", border_saturation, save = False, show = True)
-			plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "border_saturation", border_saturation, save = False, show = True)
+			# plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
 
 			print border_hue_density[max_hue_bin]/np.sum(border_hue)
 
@@ -307,16 +307,16 @@ class FeatureBorderParadigm(Feature):
 					self.SATURATION_START_INDEX, self.SATURATION_END_INDEX, self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX = \
 					self.findBorderSaturationRangeForTargetHueBin(img_hsv, self.patch, inner_patch, gaussian_window, target_hue_bins)
 					
-					plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
-					plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
+					# plotStatistics.plotOneGivenHist("", "inner_saturation", inner_saturation, save = False, show = True)
+					# plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
 					
 					"""Check inner hist, should not contain targeted hue"""
 					target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
 					filtered_inner_hue = \
 					self.targetHueFilteredBySaturation(img_hsv, inner_patch, inner_gaussian_window, target_hue_bins, target_saturation_bins)
 					
-					plotStatistics.plotOneGivenHist("", "filtered_inner_hue", filtered_inner_hue, save = False, show = True)
-					plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
+					# plotStatistics.plotOneGivenHist("", "filtered_inner_hue", filtered_inner_hue, save = False, show = True)
+					# plotStatistics.plotOneGivenHist("", "inner_hue", inner_hue, save = False, show = True)
 
 					print "inner error fraction:", np.sum(filtered_inner_hue)/ np.sum(inner_hue)
 					
