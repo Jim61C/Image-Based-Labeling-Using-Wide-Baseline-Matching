@@ -218,6 +218,7 @@ class clickRecorder(object):
 				self.centre_feature_count = self.centre_feature_count + 1
 				print "successfully constructed feature centre_paradigm for patch ", i, " clicked"
 				self.saveFeature(potential_centre_feature, potential_centre_feature_id)
+				patch.feature_to_use.append(potential_centre_feature_id)
 
 			"""subsquare_paradigm"""
 			potential_subsquare_paradigm_id = "{subsquare_paradigm}{count}".format( \
@@ -228,6 +229,7 @@ class clickRecorder(object):
 				self.subsquare_paradigm_count = self.subsquare_paradigm_count + 1
 				print "successfully constructed FeatureSubSquareParadigm for patch ", i, " clicked"
 				self.saveFeature(potential_subsquare_paradigm_feature, potential_subsquare_paradigm_id)
+				patch.feature_to_use.append(potential_subsquare_paradigm_id)
 
 			if (self.detect_shape):
 				"""centre_hog_paradigm"""
@@ -239,6 +241,7 @@ class clickRecorder(object):
 					self.centre_hog_feature_count = self.centre_hog_feature_count + 1
 					print "successfully constructed feature centre_hog_paradigm for patch ", i, " clicked"
 					self.saveFeature(potential_centre_hog_feature, potential_centre_hog_feature_id)
+					patch.feature_to_use.append(potential_centre_hog_feature_id)
 
 			"""border_paradigm"""
 			potential_border_feature_id = "{prefix}{count}".format( \
@@ -249,6 +252,7 @@ class clickRecorder(object):
 				self.border_feature_count += 1
 				print "successfully constructed feature border_paradigm for patch ", i, " clicked"
 				self.saveFeature(potential_border_feature, potential_border_feature_id)
+				patch.feature_to_use.append(potential_border_feature_id)
 
 
 def main():
@@ -310,8 +314,8 @@ def main():
 
 	my_click_recorder.setSigma(int(sigma))
 	my_click_recorder.plotBaseImg(test_folder_name, image_db, base_img_name)
-	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
 	my_click_recorder.fitFeatures(test_folder_name, folder_suffix, upperPath)
+	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
 
 
 
