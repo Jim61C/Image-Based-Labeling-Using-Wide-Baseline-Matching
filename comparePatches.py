@@ -193,6 +193,46 @@ class Patch:
 		self.LDAFeatureScore = None # measure for the uniqueness of the feature sets
 		self.is_low_response = False # flag for if it is unique due to high response or low response, by default is due to high response
 
+	def initializeFeatureObjects(self):
+		# top right yellow
+		self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
+		# BOTTOM_RIGHT_GREEN: Feature length: 6 bins
+		self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
+		# top left purple
+		self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
+		# Donut shape feature
+		# self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
+		# neighbour bottom right blue feature
+		self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
+		# bottom right yellow feature
+		self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
+		# cornerness feature
+		# self.feature_arr.append(feature_modules.FeatureCornerness(self, utils.CORNERNESS_FEATURE_ID))
+		# sharp HOG feature
+		self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
+		# border green feature
+		self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
+		# centre yellow feature
+		self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
+		# centre blue feature
+		self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
+		# green patch bottom left blue
+		self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
+		# heart shape
+		# self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
+
+		# load the auto generated feature objects
+		for feature in utils.GENERATED_FEATURE_PARADIGMS:
+			"""TODO: try not to do deepcopy rather, do initialization"""
+			# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL_{name}".format(name = feature_obj_pkl), \
+			# this_generated_feature.FEATURE_MODEL, save = False, show = True)
+			this_generated_feature = copy.deepcopy(feature)
+			# print this_generated_feature.id
+			this_generated_feature.setPatch(self)
+			# print this_generated_feature.HISTBINNUM
+			# print this_generated_feature.patch.x,  this_generated_feature.patch.y, this_generated_feature.patch.size
+			self.feature_arr.append(this_generated_feature)
+
 	def setIsLowResponse(self, is_low_response):
 		self.is_low_response = is_low_response
 
@@ -932,12 +972,12 @@ def removeDuplicatesSameFeatureSet(sorted_patches):
 ### 1. Low pass filter of Harris Corner score.
 ### 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations
 ### harris_thresh_pass normally = 0.0005, for flower sets is higher = 0.0005
-def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.0005, LDA_thresh = 1.0, step = 0.5):
+def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.01, LDA_thresh = 1.0, step = 0.5):
 	"""
 	sigma, step: used for patch extraction
 	harris_thresh_pass: threshhold for filtering the initial set of good patches
 	"""
-	patches = extractPatches(img, sigma, step)
+	patches = extractPatches(img, sigma, step, initialize_features = False)
 	"""
 	1. High Pass using Harris Corner to get inital set of potential good patches
 	"""
@@ -945,7 +985,9 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	filtered_patches = cornerResponse.filter_patches(patches, harris_thresh_pass, cornerResponseMatrix, maxCornerResponse)
 	# positions = [(patch.x, patch.y) for patch in filtered_patches]
 	print "len(filtered_patches):", len(filtered_patches)
-	# drawPatchesOnImg(np.copy(img), filtered_patches)
+	for this_filtered_patch in filtered_patches:
+		this_filtered_patch.initializeFeatureObjects()
+	# drawPatchesOnImg(np.copy(img), filtered_pgatches)
 	"""
 	2. Compute Combinatorial LDA score for each of the filtered patches (keep the set of best combination and its score + weights), remove from list if score too low
 	"""
@@ -1064,14 +1106,14 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	print "FEATURES:", FEATURES
 
 	for i in range(0, len(testPatches)):
-		start_time = time.time()
+		# start_time = time.time()
 		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow)
-		print "time spent for set all features for testPatches[{i}]:".format(i = i), time.time() - start_time
+		# print "time spent for set all features for testPatches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} testPatches done".format(count = len(testPatches))
 	for i in range(0, len(random_patches)):
-		start_time = time.time()
+		# start_time = time.time()
 		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow)
-		print "time spent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
+		# print "time spent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} random_patches done".format(count = len(random_patches))
 
 
