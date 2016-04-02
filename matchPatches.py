@@ -1154,6 +1154,68 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 			matchesFound, \
 			show = False))
 
+def findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(image_db, test_folder_name1, test_folder_name2, \
+	test1_img_name, test2_img_name, \
+	folder_suffix, upperPath = "testMatches", initialize_features = True):
+	"""
+	test1_img_name(including file extension) is from test_folder_name1
+	test2_img_name(including file extension) is from test_folder_name2
+	"""
+	if(not(os.path.exists("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name1, image = test1_img_name)) \
+		and os.path.exists("{image_db}/{folder}/{image}".format(\
+			image_db = image_db, folder = test_folder_name2, image = test2_img_name)))):
+		print "Test Images does not exist in:", test_folder_name1, test_folder_name2
+		return
+	
+	img1 = cv2.imread("{image_db}/{folder}/{image}".format(\
+				image_db = image_db, folder = test_folder_name1, image = test1_img_name), 1)
+
+	img2 = cv2.imread("{image_db}/{folder}/{image}".format(\
+				image_db = image_db, folder = test_folder_name2, image = test2_img_name), 1)
+	
+	"""create combined_test_folder_name and copy image over"""
+	combined_test_folder_name = "{test_folder_name1}_{test_folder_name2}".format(\
+		test_folder_name1 = test_folder_name1, test_folder_name2 = test_folder_name2)
+	createFolder(".", image_db, combined_test_folder_name, "")
+	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))):
+		cv2.imwrite("{image_db}/{folder}/{image}".format(\
+			image_db = image_db, folder = combined_test_folder_name, image = test1_img_name), img1)
+	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = combined_test_folder_name, image = test2_img_name)))):
+		cv2.imwrite("{image_db}/{folder}/{image}".format(\
+			image_db = image_db, folder = combined_test_folder_name, image = test2_img_name), img2)
+
+	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))
+	testPatches = findAndSaveDistinguishablePatches(image_db, combined_test_folder_name, test1_img_name, folder_suffix, sigma, upperPath)
+	listOfMatches = testDescriptorPerformance(
+		image_db,
+		combined_test_folder_name, 
+		testPatches, 
+		test1_img_name,
+		test2_img_name,
+		"GaussianWindowOnAWhole",
+		True,  
+		folder_suffix, 
+		sigma,
+		upperPath,
+		initialize_features)
+	matchesFound = []
+	for i in range(0, len(listOfMatches)):
+		matchesFound.append(listOfMatches[i][0]) # just append the best match
+	# imwrite the combined match scene
+	cv2.imwrite(\
+		createFolder(upperPath, "GaussianWindowOnAWhole", combined_test_folder_name, folder_suffix)+"/_combined_scene_match.jpg",\
+		comparePatches.drawMatchesOnImg(\
+			img1, \
+			img2, \
+			testPatches, \
+			matchesFound, \
+			show = False))
+	return
+
 def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test1_img_name, test2_img_name, \
 	folder_suffix, upperPath = "testMatches", initialize_features = True):
 	"""
@@ -1402,7 +1464,10 @@ def main():
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
+	findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
+	"test2.jpg", "test3.jpg", \
+	"_descriptor_based", upperPath = "testLabellig", initialize_features = False)
+	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset8", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
 	# mannalPruning("images", "testset_flower10", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")

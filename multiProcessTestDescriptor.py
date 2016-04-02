@@ -27,6 +27,14 @@ def dispatch_match_test(testName):
 	    matchPatches.populate_testset7(folder_suffix)
 	print 'finish matching for ',testName,' ; time spent:', time.time() - start_time, " secs"
 
+def dispatch_full_algorithm_from_two_folder(args):
+	test_folder_name1, test_folder_name2, image1, image2, image_db = args
+	folder_suffix = "_descriptor_based"
+	matchPatches.findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(\
+		image_db, test_folder_name1, test_folder_name2, \
+		image1, image2, \
+		folder_suffix, upperPath = "testLabellig", initialize_features = False)
+
 def dispatch_full_algorithm(args):
 	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
@@ -92,36 +100,59 @@ def main():
 	# testNames = ["populate_testset_rotation1","populate_testset_rotation2", "populate_testset7"]
 	# test_folder_names = ["testset_illuminance1", "testset_illuminance2", "testset_rotation1","testset_rotation2","testset4","testset7"]
 	# test_folder_names = ["testset2", "testset3", "testset5"]
+	"""dispatch_full_algorithm/dispatch_matching_given_test_patches"""
+	# test_folder_args = [\
+	# # ("testset_illuminance1", image_db), \
+	# # ("testset_illuminance2", image_db), \
+	# # ("testset_rotation1", image_db), \
+	# # ("testset_rotation2", image_db), \
+	# # ("testset4", image_db), \
+	# # ("testset7", image_db), \
+	# # ("testset1", image_db), \
+	# # ("testset8", image_db), \
+	# # ("testset12", image_db), \
+	# # ("testset13", image_db), \
+	# ("testset_flower2", image_db), \
+	# ("testset_flower3", image_db), \
+	# ("testset_flower4", image_db), \
+	# ("testset_flower5", image_db), \
+	# ("testset_flower6", image_db), \
+	# ("testset_flower7", image_db), \
+	# ("testset_flower9", image_db), \
+	# ("testset_flower10", image_db), \
+	# ("testset_flower11", image_db), \
+	# ("testset_flower12", image_db), \
+	# ("testset_flower13", image_db), \
+	# ("testset_flower15", image_db), \
+	# ("testset_flower16", image_db), \
+	# ("testset_flower19", image_db), \
+	# ("testset_flower21", image_db), \
+	# ("testset_flower23", image_db), \
+	# ("testset_flower24", image_db), \
+	# ("testset_flower25", image_db), \
+	# ("testset_flower26", image_db), \
+	# ]
+
+	"""dispatch_full_algorithm_from_two_folder"""
 	test_folder_args = [\
-	# ("testset_illuminance1", image_db), \
-	# ("testset_illuminance2", image_db), \
-	# ("testset_rotation1", image_db), \
-	# ("testset_rotation2", image_db), \
-	# ("testset4", image_db), \
-	# ("testset7", image_db), \
-	# ("testset1", image_db), \
-	# ("testset8", image_db), \
-	# ("testset12", image_db), \
-	# ("testset13", image_db), \
-	("testset_flower2", image_db), \
-	("testset_flower3", image_db), \
-	("testset_flower4", image_db), \
-	("testset_flower5", image_db), \
-	("testset_flower6", image_db), \
-	("testset_flower7", image_db), \
-	("testset_flower9", image_db), \
-	("testset_flower10", image_db), \
-	("testset_flower11", image_db), \
-	("testset_flower12", image_db), \
-	("testset_flower13", image_db), \
-	("testset_flower15", image_db), \
-	("testset_flower16", image_db), \
-	("testset_flower19", image_db), \
-	("testset_flower21", image_db), \
-	("testset_flower23", image_db), \
-	("testset_flower24", image_db), \
-	("testset_flower25", image_db), \
-	("testset_flower26", image_db), \
+	("testset_flower2", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower2", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db), \
+
+	# ("testset_flower23", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower23", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower23", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower23", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower23", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower23", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+
 	]
 	
 	# test_folder_args = [ \
@@ -133,7 +164,7 @@ def main():
 	# 	("testset_illuminance1", [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]) \
 	# ]
 
-
+	"""dispatch_feature_detection_algo3"""
 	# test_folder_args = [ \
 	# 	("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test1.jpg"), \
 	# 	("testset7", [utils.GENERATED_FEATURE_IDS[0]], "test3.jpg"), \
@@ -151,7 +182,8 @@ def main():
 	# pool.map(dispatch_feature_detection, test_folder_args)
 	# pool.map(dispatch_feature_matching, test_folder_args)
 	# pool.map(dispatch_feature_detection_algo3, test_folder_args)
-	pool.map(dispatch_full_algorithm, test_folder_args)
+	# pool.map(dispatch_full_algorithm, test_folder_args)
+	pool.map(dispatch_full_algorithm_from_two_folder, test_folder_args)
 	# pool.map(dispatch_matching_given_test_patches, test_folder_args)
 
 
