@@ -437,8 +437,10 @@ class Patch:
 			gaussianWindow = gauss_kernels(self.size, gaussianSigma)
 		else:
 			gaussianWindow = None
-		self.computeSinglePatchHSVHistogram(img, gaussianWindow, True)
-		self.computeSubPatchColorHistogram(img, "HSV", gaussianWindow, True)
+
+		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+		self.computeSinglePatchHSVHistogram(img_hsv, gaussianWindow, True)
+		self.computeSubPatchColorHistogram(img, "HSV", gaussianWindow, True, img_hsv = img_hsv)
 		self.HueHist = self.HueHistArr[0]
 		self.SaturationHist = self.SaturationHistArr[0]
 		self.ValueHist = self.ValueHistArr[0]
@@ -456,7 +458,8 @@ class Patch:
 		else:
 			gaussianWindow = None
 
-		fullPatchHSVHist = self.computeSinglePatchHSVHistogram(img, gaussianWindow, computeSeperateHists)
+		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+		fullPatchHSVHist = self.computeSinglePatchHSVHistogram(img_hsv, gaussianWindow, computeSeperateHists)
 		if(computeSeperateHists):
 			self.HueHist = self.HueHistArr[0]
 			self.SaturationHist = self.SaturationHistArr[0]
@@ -496,7 +499,7 @@ class Patch:
 		return H, S, V 
 
 	# note that img[-2] will wrap around to be img[len-2]
-	def computeSinglePatchHSVHistogram(self, img, gaussianWindow = None, computeSeperateHists = False, parentPatch = None):
+	def computeSinglePatchHSVHistogram(self, img_hsv, gaussianWindow = None, computeSeperateHists = False, parentPatch = None):
 		# If compute Gaussian Window on the sub patches as well:
 		# gaussianSigma = self.size/6.0 # six sigma rule of thumb
 		# gaussianWindow = gauss_kernels(self.size, gaussianSigma)
@@ -520,20 +523,21 @@ class Patch:
 			SaturationHist = np.zeros(bin_number)
 			ValueHist = np.zeros(bin_number)
 		
-		H_bin_size = 360/float(bin_number)
-		S_bin_size = 1/float(bin_number)
-		V_bin_size = 1/float(bin_number)
+		H_bin_size = 360.0/float(bin_number)
+		S_bin_size = 1.0/float(bin_number)
+		V_bin_size = 255.0/float(bin_number)
+
 		for i in range(self.x - self.size/2, self.x + self.size/2 + 1):
 			for j in range(self.y - self.size/2, self.y + self.size/2 + 1):
-				B = img[i][j][0]
-				G = img[i][j][1]
-				R = img[i][j][2]
+				# B = img[i][j][0]
+				# G = img[i][j][1]
+				# R = img[i][j][2]
 				
-				H, S, V = self.RGBToHSV(R, G, B)
+				# H, S, V = self.RGBToHSV(R, G, B)
 				# print "H,S,V:", H, S, V
-				h_bin = bin_number -1 if (H == 360) else int(math.floor(H/H_bin_size))
-				s_bin = bin_number -1 if (S == 1) else int(math.floor(S/S_bin_size))
-				v_bin = bin_number -1 if (V == 1) else int(math.floor(V/V_bin_size))
+				h_bin = bin_number -1 if (img_hsv[i][j][0] == 360.0) else int(math.floor(img_hsv[i][j][0]/H_bin_size))
+				s_bin = bin_number -1 if (img_hsv[i][j][1] == 1.0) else int(math.floor(img_hsv[i][j][1]/S_bin_size))
+				v_bin = bin_number -1 if (img_hsv[i][j][2] == 255.0) else int(math.floor(img_hsv[i][j][2]/V_bin_size))
 				# print "h_bin, s_bin,v_bin:", h_bin,s_bin,v_bin, "\n"
 				if(gaussianWindow is None):
 					# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += 1
@@ -595,7 +599,7 @@ class Patch:
 
 		return hist
 
-	def computeSubPatchColorHistogram(self, img, histogramfunction = "RGB", gaussianWindow = None, computeSeperateHists = False):
+	def computeSubPatchColorHistogram(self, img, histogramfunction = "RGB", gaussianWindow = None, computeSeperateHists = False, img_hsv = None):
 		newLen = (self.size+1)/2
 		if(newLen % 2 == 0):
 			newSize = newLen -1 # since size is supposed to be odd
@@ -626,10 +630,12 @@ class Patch:
 			subHistArr.append(bottom_left_sub_patch.computeSinglePatchRGBHistogram(img))
 			subHistArr.append(bottom_right_sub_patch.computeSinglePatchRGBHistogram(img))
 		elif(histogramfunction == "HSV"):
-			subHistArr.append(top_left_sub_patch.computeSinglePatchHSVHistogram(img, top_left_gaussianWindow, computeSeperateHists, self))
-			subHistArr.append(top_right_sub_patch.computeSinglePatchHSVHistogram (img,top_right_gaussianWindow, computeSeperateHists, self))
-			subHistArr.append(bottom_left_sub_patch.computeSinglePatchHSVHistogram(img,bottom_left_gaussianWindow, computeSeperateHists, self))
-			subHistArr.append(bottom_right_sub_patch.computeSinglePatchHSVHistogram(img,bottom_right_gaussianWindow, computeSeperateHists, self))
+			if (img_hsv is None):
+				img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+			subHistArr.append(top_left_sub_patch.computeSinglePatchHSVHistogram(img_hsv, top_left_gaussianWindow, computeSeperateHists, self))
+			subHistArr.append(top_right_sub_patch.computeSinglePatchHSVHistogram (img_hsv,top_right_gaussianWindow, computeSeperateHists, self))
+			subHistArr.append(bottom_left_sub_patch.computeSinglePatchHSVHistogram(img_hsv,bottom_left_gaussianWindow, computeSeperateHists, self))
+			subHistArr.append(bottom_right_sub_patch.computeSinglePatchHSVHistogram(img_hsv,bottom_right_gaussianWindow, computeSeperateHists, self))
 
 		return top_left_sub_patch, top_right_sub_patch, bottom_left_sub_patch, bottom_right_sub_patch, subHistArr
 		
@@ -1060,13 +1066,6 @@ def generateAllFeatureSets(features):
 
 
 def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow):
-	# HSV Feature
-	# patch.computeSinglePatchHSVHistogram(img, gaussianWindow, True)
-	# patch.HueHist = patch.HueHistArr[0]
-	# patch.SaturationHist = patch.SaturationHistArr[0]
-	# patch.ValueHist = patch.ValueHistArr[0]
-	patch.computeHSVHistogram(img)
-
 	# HOG Feature
 	patch.computeHOG(img_gray, True)
 	patch.setHOGScore(HOGResponse(patch.HOG))
@@ -1379,7 +1378,8 @@ def main():
 	global FEATURES
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 	# FEATURES = utils.ALL_FEATURE_IDS
-	FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
+	# FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
+	FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
 
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
