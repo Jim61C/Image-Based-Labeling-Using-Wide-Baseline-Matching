@@ -1341,11 +1341,14 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(\
 		image_db = image_db, folder = test_folder_name, image = test2_img_name), 1)
 
-	comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), testPatches, matchesFound, \
+	distinguished_combined_scene_match = comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), testPatches, matchesFound, \
 		show = True, custom_colors = custom_colors)
 
-	comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), testPatches, groundTruth, \
-		show = True)
+	# comparePatches.drawMatchesOnImg(np.copy(img), np.copy(imgToMatch), testPatches, groundTruth, \
+	# 	show = True)
+
+	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)+"/_combined_scene_match_distinguished.jpg",\
+		distinguished_combined_scene_match)
 	
 	raise ValueError ("purpose stop for drawing using different color")
 
@@ -1357,13 +1360,16 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 			testFolder = test_folder_name +folder_suffix), True, True)
 
 
-def mannalPruning(image_db, test_folder_name, test1_img_name, test2_img_name, \
-	folder_suffix, upperPath = "testPatchHSV"):
+def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
 	sigma = 39
 	level = 5
 	test_patches = []
 	ground_truth = []
 	matches_found = []
+
+	test_folder_name = raw_input("please input test_folder_name:")
+	test1_img_name = raw_input("please input test1_img_name(with extension .jpg):")
+	test2_img_name = raw_input("please input test2_img_name(with extension .jpg):")
 
 	# read test_patches
 	list_of_test_patches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
@@ -1444,7 +1450,9 @@ def main():
 	# folder_suffix = "_unnormalized_HOG_Ori_Assignment_Jensen_Shannon_Divergence"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_Saturation_filtered_aggregated_hue_expanded_border_saturation_16bin"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_SaturationWeighted_Hue"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_testset7_taylored"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_separateHS_descriptor"
 	# feature_to_use = 'HOG'
@@ -1464,13 +1472,13 @@ def main():
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
-	"test2.jpg", "test3.jpg", \
-	"_descriptor_based", upperPath = "testLabellig", initialize_features = False)
+	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
+	# "test2.jpg", "test3.jpg", \
+	# "_descriptor_based", upperPath = "testLabellig", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
-	# populateFeatureMatchingStatistics("images", "testset8", "test1.jpg", "test2.jpg", folder_suffix, upperPath = "testAlgo3")
-	# mannalPruning("images", "testset_flower10", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
+	# populateFeatureMatchingStatistics("images", "testset7", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
+	mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
 
