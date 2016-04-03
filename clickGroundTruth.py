@@ -88,11 +88,12 @@ class clickRecorder(object):
 		cv2.waitKey(0)
 
 	def plotBaseImgWithPatches(self, test_folder_name, folder_suffix, upperPath):	
-		img = cv2.imread("{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
-			path = self.path , \
-			folder = test_folder_name, \
-			file = "test1", \
-			i = self.sigma), 1)
+		# img = cv2.imread("{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
+		# 	path = self.path , \
+		# 	folder = test_folder_name, \
+		# 	file = "test1", \
+		# 	i = self.sigma), 1)
+		img = cv2.imread("images/{test_folder_name}/test1.jpg".format(test_folder_name = test_folder_name), 1)
 		
 		print "DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
 			folder = test_folder_name, \
@@ -257,24 +258,24 @@ class clickRecorder(object):
 
 def main():
 	"""For clicking on target image for groundTruth"""
-	# test_folder_name = raw_input("Please input the testset name: ")
-	# base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
-	# target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
-	# # folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
-	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
-	# upperPath = "testAlgo3"
-	# image_db = "images"
-	# my_click_recorder = clickRecorder()
-	# # set path
-	# my_click_recorder.setPath(test_folder_name, folder_suffix ,upperPath)
-	# # plot the distinguishable patches on base image
-	# my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
-	# # plot the target image for user to click
-	# my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
-	# # save the groundTruth if validated
-	# my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
+	test_folder_name = raw_input("Please input the testset name: ")
+	base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
+	target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
+	# folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
+	upperPath = "testAlgo3"
+	image_db = "images"
+	my_click_recorder = clickRecorder()
+	# set path
+	my_click_recorder.setPath(test_folder_name, folder_suffix ,upperPath)
+	# plot the distinguishable patches on base image
+	my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
+	# plot the target image for user to click
+	my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
+	# save the groundTruth if validated
+	my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
 
-	# raise ValueError("purpose stop for clicking groundTruth my algorithm only")
+	raise ValueError("purpose stop for clicking groundTruth my algorithm only")
 
 	"""For clicking on target image for groundTruth (SIFT)"""
 	# test_folder_name = raw_input("Please input the testset name: ")
