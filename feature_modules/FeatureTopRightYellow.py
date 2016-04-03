@@ -77,13 +77,6 @@ class FeatureTopRightYellow(Feature):
 				other_patch_hist_old = self.getSubPatchTargetHueFilteredBySaturation(\
 					img_hsv, i, range(1,2), range(10,13))
 
-				print "check hue hist diff"
-				"""check hue hist diff"""
-				for j in range(0, len(other_patch_hist_old)):
-					if(other_patch_hist_old[j] != other_patch_hist[j]):
-						assert (abs(other_patch_hist_old[j] - other_patch_hist[j]) < 0.001), "too large diff: {a} and {b}".format(\
-							a = other_patch_hist_old[j], b = other_patch_hist[j])
-
 				assert (len(other_patch_hist) == len(range(1,2))), \
 				"In FeatureTopRightYellow: other sub patch {i}'s hue response array needs to be of the same length as that of the patch of interest".format( i = i)
 				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
