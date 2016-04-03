@@ -174,13 +174,6 @@ class Patch:
 
 
 		### Feature auxiliary attributes to save time ###
-		"""TODO: get rid of the following 4 attributes, use 2d and derive instead"""
-		self.inner_hue_hist_scale_3_gaus_4 = None # scale down 3 level, with gaussian window sigma = window length/4
-		self.inner_saturation_hist_scale_3_gaus_4 = None
-
-		self.outer_hue_hist_scale_3_gaus_4 = None
-		self.outer_saturation_hist_scale_3_gaus_4 = None
-
 		self.outer_hs_2d_gaus_4 = None # 16 bins
 
 		self.hs_2d_arr = [] # self.hs_2d_arr[0] is full patch hs with gaussian window of 6 sigma, 16 bins, if use 36 bin hists, need another array

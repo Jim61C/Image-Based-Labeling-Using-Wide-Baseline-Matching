@@ -61,20 +61,19 @@ class FeatureCentreBlue(Feature):
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
 
 		"""Still need to compute the overall Hue, Saturation, since sigma is different now 4.0 instead of 6.0"""
-		if (self.patch.outer_hue_hist_scale_3_gaus_4 is None):
-			self.patch.outer_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.outer_saturation_hist_scale_3_gaus_4 is None):
-			self.patch.outer_saturation_hist_scale_3_gaus_4 = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.inner_hue_hist_scale_3_gaus_4 is None):
-			self.patch.inner_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
-		if (self.patch.inner_saturation_hist_scale_3_gaus_4 is None):
-			self.patch.inner_saturation_hist_scale_3_gaus_4 = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.outer_hs_2d_gaus_4 is None):
+			self.patch.outer_hs_2d_gaus_4 = self.computeHS2DWithGaussianWindow(img_hsv, self.patch, gaussian_window)
 
-		outer_hist_hue = self.patch.outer_hue_hist_scale_3_gaus_4
-		outer_hist_saturation = self.patch.outer_saturation_hist_scale_3_gaus_4
+		key = "{gaus}_{scale}".format(gaus = 4, scale = 3)
+		if (not key in self.patch.gaus_scale_to_inner_hs_2d_dict):
+		 self.patch.gaus_scale_to_inner_hs_2d_dict[key] = self.computeHS2DWithGaussianWindow(\
+		 	img_hsv, inner_patch, inner_gaussian_window)
+		
+		inner_hist_hue = self.derive1DHueFrom2D(self.patch.gaus_scale_to_inner_hs_2d_dict[key])
+		inner_hist_saturation = self.derive1DSaturationFrom2D(self.patch.gaus_scale_to_inner_hs_2d_dict[key])
 
-		inner_hist_hue = self.patch.inner_hue_hist_scale_3_gaus_4
-		inner_hist_saturation = self.patch.inner_saturation_hist_scale_3_gaus_4
+		outer_hist_hue = self.derive1DHueFrom2D(self.patch.outer_hs_2d_gaus_4)
+		outer_hist_saturation = self.derive1DSaturationFrom2D(self.patch.outer_hs_2d_gaus_4)
 
 		border_hist_hue = outer_hist_hue - inner_hist_hue
 		border_hist_saturation = outer_hist_saturation - inner_hist_saturation

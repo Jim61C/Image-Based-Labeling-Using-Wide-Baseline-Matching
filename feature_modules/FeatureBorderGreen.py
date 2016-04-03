@@ -57,13 +57,15 @@ class FeatureBorderGreen(Feature):
 		assert gaussian_window.shape == (self.patch.size, self.patch.size), "outer gaussian_window size not correct"
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
 
-		if (self.patch.outer_hue_hist_scale_3_gaus_4 is None):
-			self.patch.outer_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, self.patch, gaussian_window)
-		if (self.patch.inner_hue_hist_scale_3_gaus_4 is None):
-			self.patch.inner_hue_hist_scale_3_gaus_4 = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
+		if (self.patch.outer_hs_2d_gaus_4 is None):
+			self.patch.outer_hs_2d_gaus_4 = self.computeHS2DWithGaussianWindow(img_hsv, self.patch, gaussian_window)
+		key = "{gaus}_{scale}".format(gaus = 4, scale = 3)
+		if (not key in self.patch.gaus_scale_to_inner_hs_2d_dict):
+		 self.patch.gaus_scale_to_inner_hs_2d_dict[key] = self.computeHS2DWithGaussianWindow(\
+		 	img_hsv, inner_patch, inner_gaussian_window)
 		
-		outer_hist = self.patch.outer_hue_hist_scale_3_gaus_4
-		inner_hist = self.patch.inner_hue_hist_scale_3_gaus_4
+		outer_hist = self.derive1DHueFrom2D(self.patch.outer_hs_2d_gaus_4)
+		inner_hist = self.derive1DHueFrom2D(self.patch.gaus_scale_to_inner_hs_2d_dict[key])
 		border_hist = outer_hist - inner_hist
 		# model_constructor = np.zeros(len(border_hist))
 		# model_constructor[4:7] = border_hist[4:7]
