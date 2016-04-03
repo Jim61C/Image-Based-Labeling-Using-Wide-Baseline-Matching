@@ -1268,6 +1268,106 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 			matchesFound, \
 			show = False))
 
+def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_folder_name, test2_folder_name, \
+	test1_img_name, test2_img_name, folder_suffix, upperPath = "testLabellig", initialize_features = True):
+	"""
+	image_db: image database folder to read source images from;
+	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
+	test1_folder_name: the folder containing test1_img_name, and there are already distinguishablePatches 
+					   for folders at {upperPath{/GaussianWindowOnAWhole/{test1_folder_name}_{test1_folder_name}_{folder_suffix}
+	test2_folder_name: the folder containing test2_img_name
+	folder_suffix: suffix to the folder to save specifying what kind of feature algorithm used;
+	test1_img_name: 'test1.jpg'(Default)
+	test2_img_name: 'test2.jpg'(Default)
+	"""
+	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(
+		image_db = image_db, folder = test1_folder_name, image = test1_img_name)))
+	img1 = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test1_folder_name, image = test1_img_name), 1)
+	img2 = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test2_folder_name, image = test2_img_name), 1)
+	
+	"""create combined_test_folder_name and copy image over"""
+	combined_test_folder_name = "{test1_folder_name}_{test2_folder_name}".format(\
+		test1_folder_name = test1_folder_name, test2_folder_name = test2_folder_name)
+	createFolder(".", image_db, combined_test_folder_name, "")
+	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))):
+		cv2.imwrite("{image_db}/{folder}/{image}".format(\
+			image_db = image_db, folder = combined_test_folder_name, image = test1_img_name), img1)
+	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = combined_test_folder_name, image = test2_img_name)))):
+		cv2.imwrite("{image_db}/{folder}/{image}".format(\
+			image_db = image_db, folder = combined_test_folder_name, image = test2_img_name), img2)
+
+	testPatches = []
+	listOfTestPatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test1_folder_name+ "_" + test1_folder_name +folder_suffix, 
+		folder = test1_folder_name + "_" + test1_folder_name, 
+		file = test1_img_name[:test1_img_name.find(".")], 
+		i = sigma))
+	for i in range(0, len(listOfTestPatches)):
+		testPatches.append(listOfTestPatches[i])
+
+	# comparePatches.drawPatchesOnImg(np.copy(img1), testPatches, mark_sequence = True)
+
+	"""copy over the distinguishablePatches"""
+	createFolder(upperPath, "GaussianWindowOnAWhole", combined_test_folder_name, folder_suffix)
+	img_with_distinguishablePatches = cv2.imread(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test1_folder_name+ "_" + test1_folder_name +folder_suffix, 
+		folder = test1_folder_name + "_" + test1_folder_name, 
+		file = test1_img_name[:test1_img_name.find(".")], 
+		i = sigma), 1)
+
+	cv2.imwrite( \
+		"{upperPath}/GaussianWindowOnAWhole/{test_folder}/DistinguishablePatch_{folder1}_{folder2}_{file}_simga{i}_GaussianWindowOnAWhole.jpg".format( \
+			upperPath = upperPath , \
+			test_folder = test1_folder_name+ "_" + test2_folder_name +folder_suffix, \
+			folder1 = test1_folder_name, \
+			folder2 = test2_folder_name, \
+			file = test1_img_name[:test1_img_name.find(".")], \
+			i = sigma), img_with_distinguishablePatches)
+	
+	saveLoadPatch.savePatchMatches(testPatches, 1, \
+		"{upperPath}/GaussianWindowOnAWhole/{test_folder}/DistinguishablePatch_{folder1}_{folder2}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
+			upperPath = upperPath, \
+			test_folder = test1_folder_name+ "_" + test2_folder_name +folder_suffix, \
+			folder1 = test1_folder_name, \
+			folder2 = test2_folder_name, \
+			file = test1_img_name[:test1_img_name.find(".")], \
+			i = sigma))
+
+	listOfMatches = testDescriptorPerformance(
+		image_db,
+		combined_test_folder_name, 
+		testPatches, 
+		test1_img_name,
+		test2_img_name,
+		"GaussianWindowOnAWhole",
+		True,  
+		folder_suffix, 
+		sigma,
+		upperPath,
+		initialize_features)
+
+	matchesFound = []
+	for i in range(0, len(listOfMatches)):
+		matchesFound.append(listOfMatches[i][0]) # just append the best match
+	# imwrite the combined match scene
+	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", combined_test_folder_name, folder_suffix)+"/_combined_scene_match.jpg",\
+		comparePatches.drawMatchesOnImg(\
+			img1, \
+			img2, \
+			testPatches, \
+			matchesFound, \
+			show = False))
+
 """
 TODO: complete populateFeatureMatchingStatistics after the Image DB is found
 """
@@ -1452,7 +1552,8 @@ def main():
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_SaturationWeighted_Hue"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_testset7_taylored"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_separateHS_descriptor"
 	# feature_to_use = 'HOG'
@@ -1472,13 +1573,15 @@ def main():
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
+	executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
+	"test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabellig", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
 	# "test2.jpg", "test3.jpg", \
 	# "_descriptor_based", upperPath = "testLabellig", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset7", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
-	mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
+	# mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
 	# generateHists("images", "testAlgo3", "testset_illuminance1", folder_suffix, file1 = "test1", file2 = "test2", sigma = 39)
 	print 'finish matching; time spent:', time.time() - start_time
 
