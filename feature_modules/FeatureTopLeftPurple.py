@@ -32,11 +32,21 @@ class FeatureTopLeftPurple(Feature):
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
 	
 	def computeFeature(self, img, useGaussianSmoothing = True):
+		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+
+		if (not len(self.patch.hs_2d_arr) == 5):
+			gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/6.0)
+			self.computeHS2DArr(img_hsv, self.patch, gaussian_window)
+
 		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
 			self.patch.HueHistArr = []
 			self.patch.SaturationHistArr = []
 			self.patch.ValueHistArr = []
-			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
+			"""derive from 2D instead of recompute"""
+			for i in range(0, 5):
+				self.patch.HueHistArr.append(self.derive1DHueFrom2D(self.patch.hs_2d_arr[i]))
+				self.patch.SaturationHistArr.append(self.derive1DSaturationFrom2D(self.patch.hs_2d_arr[i]))
+
 		self.hist = np.concatenate((self.patch.HueHistArr[self.TOP_LEFT_INDEX], \
 			self.patch.SaturationHistArr[self.TOP_LEFT_INDEX]), axis = 1)
 

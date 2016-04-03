@@ -31,12 +31,20 @@ class FeatureTopRightYellow(Feature):
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
+		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+
+		if (not len(self.patch.hs_2d_arr) == 5):
+			gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/6.0)
+			self.computeHS2DArr(img_hsv, self.patch, gaussian_window)
+
 		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
 			self.patch.HueHistArr = []
 			self.patch.SaturationHistArr = []
 			self.patch.ValueHistArr = []
-			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
-
+			"""derive from 2D instead of recompute"""
+			for i in range(0, 5):
+				self.patch.HueHistArr.append(self.derive1DHueFrom2D(self.patch.hs_2d_arr[i]))
+				self.patch.SaturationHistArr.append(self.derive1DSaturationFrom2D(self.patch.hs_2d_arr[i]))
 		
 		self.hist = np.concatenate((self.patch.HueHistArr[self.TOP_RIGHT_INDEX], \
 			self.patch.SaturationHistArr[self.TOP_RIGHT_INDEX]), axis = 1)
@@ -55,13 +63,27 @@ class FeatureTopRightYellow(Feature):
 		# plotStatistics.plotOneGivenHist("", "self.hist", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "self.FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
 
-		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
-		self.HISTBINNUM = len(self.patch.HueHist)
+		self.HISTBINNUM = len(self.patch.HueHistArr[0])
 
 		for i in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
 			if( i != self.TOP_RIGHT_INDEX):
-				other_patch_hist = self.getSubPatchTargetHueFilteredBySaturation(\
+				other_patch_hist = self.deriveSubPatchTargetHueFilteredBySaturationFrom2DArr(\
+				img_hsv, \
+				sub_patch_index = i, \
+				hs_2d_arr = self.patch.hs_2d_arr, \
+				target_hue_bins = range(1,2), \
+				target_saturation_bins = range(10,13))
+
+				other_patch_hist_old = self.getSubPatchTargetHueFilteredBySaturation(\
 					img_hsv, i, range(1,2), range(10,13))
+
+				print "check hue hist diff"
+				"""check hue hist diff"""
+				for j in range(0, len(other_patch_hist_old)):
+					if(other_patch_hist_old[j] != other_patch_hist[j]):
+						assert (abs(other_patch_hist_old[j] - other_patch_hist[j]) < 0.001), "too large diff: {a} and {b}".format(\
+							a = other_patch_hist_old[j], b = other_patch_hist[j])
+
 				assert (len(other_patch_hist) == len(range(1,2))), \
 				"In FeatureTopRightYellow: other sub patch {i}'s hue response array needs to be of the same length as that of the patch of interest".format( i = i)
 				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)

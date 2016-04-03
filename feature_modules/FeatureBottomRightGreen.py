@@ -38,11 +38,21 @@ class FeatureBottomRightGreen(Feature):
 
 	### override super class ###
 	def computeFeature(self, img, useGaussianSmoothing = True):
+		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
+
+		if (not len(self.patch.hs_2d_arr) == 5):
+			gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/6.0)
+			self.computeHS2DArr(img_hsv, self.patch, gaussian_window)
+
 		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
 			self.patch.HueHistArr = []
 			self.patch.SaturationHistArr = []
 			self.patch.ValueHistArr = []
-			self.patch.computeSeperateHSVHistogram(img, useGaussianSmoothing)
+			"""derive from 2D instead of recompute"""
+			for i in range(0, 5):
+				self.patch.HueHistArr.append(self.derive1DHueFrom2D(self.patch.hs_2d_arr[i]))
+				self.patch.SaturationHistArr.append(self.derive1DSaturationFrom2D(self.patch.hs_2d_arr[i]))
+			
 		# print "sum of HueHistArr[4]:", np.sum(self.patch.HueHistArr[4])
 		# print "sum of SaturationHistArr[4]:", np.sum(self.patch.SaturationHistArr[4])
 		self.hist = np.concatenate( \
@@ -62,9 +72,8 @@ class FeatureBottomRightGreen(Feature):
 		# print model_hist
 		# plotStatistics.plotOneGivenHist("", "FeatureBottomRightGreen", self.hist, save = False, show = True)
 		# plotStatistics.plotOneGivenHist("", "self.FEATURE_MODEL", self.FEATURE_MODEL, save = False, show = True)
-
-		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
-		self.HISTBINNUM = len(self.patch.HueHist)
+		
+		self.HISTBINNUM = len(self.patch.HueHistArr[0])
 		for i in range(1,4):
 			# other_patch_hue = self.patch.HueHistArr[i][4:5]
 			# other_patch_saturation = self.patch.SaturationHistArr[i][7:10]
@@ -76,9 +85,12 @@ class FeatureBottomRightGreen(Feature):
 			
 			# plotStatistics.plotOneGivenHist("", "other_patch_hue[{i}]".format(i = i), self.patch.HueHistArr[i], save = False, show = True)
 			# plotStatistics.plotOneGivenHist("", "other_patch_saturation[{i}]".format(i = i), self.patch.SaturationHistArr[i], save = False, show = True)
-			other_patch_hist = self.getSubPatchTargetHueFilteredBySaturation(img_hsv, \
+			other_patch_hist = self.deriveSubPatchTargetHueFilteredBySaturationFrom2DArr(\
+				img_hsv, \
 				sub_patch_index = i, \
-				target_hue_bins = range(3,5), target_saturation_bins = range(7,10))
+				hs_2d_arr = self.patch.hs_2d_arr, \
+				target_hue_bins = range(3,5), \
+				target_saturation_bins = range(7,10))
 			# plotStatistics.plotOneGivenHist("", "other_patch_hist[{i}]".format(i = i), other_patch_hist, save = False, show = True)
 			assert (len(other_patch_hist) == len(range(3,5))), \
 			"other_patch_hist {i}".format(i = i) + " must be having same length as target hue bin range"
