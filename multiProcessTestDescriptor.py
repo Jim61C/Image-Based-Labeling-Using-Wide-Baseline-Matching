@@ -29,7 +29,7 @@ def dispatch_match_test(testName):
 
 def dispatch_full_algorithm_from_two_folder(args):
 	test_folder_name1, test_folder_name2, image1, image2, image_db = args
-	folder_suffix = "_descriptor_based"
+	folder_suffix = "_descriptor_based_point_01_Harris"
 	matchPatches.findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(\
 		image_db, test_folder_name1, test_folder_name2, \
 		image1, image2, \

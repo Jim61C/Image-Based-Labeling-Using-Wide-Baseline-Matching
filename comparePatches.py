@@ -1106,7 +1106,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	for i in range(0, len(random_patches)):
 		# start_time = time.time()
 		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow)
-		# print "time spent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
+		# print "time gspent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} random_patches done".format(count = len(random_patches))
 
 
