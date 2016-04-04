@@ -439,7 +439,7 @@ class Patch:
 			gaussianWindow = None
 
 		self.computeSinglePatchHSVHistogram(img_hsv, gaussianWindow, True)
-		self.computeSubPatchColorHistogram(img, "HSV", gaussianWindow, True, img_hsv = img_hsv)
+		self.computeSubPatchColorHistogram(img_hsv, "HSV", gaussianWindow, True, img_hsv = img_hsv)
 		self.HueHist = self.HueHistArr[0]
 		self.SaturationHist = self.SaturationHistArr[0]
 		self.ValueHist = self.ValueHistArr[0]
@@ -599,6 +599,10 @@ class Patch:
 		return hist
 
 	def computeSubPatchColorHistogram(self, img, histogramfunction = "RGB", gaussianWindow = None, computeSeperateHists = False, img_hsv = None):
+		"""
+		if histogramfunction is 'HSV', then img is in HSV format, else in BGR format
+		"""
+
 		newLen = (self.size+1)/2
 		if(newLen % 2 == 0):
 			newSize = newLen -1 # since size is supposed to be odd
