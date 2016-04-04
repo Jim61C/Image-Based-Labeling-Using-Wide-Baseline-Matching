@@ -33,7 +33,7 @@ def dispatch_full_algorithm_from_two_folder(args):
 	matchPatches.findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(\
 		image_db, test_folder_name1, test_folder_name2, \
 		image1, image2, \
-		folder_suffix, upperPath = "testLabellig", initialize_features = False)
+		folder_suffix, upperPath = "testLabeling", initialize_features = False)
 
 def dispatch_full_algorithm(args):
 	test_folder_name, image_db = args
@@ -63,7 +63,7 @@ def dispatch_matching_given_test_patches_test_from_two_folder(args):
 	test_folder_name1, test_folder_name2, image1, image2, image_db = args
 	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	matchPatches.executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test_folder_name1, test_folder_name2, \
-	image1, image2, folder_suffix, upperPath = "testLabellig", initialize_features = False)
+	image1, image2, folder_suffix, upperPath = "testLabeling", initialize_features = False)
 
 def dispatch_feature_detection(args):
 	test_folder_name, image_db = args

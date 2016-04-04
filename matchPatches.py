@@ -1269,7 +1269,7 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 			show = False))
 
 def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_folder_name, test2_folder_name, \
-	test1_img_name, test2_img_name, folder_suffix, upperPath = "testLabellig", initialize_features = True):
+	test1_img_name, test2_img_name, folder_suffix, upperPath = "testLabeling", initialize_features = True):
 	"""
 	image_db: image database folder to read source images from;
 	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
@@ -1574,10 +1574,10 @@ def main():
 	
 	"""Test full automatic algorithm"""
 	executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
-	"test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabellig", initialize_features = False)
+	"test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
 	# "test2.jpg", "test3.jpg", \
-	# "_descriptor_based", upperPath = "testLabellig", initialize_features = False)
+	# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset7", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
