@@ -15,3 +15,4 @@ testUniquePatches/
 feature_modules/*.pyc
 testSIFT/
 *.npz
+testLabeling/
