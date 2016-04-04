@@ -1536,8 +1536,95 @@ def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
 	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)+"/_combined_scene_match_pruned.jpg",\
 		pruned_match)
 
+	saveLoadPatch.savePatchMatches(matches_found_keep, 1, \
+		"{path}/unique_patch_matches_pruned.csv".format( \
+			path = createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix), \
+			))
+
 	return	
 
+def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_name, test1_img_name, test2_img_name, \
+	folder_suffix, upperPath = "testLabeling"):
+	"""
+	test1_folder_name: the testset containing incoming test image
+	test2_folder_name: the testset from the constrained database
+	test1_img_name: image name of the incoming test image
+	test2_img_name: image name of the imaged matched in the constrained database
+	folder_suffix: _descriptor_based_point_01_Harris_from_two_folder
+	"""
+	sigma = 39
+	level = 5
+	testPatches = []
+	groundTruth = []
+	matchesFound = []
+	test_folder_name = test1_folder_name + "_" + test2_folder_name
+
+	# read testPatches
+	listOfTestPatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix, 
+		folder = test_folder_name, 
+		file = test1_img_name[:test1_img_name.find(".")], 
+		i = sigma))
+	for i in range(0, len(listOfTestPatches)):
+		testPatches.append(listOfTestPatches[i])
+		print listOfTestPatches[i].is_low_response
+
+	# read matchesFound
+	testPatchMatches = saveLoadPatch.loadPatchMatches(\
+		"{upperPath}/{folderToSave}/{testFolder}/GoodMatches_{folder}_{file1}_{file2}_simga{i}_shiftBy{step}_useGaussianWindow_{tf}_5levels.csv".format(\
+		upperPath = upperPath,
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test_folder_name +folder_suffix,  
+		folder = test_folder_name, 
+		file1 = test1_img_name[:test1_img_name.find(".")], 
+		file2 = test2_img_name[:test2_img_name.find(".")], 
+		i = sigma, 
+		step = 0.5, 
+		tf = True))
+	for i in range(0, len(testPatchMatches)):
+		matchesFound.append(testPatchMatches[i][0])
+
+	assert (len(matchesFound) == len(testPatches)), \
+	"In checkTestLabelingNumberMatches: matchesFound should have the same length as testPatches"
+
+	# assign matchesFound attributes of unique patches related such as feature_to_use and is_low_response
+	for i in range(0, len(matchesFound)):
+		matchesFound[i].setFeatureToUse(testPatches[i].feature_to_use)
+		matchesFound[i].setFeatureWeights(testPatches[i].feature_weights)
+		matchesFound[i].setIsLowResponse(testPatches[i].is_low_response)
+	
+	num_correct_matches = 0
+
+	# read groundTruth
+	listOfGroundTruth = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
+		"{upperPath}/{folderToSave}/{testFolder}/unique_patch_matches_pruned.csv".format(
+		upperPath = "testAlgo3",
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test2_folder_name + "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+		))
+	for i in range(0, len(listOfGroundTruth)):
+		groundTruth.append(listOfGroundTruth[i])
+
+	for i in range(0, len(matchesFound)):
+		for j in range(0, len(groundTruth)):
+			if (utils.isGoodMatch(matchesFound[i], groundTruth[j])):
+				print "found good match at matchesFound[{i}]".format(i = i)
+				features_match_found = matchesFound[i].feature_to_use
+				features_ground_truth = groundTruth[j].feature_to_use
+				print "features_match_found:", features_match_found, " is_low_response? ", matchesFound[i].is_low_response
+				print "features_ground_truth:", features_ground_truth, "is_low_response? ", groundTruth[j].is_low_response
+				"""if match found feature is the same as ground_truth unique feature set, real match found"""
+				if (set(features_match_found) == set(features_ground_truth) and \
+					matchesFound[i].is_low_response == groundTruth[j].is_low_response):
+					print "real match found at matchesFound[{i}]".format(i = i), "with unique feature set:", features_ground_truth
+					num_correct_matches += 1
+
+	print "number of correct matches between testLabeling image:", test1_img_name, " from ", test1_folder_name, \
+	" and ", test2_img_name, " from ", test2_folder_name, " = ", num_correct_matches
+	return num_correct_matches
 
 
 def main():
@@ -1557,8 +1644,8 @@ def main():
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_Based_SaturationWeighted_Hue"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_testset7_taylored"
-	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
-	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_separateHS_descriptor"
 	# feature_to_use = 'HOG'
@@ -1578,8 +1665,10 @@ def main():
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
-	"test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
+	checkTestLabelingNumberMatches("images", "testset_flower2", "testset_flower2", "test2.jpg", "test3.jpg", \
+	"_descriptor_based_point_01_Harris_from_two_folder", upperPath = "testLabeling")
+	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
+	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
 	# "test2.jpg", "test3.jpg", \
 	# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
