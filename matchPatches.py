@@ -409,11 +409,10 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMat
 			# 	matchPatches[i].getFeatureObject(this_feature).computeScore()
 			"""old descriptor based matching"""
 			if(FEATURE_WEIGHTING['HSV'] != 0):
-				test_start_time = time.time()
+				# test_start_time = time.time()
 				matchPatches[i].computeHSVHistogram(imgToMatchHSV,useGaussianWindow)
-				print "compute HSV for match patch: ", i, " time spent:", time.time() - test_start_time
+				# print "compute HSV for match patch: ", i, " time spent:", time.time() - test_start_time
 			if(FEATURE_WEIGHTING['HOG'] != 0):
-				print "compute HOG:"
 				matchPatches[i].computeHOG(imgToMatch_gray, useGaussianWindow)
 
 		"""-------For logging purpose only: One PatchesArr done!------"""
