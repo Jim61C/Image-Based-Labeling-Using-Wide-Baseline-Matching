@@ -513,14 +513,14 @@ class Patch:
 		"""
 		16*16 = 256 flattened HS histogram
 		"""
-		hist = np.zeros(bin_number**2) # try 256 HS only and see how
+		# hist = np.zeros(bin_number**2) # try 256 HS only and see how
 		"""
 		Check if need to computeSeperateHists of H, S, V channel
 		"""
-		if(computeSeperateHists):
-			HueHist = np.zeros(bin_number)
-			SaturationHist = np.zeros(bin_number)
-			ValueHist = np.zeros(bin_number)
+		# if(computeSeperateHists):
+		HueHist = np.zeros(bin_number)
+		SaturationHist = np.zeros(bin_number)
+		ValueHist = np.zeros(bin_number)
 		
 		H_bin_size = 360.0/float(bin_number)
 		S_bin_size = 1.0/float(bin_number)
@@ -538,36 +538,38 @@ class Patch:
 				s_bin = bin_number -1 if (img_hsv[i][j][1] == 1.0) else int(math.floor(img_hsv[i][j][1]/S_bin_size))
 				v_bin = bin_number -1 if (img_hsv[i][j][2] == 255.0) else int(math.floor(img_hsv[i][j][2]/V_bin_size))
 				# print "h_bin, s_bin,v_bin:", h_bin,s_bin,v_bin, "\n"
-				if(gaussianWindow is None):
-					# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += 1
-					hist[h_bin * bin_number + s_bin ] += 1
-				else:
-					# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += gaussianWindow[i - ref_x][j - ref_y]
-					hist[h_bin * bin_number + s_bin ] += gaussianWindow[i - ref_x][j - ref_y]
+				# if(gaussianWindow is None):
+				# 	# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += 1
+				# 	hist[h_bin * bin_number + s_bin ] += 1
+				# else:
+				# 	# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += gaussianWindow[i - ref_x][j - ref_y]
+				# 	hist[h_bin * bin_number + s_bin ] += gaussianWindow[i - ref_x][j - ref_y]
 
-				if(computeSeperateHists):
-					if(gaussianWindow is None):
-						HueHist[h_bin] += 1
-						SaturationHist[s_bin] += 1
-						ValueHist[v_bin] += 1
-					else:
-						HueHist[h_bin] += gaussianWindow[i - ref_x][j - ref_y]
-						SaturationHist[s_bin] += gaussianWindow[i - ref_x][j - ref_y]
-						ValueHist[v_bin] += gaussianWindow[i - ref_x][j - ref_y]
+				# if(computeSeperateHists):
+				# 	if(gaussianWindow is None):
+				# 		HueHist[h_bin] += 1
+				# 		SaturationHist[s_bin] += 1
+				# 		ValueHist[v_bin] += 1
+				# 	else:
+				HueHist[h_bin] += gaussianWindow[i - ref_x][j - ref_y]
+				SaturationHist[s_bin] += gaussianWindow[i - ref_x][j - ref_y]
+				ValueHist[v_bin] += gaussianWindow[i - ref_x][j - ref_y]
 
 				# print "smoothed weight added for pixel {i}_{j}".format(i = i, j = j), gaussianWindow[i - ref_x][j - ref_y]
 
 		# print "sum of hist should be 1 (if individual gaussianWindow is applied for each subwidow as well):", np.sum(hist)
-		if(computeSeperateHists and parentPatch != None):
+		# if(computeSeperateHists and parentPatch != None):
+		if(parentPatch != None):
 			parentPatch.HueHistArr.append(HueHist)
 			parentPatch.SaturationHistArr.append(SaturationHist)
 			parentPatch.ValueHistArr.append(ValueHist)
-		elif(computeSeperateHists):
-			self.HueHistArr.append(HueHist)
-			self.SaturationHistArr.append(SaturationHist)
-			self.ValueHistArr.append(ValueHist)
+		# elif(computeSeperateHists):
+		self.HueHistArr.append(HueHist)
+		self.SaturationHistArr.append(SaturationHist)
+		self.ValueHistArr.append(ValueHist)
 
-		return hist
+		# return hist
+		return
 	
 
 	def computeRGBHistogram(self, img):
