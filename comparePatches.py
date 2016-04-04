@@ -622,10 +622,10 @@ class Patch:
 			bottom_left_gaussianWindow = gaussianWindow[gaussianWindow.shape[0] - newSize:gaussianWindow.shape[0], 0:newSize]
 			bottom_right_gaussianWindow = gaussianWindow[gaussianWindow.shape[0] - newSize:gaussianWindow.shape[0], gaussianWindow.shape[1] - newSize: gaussianWindow.shape[1]]
 
-		top_left_sub_patch = Patch(self.x - newLen/2, self.y - newLen/2, newSize)
-		top_right_sub_patch = Patch(self.x - newLen/2, self.y + newLen/2, newSize)
-		bottom_left_sub_patch = Patch(self.x + newLen/2, self.y - newLen/2, newSize)
-		bottom_right_sub_patch = Patch(self.x + newLen/2, self.y + newLen/2, newSize)
+		top_left_sub_patch = Patch(self.x - newLen/2, self.y - newLen/2, newSize, initialize_features = False)
+		top_right_sub_patch = Patch(self.x - newLen/2, self.y + newLen/2, newSize, initialize_features = False)
+		bottom_left_sub_patch = Patch(self.x + newLen/2, self.y - newLen/2, newSize, initialize_features = False)
+		bottom_right_sub_patch = Patch(self.x + newLen/2, self.y + newLen/2, newSize, initialize_features = False)
 		
 		if(histogramfunction == "RGB"):
 			subHistArr.append(top_left_sub_patch.computeSinglePatchRGBHistogram(img))
