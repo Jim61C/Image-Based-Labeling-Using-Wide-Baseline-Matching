@@ -313,8 +313,8 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 		if(i == level):
 			"""if top level of pyramid, run original matching algorithm"""
 			thisListOfMatches = testDescriptorPerformanceWorker(thisTestPatches, \
-				thisImg, thisImgGray , thisImgHSV \
-				thisImgToMatch, thisImgToMatchGray, thisImgToMatchHSV \
+				thisImg, thisImgGray , thisImgHSV, \
+				thisImgToMatch, thisImgToMatchGray, thisImgToMatchHSV, \
 				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1), \
 				initialize_features = initialize_features) # each gaussian 125 best matches
 			matchesFound = thisListOfMatches
@@ -409,8 +409,11 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMat
 			# 	matchPatches[i].getFeatureObject(this_feature).computeScore()
 			"""old descriptor based matching"""
 			if(FEATURE_WEIGHTING['HSV'] != 0):
+				test_start_time = time.time()
 				matchPatches[i].computeHSVHistogram(imgToMatchHSV,useGaussianWindow)
+				print "compute HSV for match patch: ", i, " time spent:", time.time() - test_start_time
 			if(FEATURE_WEIGHTING['HOG'] != 0):
+				print "compute HOG:"
 				matchPatches[i].computeHOG(imgToMatch_gray, useGaussianWindow)
 
 		"""-------For logging purpose only: One PatchesArr done!------"""
