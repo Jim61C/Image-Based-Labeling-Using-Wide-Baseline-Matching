@@ -414,14 +414,14 @@ class Patch:
 		# return normalize(np.array(hist), norm='l1')[0] 
 
 	# TODO: refactor, make a computeColorHistogram as interface to outside, so that we can change the implementation inside willfully
-	def computeHSVHistogram(self, img, useGaussianSmoothing = True, computeSeperateHists = False):
+	def computeHSVHistogram(self, img_hsv, useGaussianSmoothing = True, computeSeperateHists = False):
 		# self.computeFlattenedHSVHistogram(img, useGaussianSmoothing, computeSeperateHists)
-		self.computeSeperateHSVHistogram(img, useGaussianSmoothing)
+		self.computeSeperateHSVHistogram(img_hsv, useGaussianSmoothing)
 
 	# compute the seperat H, S, V histograms overall and on the sub patches
 	# self.HueHistArr, self.SaturationHistArr, self.ValueHistArr will be of size 5 each
 	# TODO: decouple computeSeperateHSVHistogram from computeFlattenedHSVHistogram
-	def computeSeperateHSVHistogram(self, img, useGaussianSmoothing = True):
+	def computeSeperateHSVHistogram(self, img_hsv, useGaussianSmoothing = True):
 		"""
 		Here compute H,S,V channel, but V channel is left out during matching for illuminance invariance
 		"""
@@ -438,7 +438,6 @@ class Patch:
 		else:
 			gaussianWindow = None
 
-		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		self.computeSinglePatchHSVHistogram(img_hsv, gaussianWindow, True)
 		self.computeSubPatchColorHistogram(img, "HSV", gaussianWindow, True, img_hsv = img_hsv)
 		self.HueHist = self.HueHistArr[0]
@@ -721,8 +720,9 @@ def computePatchesRGBHistogram(img,patches):
 	return
 
 def computePatchesHSVHistogram(img,patches):
+	img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 	for i in range(0, len(patches)):
-		patches[i].computeHSVHistogram(img)
+		patches[i].computeHSVHistogram(img_hsv)
 		print "compute patch HSV:", i
 	return
 

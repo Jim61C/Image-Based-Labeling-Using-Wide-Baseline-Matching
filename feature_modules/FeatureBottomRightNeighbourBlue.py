@@ -39,7 +39,7 @@ class FeatureBottomRightNeighbourBlue(Feature):
 		neighbour = comparePatches.Patch(self.patch.x + self.patch.size/2, self.patch.y + self.patch.size/2, \
 			comparePatches.getGaussianScale(self.patch.size, 1.2, -3))
 		if(self.withInImage(neighbour,img)):
-			neighbour.computeHSVHistogram(img) # compute seperate H,S,V with gaussian smoothing
+			neighbour.computeHSVHistogram(cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)) # compute seperate H,S,V with gaussian smoothing
 			self.hist = neighbour.HueHist
 			self.hist = normalize(self.hist, norm='l1')[0]
 			# plotStatistics.plotColorHistogram(neighbour, img, "", "neighbour", save = False, show = True)

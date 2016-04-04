@@ -305,13 +305,16 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 		thisImgToMatch = imgToMatchPyd[i]
 		thisImgGray = cv2.cvtColor(thisImg, cv2.COLOR_BGR2GRAY).astype(np.int)
 		thisImgToMatchGray = cv2.cvtColor(thisImgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int)
+		thisImgHSV = cv2.cvtColor(thisImg.astype(np.float32), cv2.COLOR_BGR2HSV)
+		thisImgToMatchHSV = cv2.cvtColor(thisImgToMatch.astype(np.float32), cv2.COLOR_BGR2HSV)
 		thisTestPatches = testPatchesPyd[i]
+
 
 		if(i == level):
 			"""if top level of pyramid, run original matching algorithm"""
 			thisListOfMatches = testDescriptorPerformanceWorker(thisTestPatches, \
-				thisImg, thisImgGray , \
-				thisImgToMatch, thisImgToMatchGray, \
+				thisImg, thisImgGray , thisImgHSV \
+				thisImgToMatch, thisImgToMatchGray, thisImgToMatchHSV \
 				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1), \
 				initialize_features = initialize_features) # each gaussian 125 best matches
 			matchesFound = thisListOfMatches
@@ -337,7 +340,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 					# 	newPatch.getFeatureObject(this_feature).computeFeature(thisImgToMatch)
 					# 	newPatch.getFeatureObject(this_feature).computeScore()
 					if(FEATURE_WEIGHTING['HSV'] != 0):
-						newPatch.computeHSVHistogram(thisImgToMatch,useGaussianWindow)
+						newPatch.computeHSVHistogram(thisImgToMatchHSV,useGaussianWindow)
 					if(FEATURE_WEIGHTING['HOG'] != 0):
 						newPatch.computeHOG(thisImgToMatchGray, useGaussianWindow)
 					# append the new potential match patch for current particular one test patch
@@ -352,7 +355,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 				# 	thisPatchToMatch.getFeatureObject(this_feature).computeFeature(thisImg)
 				# 	thisPatchToMatch.getFeatureObject(this_feature).computeScore()
 				if(FEATURE_WEIGHTING['HSV'] != 0):
-					thisPatchToMatch.computeHSVHistogram(thisImg,useGaussianWindow)
+					thisPatchToMatch.computeHSVHistogram(thisImgHSV,useGaussianWindow)
 				if(FEATURE_WEIGHTING['HOG'] != 0):
 					thisPatchToMatch.computeHOG(thisImgGray, useGaussianWindow)
 				rematches.append(findBestMatches(thisPatchToMatch, \
@@ -376,7 +379,8 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 	return matchesFound # a list of [list of good matches] for each test patch
 
 
-def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, testFolderName, k = 1, \
+def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMatch, imgToMatch_gray, imgToMatchHSV, \
+	sigma, testFolderName, k = 1, \
 	patchStep = 0.5, useGaussianWindow = True, metricFunc = comparePatches.Jensen_Shannon_Divergence, initialize_features = True):
 	#Extract match patches
 	matchPatches_origin = comparePatches.extractPatches(imgToMatch, sigma, patchStep, initialize_features = initialize_features)
@@ -405,7 +409,7 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgTo
 			# 	matchPatches[i].getFeatureObject(this_feature).computeScore()
 			"""old descriptor based matching"""
 			if(FEATURE_WEIGHTING['HSV'] != 0):
-				matchPatches[i].computeHSVHistogram(imgToMatch,useGaussianWindow)
+				matchPatches[i].computeHSVHistogram(imgToMatchHSV,useGaussianWindow)
 			if(FEATURE_WEIGHTING['HOG'] != 0):
 				matchPatches[i].computeHOG(imgToMatch_gray, useGaussianWindow)
 
@@ -422,7 +426,7 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgTo
 		# 	this_test_patch.getFeatureObject(this_feature).computeScore()
 		"""old descriptor based matching"""
 		if(FEATURE_WEIGHTING['HSV'] != 0):
-			this_test_patch.computeHSVHistogram(img, useGaussianWindow)
+			this_test_patch.computeHSVHistogram(imgHSV, useGaussianWindow)
 		if(FEATURE_WEIGHTING['HOG'] != 0):
 			this_test_patch.computeHOG(img_gray, useGaussianWindow)
 		bestMatches = testFindOnePatchMatch(this_test_patch, patchesArr, k, metricFunc) # will return the best matches (in an array) of the testPatch1
@@ -460,7 +464,6 @@ def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMat
 
  	# Move the window by 1/4 
  	patchStep = 0.5
-	# testPatchMatches = testDescriptorPerformanceWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, folderName, patchStep)
 	testPatchMatches = testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch, \
 		imgToMatch_gray, sigma, folderName, patchStep, initialize_features = initialize_features)
 	# Logging and Saving of match results
@@ -515,9 +518,9 @@ def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound,
 
 	for i in range(0, len(testPatches)):
 		"""old descriptor checking HSV and HOG hists"""
-		testPatches[i].computeHSVHistogram(img, True, True)
-		groundTruth[i].computeHSVHistogram(imgToMatch, True, True)
-		matchesFound[i].computeHSVHistogram(imgToMatch, True, True)
+		testPatches[i].computeHSVHistogram(cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
+		groundTruth[i].computeHSVHistogram(cv2.cvtColor(imgToMatch.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
+		matchesFound[i].computeHSVHistogram(cv2.cvtColor(imgToMatch.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
 
 		testPatches[i].computeHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int),  True)
 		groundTruth[i].computeHOG(cv2.cvtColor(imgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int),  True)

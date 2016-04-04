@@ -11,7 +11,7 @@ def plotColorHistogram(patch, img, path, fname, save = True, show = True, histTo
 	fig = None
 	if(histToUse == "HSV"):
 		if(len(patch.HSVHistArr) == 0): 
-			patch.computeHSVHistogram(img, useGaussian, True)
+			patch.computeHSVHistogram(cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV), useGaussian, True)
 		# fig = plt.plot(patch.HSVHist)
 		# plt.xlabel(fname)
 		# if(save):
