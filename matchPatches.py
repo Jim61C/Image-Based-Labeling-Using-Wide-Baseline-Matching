@@ -1597,6 +1597,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		matchesFound[i].setIsLowResponse(testPatches[i].is_low_response)
 	
 	num_correct_matches = 0
+	num_location_matches = 0
 
 	# read groundTruth
 	listOfGroundTruth = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
@@ -1609,9 +1610,13 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		groundTruth.append(listOfGroundTruth[i])
 
 	for i in range(0, len(matchesFound)):
+		this_match_found_is_location_match = False
 		for j in range(0, len(groundTruth)):
 			if (utils.isGoodMatch(matchesFound[i], groundTruth[j])):
 				print "found good match at matchesFound[{i}]".format(i = i)
+				if (not this_match_found_is_location_match):
+					num_location_matches += 1
+					this_match_found_is_location_match = True
 				features_match_found = matchesFound[i].feature_to_use
 				features_ground_truth = groundTruth[j].feature_to_use
 				print "features_match_found:", features_match_found, " is_low_response? ", matchesFound[i].is_low_response
@@ -1622,9 +1627,13 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 					print "real match found at matchesFound[{i}]".format(i = i), "with unique feature set:", features_ground_truth
 					num_correct_matches += 1
 
+	print "number of location matches between testLabeling image:", test1_img_name, " from ", test1_folder_name, \
+	" and ", test2_img_name, " from ", test2_folder_name, " = ", num_location_matches
+
 	print "number of correct matches between testLabeling image:", test1_img_name, " from ", test1_folder_name, \
 	" and ", test2_img_name, " from ", test2_folder_name, " = ", num_correct_matches
-	return num_correct_matches
+	
+	return num_correct_matches, num_location_matches
 
 
 def main():
@@ -1665,11 +1674,12 @@ def main():
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	checkTestLabelingNumberMatches("images", "testset_flower2", "testset_flower2", "test2.jpg", "test3.jpg", \
+	for i in [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]:
+		checkTestLabelingNumberMatches("images", "testset_flower23", "testset_flower{i}".format(i = i), "test2.jpg", "test3.jpg", \
 	"_descriptor_based_point_01_Harris_from_two_folder", upperPath = "testLabeling")
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
 	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
-	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
+	# findDistinguishablePatchesAndExecuteMatchingFrpthomTwoFolders("images", "testset_flower2", "testset_flower2", \
 	# "test2.jpg", "test3.jpg", \
 	# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
