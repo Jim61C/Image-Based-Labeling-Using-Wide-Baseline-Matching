@@ -89,6 +89,10 @@ def dispatch_feature_detection_algo3(args):
 		image_db = "images", \
 		custom_feature_sets = custom_features_set)
 
+def dispatch_test_labeling_num_matches(args):
+	plot_folder_name, tight_criteria = args
+	matchPatches.populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, save = False, show = True)
+
 def extract_all_testfoldernames(image_db):
 	folders = [(name, image_db) for name in os.listdir(image_db) \
 	if os.path.isdir(os.path.join(image_db, name))]
@@ -274,6 +278,14 @@ def main():
 	# 	("testset7", [utils.GENERATED_FEATURE_IDS[3]], "test3.jpg") \
 	# ]
 
+	"""dispatch_test_labeling_num_matches"""
+	test_labeling_num_matches_args = [\
+	("location match first then unique set <=", "<="), \
+	("exact unique feature set", "=="), \
+	("location match first then unique set <= or >=", "<= or >="), \
+	("location match first then intersection","intersection"), \
+	]
+
 	start_time = time.time()
 	pool = Pool(cpu_count())
 	# pool.map(dispatch_match_test, testNames)
@@ -282,8 +294,9 @@ def main():
 	# pool.map(dispatch_feature_detection_algo3, test_folder_args)
 	# pool.map(dispatch_full_algorithm, test_folder_args)
 	# pool.map(dispatch_full_algorithm_from_two_folder, test_folder_args)
-	pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
+	# pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
 	# pool.map(dispatch_matching_given_test_patches, test_folder_args)
+	pool.map(dispatch_test_labeling_num_matches, test_labeling_num_matches_args)
 
 
 	pool.close()

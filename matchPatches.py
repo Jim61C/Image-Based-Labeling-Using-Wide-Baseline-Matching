@@ -1544,13 +1544,14 @@ def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
 	return	
 
 def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_name, test1_img_name, test2_img_name, \
-	folder_suffix, upperPath = "testLabeling"):
+	folder_suffix, upperPath = "testLabeling", tight_criteria = None):
 	"""
 	test1_folder_name: the testset containing incoming test image
 	test2_folder_name: the testset from the constrained database
 	test1_img_name: image name of the incoming test image
 	test2_img_name: image name of the imaged matched in the constrained database
 	folder_suffix: _descriptor_based_point_01_Harris_from_two_folder
+	tight_criteria: default is exactly the same set of unique features
 	"""
 	sigma = 39
 	level = 5
@@ -1609,23 +1610,58 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	for i in range(0, len(listOfGroundTruth)):
 		groundTruth.append(listOfGroundTruth[i])
 
+	"""cap the maximum number of tight matches to number of feature patches in the database"""
+	matched_ground_truth = {}
+	location_matched_ground_truth = {}
+
 	for i in range(0, len(matchesFound)):
-		this_match_found_is_location_match = False
+		this_match_found_is_location_match_flag = False # one match patch should correspond to one unique patch in the database
+		this_match_found_is_tight_match_flag = False # one match patch should correspond to one unique patch in the database
 		for j in range(0, len(groundTruth)):
-			if (utils.isGoodMatch(matchesFound[i], groundTruth[j])):
-				print "found good match at matchesFound[{i}]".format(i = i)
-				if (not this_match_found_is_location_match):
+
+			if (utils.isGoodMatch(matchesFound[i], groundTruth[j], patch_neighbour_hood = 5)):
+				print "\nmatchesFound[{i}]".format(i = i), "found good location match with groundTruth[{j}]".format(j = j)
+				if (not this_match_found_is_location_match_flag and \
+					(not j in location_matched_ground_truth)):
 					num_location_matches += 1
-					this_match_found_is_location_match = True
+					this_match_found_is_location_match_flag = True
+					location_matched_ground_truth[j] = True
 				features_match_found = matchesFound[i].feature_to_use
 				features_ground_truth = groundTruth[j].feature_to_use
 				print "features_match_found:", features_match_found, " is_low_response? ", matchesFound[i].is_low_response
 				print "features_ground_truth:", features_ground_truth, "is_low_response? ", groundTruth[j].is_low_response
-				"""if match found feature is the same as ground_truth unique feature set, real match found"""
-				if (set(features_match_found) == set(features_ground_truth) and \
-					matchesFound[i].is_low_response == groundTruth[j].is_low_response):
+				
+				"""if matchFound has unique features in common with database groundTruth, real match found"""
+				good_match = False
+				
+				if (tight_criteria is None or tight_criteria == "exact"):
+					if (set(features_match_found) == set(features_ground_truth) and \
+						matchesFound[i].is_low_response == groundTruth[j].is_low_response):
+						good_match = True
+
+				elif (tight_criteria == "<="):
+					if (set(features_match_found) <= set(features_ground_truth) and \
+						matchesFound[i].is_low_response == groundTruth[j].is_low_response):
+						good_match = True
+				
+				elif (tight_criteria == "<= or >="):
+					if ((set(features_match_found) <= set(features_ground_truth) or \
+						set(features_match_found) >= set(features_ground_truth)) and \
+						matchesFound[i].is_low_response == groundTruth[j].is_low_response):
+						good_match = True
+				
+				elif (tight_criteria == "intersection"):
+					if ((not set(features_match_found).isdisjoint(set(features_ground_truth))) and \
+						matchesFound[i].is_low_response == groundTruth[j].is_low_response):
+						good_match = True
+				
+				if (good_match and \
+					(not this_match_found_is_tight_match_flag) and \
+					(not j in matched_ground_truth)):
 					print "real match found at matchesFound[{i}]".format(i = i), "with unique feature set:", features_ground_truth
 					num_correct_matches += 1
+					this_match_found_is_tight_match_flag = True
+					matched_ground_truth[j] = True
 
 	print "number of location matches between testLabeling image:", test1_img_name, " from ", test1_folder_name, \
 	" and ", test2_img_name, " from ", test2_folder_name, " = ", num_location_matches
@@ -1634,6 +1670,63 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	" and ", test2_img_name, " from ", test2_folder_name, " = ", num_correct_matches
 	
 	return num_correct_matches, num_location_matches
+
+def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, save = False, show = True):
+	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
+	ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	incoming_test_ids = [12]
+
+	for i in range(0, len(incoming_test_ids)):
+		num_location_matches_arr = [] # arr of location matches
+		num_correct_matches_arr = [] # arr of tight matches
+		testset_names = [] # hold the xtick names to show
+		
+		for j in range(0, len(testset_flower_ids)):
+			num_correct_matches, num_location_matches = checkTestLabelingNumberMatches(\
+				"images", \
+				"testset_flower{i}".format(i = incoming_test_ids[i]), \
+				"testset_flower{j}".format(j = testset_flower_ids[j]), "test2.jpg", "test3.jpg", \
+				"_descriptor_based_point_01_Harris_from_two_folder", \
+				upperPath = "testLabeling", \
+				tight_criteria = tight_criteria)
+			num_correct_matches_arr.append(num_correct_matches)
+			num_location_matches_arr.append(num_location_matches)
+			testset_names.append("testset_flower{testset_count}".format(\
+				testset_count = ALL_SCENE_SETS.index(testset_flower_ids[j]) + 1))
+
+		test_image_name = "testset_flower{test_image_index}".format(\
+			test_image_index = ALL_SCENE_SETS.index(incoming_test_ids[i]) + 1)
+		title = "Test incoming image from scene {scene}".format(\
+			scene = test_image_name)
+		
+		"""plotting matches against database sets"""
+		fig, ax = plt.subplots()
+		fig.set_figwidth(10)
+		plt.margins(0.05) # avoid the markers to be cut off at the border of the plotting area
+		plt.subplots_adjust(bottom=0.2) # make sure bottom labels could be seen fully
+		# plt.subplots_adjust(right=0.8)
+		box = ax.get_position()
+		ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+		plt.xticks(range(0, len(testset_names)), testset_names, rotation='45') # rotate bottom labels
+		ax.yaxis.grid(True)
+		for tick in ax.xaxis.get_majorticklabels():
+		    tick.set_horizontalalignment("right") # make sure the bottom label is precisely at the position
+		plt.plot(range(0, len(num_correct_matches_arr)), num_correct_matches_arr, \
+			marker='o', markersize = 10, linestyle='--', label = "tight matches")
+		# plt.plot(range(0, len(num_location_matches_arr)), num_location_matches_arr, \
+			# marker='^', markersize = 10, linestyle='--', label = "location matches")
+		ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+		plt.title(title)
+		if (save):
+			plt.savefig("{path}/Test incoming image from scene {scene} {plot_folder_name}.png".format(\
+				path = path, scene = test_image_name, plot_folder_name = plot_folder_name))
+		if (show):
+			plt.show()
+		plt.clf()
+
+	return
 
 
 def main():
@@ -1667,16 +1760,24 @@ def main():
 
 	"""Mannual Tests"""
 	# populate_testset_illuminance1(folder_suffix, "testAlgo3")
-	# populate_testset_illuminance2(pfolder_suffix)
+	# populate_testset_illuminance2(folder_suffix)
 	# populate_testset_rotation1(folder_suffix, "testAlgo3")
 	# populate_testset_rotation2(folder_suffix)
 	# populate_testset4(folder_suffix)
 	# populate_testset7(folder_suffix, base_img_name = "test1.jpg", target_img_name = "test3.jpg", upperPath = "testAlgo3")
 	
 	"""Test full automatic algorithm"""
-	for i in [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]:
-		checkTestLabelingNumberMatches("images", "testset_flower23", "testset_flower{i}".format(i = i), "test2.jpg", "test3.jpg", \
-	"_descriptor_based_point_01_Harris_from_two_folder", upperPath = "testLabeling")
+	# plot_folder_name = "location match first then unique set <=" # the criteria for tight matches
+	# plot_folder_name = "exact unique feature set"
+	# plot_folder_name = "location match first then unique set <= or >="
+	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood extended dist thresh"
+	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match"
+	# plot_folder_name = "pure unique feature based"
+	tight_criteria = "intersection"
+	# tight_criteria = "<= or >="
+	# tight_criteria = "<="
+	# tight_criteria = "=="
+	populateCheckTestLabelingNumMatches(plot_folder_name, "intersection", save = True, show = False)
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
 	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatchingFrpthomTwoFolders("images", "testset_flower2", "testset_flower2", \
