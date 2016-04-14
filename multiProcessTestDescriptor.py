@@ -27,6 +27,13 @@ def dispatch_match_test(testName):
 	    matchPatches.populate_testset7(folder_suffix)
 	print 'finish matching for ',testName,' ; time spent:', time.time() - start_time, " secs"
 
+def driver_full_algorithm(args):
+	if(len(args) == 5):
+		dispatch_full_algorithm_from_two_folder(args)
+	elif(len(args) == 2):
+		dispatch_full_algorithm(args)
+	return
+
 def dispatch_full_algorithm_from_two_folder(args):
 	test_folder_name1, test_folder_name2, image1, image2, image_db = args
 	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
@@ -143,119 +150,117 @@ def main():
 	# ]
 
 	"""dispatch_full_algorithm_from_two_folder"""
-	test_folder_args = [\
-	# ("testset_flower2", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower2", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db), \
+	# test_folder_args = [\
+	# # ("testset_flower2", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower2", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db), \
 
-	("testset_flower3", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower3", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower3", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower3", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower3", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower3", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower5", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower5", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower5", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower5", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower5", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower5", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower7", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower7", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower7", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower7", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower7", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower7", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower9", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower9", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower9", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower9", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower9", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower9", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower10", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower10", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower10", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower10", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower10", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower10", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower12", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower12", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower12", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower12", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower12", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower12", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower13", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower13", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower13", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower13", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower13", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower13", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	("testset_flower19", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower19", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-	("testset_flower19", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# ("testset_flower19", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower19", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ("testset_flower19", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
 
-	# ("testset_flower23", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
-	# ("testset_flower23", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
-	# ("testset_flower23", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
-
-
-	]
+	# # ("testset_flower23", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db),\
+	# # ("testset_flower23", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	# # ("testset_flower23", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	# ]
 	
 	# test_folder_args = [ \
 	# 	("testset_illuminance1", [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]), \
@@ -279,11 +284,46 @@ def main():
 	# ]
 
 	"""dispatch_test_labeling_num_matches"""
-	test_labeling_num_matches_args = [\
-	("location match first then unique set <=", "<="), \
-	("exact unique feature set", "=="), \
-	("location match first then unique set <= or >=", "<= or >="), \
-	("location match first then intersection","intersection"), \
+	# test_labeling_num_matches_args = [\
+	# ("location match first then unique set <=", "<="), \
+	# ("exact unique feature set", "=="), \
+	# ("location match first then unique set <= or >=", "<= or >="), \
+	# ("location match first then intersection","intersection"), \
+	# ]
+
+
+	"""driver_full_algorithm"""
+	test_folder_args = [\
+	("testset_flower2", image_db), \
+	("testset_flower3", image_db), \
+	# ("testset_flower4", image_db), \
+	("testset_flower5", image_db), \
+	# ("testset_flower6", image_db), \
+	("testset_flower7", image_db), \
+	("testset_flower9", image_db), \
+	("testset_flower10", image_db), \
+	# ("testset_flower11", image_db), \
+	("testset_flower12", image_db), \
+	("testset_flower13", image_db), \
+	# ("testset_flower15", image_db), \
+	# ("testset_flower16", image_db), \
+	("testset_flower19", image_db), \
+	# ("testset_flower21", image_db), \
+	("testset_flower23", image_db), \
+	# ("testset_flower24", image_db), \
+	# ("testset_flower25", image_db), \
+	# ("testset_flower26", image_db), \
+
+	("testset_flower2", "testset_flower2", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower3", "testset_flower3", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower5", "testset_flower5", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower7", "testset_flower7", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower9", "testset_flower9", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower10", "testset_flower10", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower12", "testset_flower12", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower13", "testset_flower13", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower19", "testset_flower19", "test2.jpg", "test3.jpg" ,image_db), \
+	("testset_flower23", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db), \
 	]
 
 	start_time = time.time()
@@ -296,7 +336,9 @@ def main():
 	# pool.map(dispatch_full_algorithm_from_two_folder, test_folder_args)
 	# pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
 	# pool.map(dispatch_matching_given_test_patches, test_folder_args)
-	pool.map(dispatch_test_labeling_num_matches, test_labeling_num_matches_args)
+	# pool.map(dispatch_test_labeling_num_matches, test_labeling_num_matches_args)
+
+	pool.map(driver_full_algorithm, test_folder_args)
 
 
 	pool.close()
