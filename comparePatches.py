@@ -1166,7 +1166,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 
 
 
-def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255), mark_sequence = False): 
+def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,255), mark_sequence = False, draw_rect = True): 
 	"""
 	patches can be 1. an instance of Patch class 2. A list of patches
 	Gradiant is to indiacte the goodness of the match patch, the ligher(redder) the better
@@ -1174,25 +1174,27 @@ def drawPatchesOnImg(img, patches, show = True, gradiant = None, color = (0,0,25
 	"""
 	if(type(patches).__name__ == "instance"):
 		p = patches
-		cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1) # np.random.randint(0,255,size = 3)
+		if (draw_rect):
+			cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1) # np.random.randint(0,255,size = 3)
 	elif(type(patches) is list):	
 		for i in range(0, len(patches)):
 			p = patches[i]
 			if(mark_sequence):
 				cv2.putText(img, "{i}".format(i =i), (patches[i].y, patches[i].x), cv2.FONT_HERSHEY_SIMPLEX, 0.5 ,(0,0,255),1)
-			if(gradiant is None):
-				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1)
-			else:
-				cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(color[0]*(1 - gradiant * i),color[1]*(1 - gradiant * i),color[2]*(1 - gradiant * i)),1) # np.random.randint(0,255,size = 3)
+			if(draw_rect):
+				if(gradiant is None):
+					cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),color,1)
+				else:
+					cv2.rectangle(img,(p.y-p.size/2,p.x-p.size/2),(p.y+p.size/2,p.x+p.size/2),(color[0]*(1 - gradiant * i),color[1]*(1 - gradiant * i),color[2]*(1 - gradiant * i)),1) # np.random.randint(0,255,size = 3)
 	
 	if(show):	
 		cv2.imshow("draw Patches On Original Image",img)
 		cv2.waitKey(0)
 	return img
 
-def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colors = None):
-	drawPatchesOnImg(img, patches,show = False, mark_sequence = True)
-	drawPatchesOnImg(imgToMatch, matches, show = False, mark_sequence = True)
+def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colors = None, draw_rect = True):
+	drawPatchesOnImg(img, patches,show = False, mark_sequence = True, draw_rect = draw_rect)
+	drawPatchesOnImg(imgToMatch, matches, show = False, mark_sequence = True, draw_rect = draw_rect)
 
 	patch_key_points = []
 	match_key_points = []
@@ -1397,7 +1399,7 @@ def main():
 	# FEATURES = utils.ALL_FEATURE_IDS
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
 	# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
-	FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"]
+	FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"] # for testset_flower5_testset_flower2
 	# FEATURES = ["subsquare_paradigm_12"]
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
