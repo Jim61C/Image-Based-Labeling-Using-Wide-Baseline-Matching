@@ -278,6 +278,8 @@ class FeatureCentreParadigm(Feature):
 		self.HUEFRACTION = 0.7
 		self.SATURATIONFRACTION_INVERSE = 0.1 # maximum border hist
 		self.SHRINK_HUE_BIN_FRACTION = 0.99
+		MINIMUM_VALUE_CHANNEL_BIN = 4
+		MAX_FIRST_BIN_SATURATION_PERCENT = 0.5
 
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		gaussian_window = comparePatches.gauss_kernels(self.patch.size, sigma = self.patch.size/self.GAUSSIAN_WINDOW_LENGTH_SIGMA)
@@ -327,6 +329,20 @@ class FeatureCentreParadigm(Feature):
 			target_hue_bins = []
 			for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
 				target_hue_bins.append(i % self.HISTBINNUM)
+
+			"""check inner centre patch value not pure dark, saturation not pure white"""
+			value_for_target_hue_bins = self.findValueHistForTargetHueBin(\
+				img_hsv, inner_patch, inner_gaussian_window, target_hue_bins)
+
+			saturation_for_target_hue_bins = self.findSaturationHistForTargetHueBin(\
+				img_hsv, inner_patch, inner_gaussian_window, target_hue_bins)
+
+			print "saturation_for_target_hue_bins:", saturation_for_target_hue_bins
+
+			if (np.argmax(value_for_target_hue_bins) <= MINIMUM_VALUE_CHANNEL_BIN or \
+					saturation_for_target_hue_bins[0]/ np.sum(saturation_for_target_hue_bins) >= MAX_FIRST_BIN_SATURATION_PERCENT):
+				continue
+
 			"""
 			SATURATION_START_INDEX, SATURATION_END_INDEX does not need to be Mod before use
 			"""
@@ -346,6 +362,7 @@ class FeatureCentreParadigm(Feature):
 			if (np.sum(filtered_border_hue)/ np.sum(border_hue) > self.SATURATIONFRACTION_INVERSE):
 				continue
 
+			comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
 			print "successfully constructed feature centre_paradigm, self.HUE_START_INDEX:", self.HUE_START_INDEX, \
 			"self.HUE_END_INDEX:", self.HUE_END_INDEX, \
 			"self.SATURATION_START_INDEX:", self.SATURATION_START_INDEX, \
