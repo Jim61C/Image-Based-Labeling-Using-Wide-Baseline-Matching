@@ -1003,7 +1003,8 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	# plt.show()
 	i = 0
 	while(i < len(filtered_patches)):
-		if(filtered_patches[i].LDAFeatureScore < LDA_thresh):
+		"""keep only high response"""
+		if(filtered_patches[i].LDAFeatureScore < LDA_thresh or filtered_patches[i].is_low_response):
 			filtered_patches.pop(i)
 		else:
 			i += 1
@@ -1343,20 +1344,30 @@ def populateTestCombinatorialFeatureScore( \
 		"{path}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format( \
 			path = path , \
 			folder = test_folder_name, \
-			file = "test1", \
+			file = img_name[:img_name.find(".")], \
 			i = sigma))
 	for i in range(0, len(listOfPatches)):
 		testPatches.append(listOfPatches[i][0]) # just append the best match
 
 	drawPatchesOnImg(np.copy(img), testPatches, True, None, (0,0,255), True)
-	max_corner_response, _ = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), windowSize = sigma, _step = 0.5)
+	# max_corner_response, _ = cornerResponse.getHarrisCornerResponse(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), windowSize = sigma, _step = 0.5)
+
 
 	for i in range(0, len(testPatches)):
 		print "\ntestPatches[{i}]:".format(i = i)
+		total_score_sum = 0.0
 		for this_feature in FEATURES:
+			print this_feature, "HUE_START_INDEX:", testPatches[i].getFeatureObject(this_feature).HUE_START_INDEX
+			print this_feature, "HUE_END_INDEX:", testPatches[i].getFeatureObject(this_feature).HUE_END_INDEX
+			print this_feature, "SATURATION_START_INDEX:", testPatches[i].getFeatureObject(this_feature).SATURATION_START_INDEX
+			print this_feature, "SATURATION_END_INDEX:", testPatches[i].getFeatureObject(this_feature).SATURATION_END_INDEX
+			if (this_feature.find(utils.SUBSQUARE_PARADIGM_FEATURE_PREFIX) != -1):
+				print this_feature, " SUBPATCH_OF_INTEREST_INDEX: ", \
+				testPatches[i].getFeatureObject(this_feature).SUBPATCH_OF_INTEREST_INDEX
 			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
 			testPatches[i].getFeatureObject(this_feature).computeScore()
 			print "testPatches[{i}]".format( i = i), "actual feature score: ", testPatches[i].getFeatureObject(this_feature).score
+			total_score_sum += testPatches[i].getFeatureObject(this_feature).score
 			if (this_feature != utils.HEART_SHAPE_FEATURE_ID):
 				plotStatistics.plotOneGivenHist(\
 					path, \
@@ -1370,7 +1381,7 @@ def populateTestCombinatorialFeatureScore( \
 					testPatches[i].getFeatureObject(this_feature).FEATURE_MODEL, \
 					save = False, \
 					show = True)
-		
+		print "total_score_sum:", total_score_sum
 
 	# 	plotStatistics.plotColorHistogram(testPatches[i], img, path+"/hists", "unique_patch[{i}]".format(i = i), save = True, show = True, histToUse = "HSV", useGaussian = True)
 	feature_set_scores = findCombinatorialFeatureScore(img, testPatches, sigma, path)
@@ -1385,13 +1396,15 @@ def main():
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 	# FEATURES = utils.ALL_FEATURE_IDS
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
-	FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
-
+	# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
+	FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"]
+	# FEATURES = ["subsquare_paradigm_12"]
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
 	# folderNames = ["testset7"]
 	# folderNames = ["testset_rotation1"]
 	folderNames = ["testset_flower2"]
+	# folderNames = ["testset_flower5_testset_flower2"]
 
 	# Test combinatorial feature scores on a set of eyeballed patches
 	for i in range(0, len(folderNames)):
@@ -1400,6 +1413,11 @@ def main():
 			# folder_suffix = "_eyeballed_unique_patches"\
 			folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
 			)
+		# populateTestCombinatorialFeatureScore(folderNames[i], "test2.jpg",39, \
+		# 	upperPath = "testLabeling", \
+		# 	# folder_suffix = "_eyeballed_unique_patches"\
+		# 	folder_suffix =  "_descriptor_based_point_01_Harris_from_two_folder"
+		# 	)
 	raise ValueError("purpose stop for testing populating combinatorial score")
 
 	### Test Algo3 in finding distinguishable patches ###
