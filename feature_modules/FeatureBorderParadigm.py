@@ -136,12 +136,11 @@ class FeatureBorderParadigm(Feature):
 		"len(self.hist): {self_his_len}, len(self.FEATURE_MODEL): {feature_model_len}".format(\
 			self_his_len = len(self.hist), feature_model_len = len(self.FEATURE_MODEL))
 		
-		# return 1.0 / (1.0 + metric_func(\
-				# np.concatenate((self.hist[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
-					# self.hist[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1), \
-				# np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
-					# self.FEATURE_MODEL[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1)))
-		# return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
+		return 1.0 / (1.0 + metric_func(\
+				np.concatenate((self.hist[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
+					self.hist[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1), \
+				np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
+					self.FEATURE_MODEL[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1)))
 
 		return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
 		# return 1.0 / (1.0 + metric_func(\
@@ -166,7 +165,7 @@ class FeatureBorderParadigm(Feature):
 
 	def computeScore(self):
 		if(self.score is None):
-			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Hat)
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Unnormalized)
 			# self.score = self.featureResponse()
 
 

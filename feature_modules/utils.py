@@ -65,6 +65,7 @@ def loadGeneratedFeatureParadigm():
 
 	"""Examining of features constructed"""
 	# for feature_paradigm in GENERATED_FEATURE_PARADIGMS:
+	# 	print feature_paradigm.id, " model length:", len(feature_paradigm.FEATURE_MODEL)
 	# 	plotStatistics.plotOneGivenHist("",feature_paradigm.id, feature_paradigm.FEATURE_MODEL, save = False, show = True)
 	# 	feature_id = feature_paradigm.id
 	# 	if (feature_id.find(SUBSQUARE_PARADIGM_FEATURE_PREFIX) != -1):
