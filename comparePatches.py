@@ -180,6 +180,13 @@ class Patch:
 
 		self.gaus_scale_to_inner_hs_2d_dict = {} # key is "4_3", meaning 4 sigma gaussian window and inner patch is scale down 3
 
+		self.outer_HOG_gaus_4 = None
+		self.outer_HOG_Uncirculated_gaus_4 = None
+		
+		self.gaus_scale_to_inner_HOG_dict = {}
+
+		self.gaus_scale_to_inner_Uncirculated_HOG_dict = {}
+
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
 		self.feature_weights = None
@@ -1363,11 +1370,20 @@ def populateTestCombinatorialFeatureScore( \
 			print this_feature, "HUE_END_INDEX:", testPatches[i].getFeatureObject(this_feature).HUE_END_INDEX
 			print this_feature, "SATURATION_START_INDEX:", testPatches[i].getFeatureObject(this_feature).SATURATION_START_INDEX
 			print this_feature, "SATURATION_END_INDEX:", testPatches[i].getFeatureObject(this_feature).SATURATION_END_INDEX
+			print this_feature, "SATURATION_FILTER_START_INDEX:", testPatches[i].getFeatureObject(this_feature).SATURATION_FILTER_START_INDEX
+			print this_feature, "SATURATION_FILTER_END_INDEX:", testPatches[i].getFeatureObject(this_feature).SATURATION_FILTER_END_INDEX
+
+			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
+			testPatches[i].getFeatureObject(this_feature).computeScore()
+
 			if (this_feature.find(utils.SUBSQUARE_PARADIGM_FEATURE_PREFIX) != -1):
 				print this_feature, " SUBPATCH_OF_INTEREST_INDEX: ", \
 				testPatches[i].getFeatureObject(this_feature).SUBPATCH_OF_INTEREST_INDEX
-			testPatches[i].getFeatureObject(this_feature).computeFeature(img)
-			testPatches[i].getFeatureObject(this_feature).computeScore()
+				plotStatistics.plotOneGivenHist("", \
+					this_feature + "testPatches[{i}] ".format(i = i) + "actual Hue", \
+					testPatches[i].HueHistArr[testPatches[i].getFeatureObject(this_feature).SUBPATCH_OF_INTEREST_INDEX], \
+					save = False, \
+					show = True)
 			print "testPatches[{i}]".format( i = i), "actual feature score: ", testPatches[i].getFeatureObject(this_feature).score
 			total_score_sum += testPatches[i].getFeatureObject(this_feature).score
 			if (this_feature != utils.HEART_SHAPE_FEATURE_ID):
@@ -1399,8 +1415,8 @@ def main():
 	# FEATURES = utils.ALL_FEATURE_IDS
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
 	# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
-	FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"] # for testset_flower5_testset_flower2
-	# FEATURES = ["subsquare_paradigm_12"]
+	# FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"] # for testset_flower5_testset_flower2
+	FEATURES = ["subsquare_paradigm_12"] # for testset_flower2
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
 	# folderNames = ["testset7"]

@@ -44,15 +44,29 @@ class FeatureCentreHOGParadigm(Feature):
 		assert gaussian_window.shape == (self.patch.size, self.patch.size), "outer gaussian_window size not correct"
 		assert inner_gaussian_window.shape == (inner_patch.size, inner_patch.size), "inner gaussian_window size not correct"
 
-		"""inner patch HOG"""
-		self.outer_HOG = self.patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), gaussian_window)
-		self.inner_HOG = inner_patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), inner_gaussian_window)
+		"""inner/outer patch HOG"""
+		if (self.patch.outer_HOG_gaus_4 is None):
+			self.patch.outer_HOG_gaus_4 = self.patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), gaussian_window)
+			self.patch.outer_HOG_Uncirculated_gaus_4 = self.patch.HOG_Uncirculated
+		key = "{gaus}_{scale}".format(gaus = int(self.GAUSSIAN_WINDOW_LENGTH_SIGMA), scale = int(self.GAUSSIAN_SCALE))
+		if ((not key in self.patch.gaus_scale_to_inner_HOG_dict) or \
+			(not key in self.patch.gaus_scale_to_inner_Uncirculated_HOG_dict)):
+			self.patch.gaus_scale_to_inner_HOG_dict[key] = inner_patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), inner_gaussian_window)
+			self.patch.gaus_scale_to_inner_Uncirculated_HOG_dict[key] = inner_patch.HOG_Uncirculated
+
+		# self.outer_HOG = self.patch.outer_HOG_gaus_4
+		# self.inner_HOG = self.patch.gaus_scale_to_inner_HOG_dict[key]
+		outer_HOG_uncirculated = self.patch.outer_HOG_Uncirculated_gaus_4
+		inner_HOG_uncirculated = self.patch.gaus_scale_to_inner_Uncirculated_HOG_dict[key]
 		
 		"""border HOG"""
-		self.border_HOG = self.patch.HOG_Uncirculated - inner_patch.HOG_Uncirculated
+		self.border_HOG = outer_HOG_uncirculated - inner_HOG_uncirculated
 		max_ori = np.argmax(self.border_HOG) # use maximum
-		self.border_HOG =  np.array(list(self.border_HOG[max_ori:len(self.border_HOG)]) + \
+		self.border_HOG = np.array(list(self.border_HOG[max_ori:len(self.border_HOG)]) + \
 		list(self.border_HOG[0:max_ori])) # rotate circular hist
+
+		self.inner_HOG = np.array(list(self.inner_HOG_uncirculated[max_ori:len(self.inner_HOG_uncirculated)]) + \
+		list(self.inner_HOG_uncirculated[0:max_ori])) # rotate inner HOG as well
 
 		self.hist = np.concatenate((self.inner_HOG, self.border_HOG), axis = 1)
 		# comparePatches.drawPatchesOnImg(np.copy(img),[self.patch, inner_patch], True)
@@ -67,15 +81,17 @@ class FeatureCentreHOGParadigm(Feature):
 				other_oris_start_bin.append(i)
 
 		dissimilarity = metric_func(hist, model)
+		best_start_bin = np.argmax(hist)
 		for other_start_bin in other_oris_start_bin:
 			rotated_hist = np.array(list(hist[other_start_bin:len(hist)]) + \
 		list(hist[0:other_start_bin]))
 			other_dissimilarity = metric_func(rotated_hist, model)
 			if(other_dissimilarity < dissimilarity):
 				dissimilarity = other_dissimilarity
+				best_start_bin = other_start_bin
 				print "bin {k} is used for comparison (better)!".format(k = other_start_bin)
 
-		return dissimilarity
+		return dissimilarity, best_start_bin
 
 	def featureResponse(self):
 		assert (not self.hist is None), "Error in FeatureCentreHOGParadigm: calling computeScore before the feature hist is computed!"
@@ -84,10 +100,13 @@ class FeatureCentreHOGParadigm(Feature):
 		
 		assert (len(self.inner_HOG) == len(self.FEATURE_MODEL_INNER)), "Error in FeatureCentreHOGParadigm: inner HOG length is not correct!"
 		assert (len(self.border_HOG) == len(self.FEATURE_MODEL_BORDER)), "Error in FeatureCentreHOGParadigm: border HOG length is not correct!"
-		dissimilarity_inner = self.circularComparison(self.inner_HOG, self.FEATURE_MODEL_INNER, comparePatches.Jensen_Shannon_Divergence)
+		dissimilarity_inner, best_start_bin = self.circularComparison(self.inner_HOG, self.FEATURE_MODEL_INNER, comparePatches.Jensen_Shannon_Divergence)
 		# dissimilarity_inner = comparePatches.Jensen_Shannon_Divergence(self.inner_HOG, self.FEATURE_MODEL_INNER)
-		dissimilarity_border = comparePatches.Jensen_Shannon_Divergence_Hat(self.border_HOG, self.FEATURE_MODEL_BORDER)
-		return 1.0 / (1.0 + np.linalg.norm([dissimilarity_inner], 2))
+		dissimilarity_border = comparePatches.Jensen_Shannon_Divergence_Hat(\
+			np.array(list(self.border_HOG[best_start_bin:len(self.border_HOG)]) + \
+				list(self.border_HOG[0:best_start_bin])), \
+			self.FEATURE_MODEL_BORDER) # rotate border accordingly
+		return 1.0 / (1.0 + np.linalg.norm([dissimilarity_inner, dissimilarity_border], 2))
 		# return np.sum(self.hist) # if all HOG degree are at the cutted HOG bins, response will be 1.0
 
 	def computeScore(self):
@@ -130,12 +149,14 @@ class FeatureCentreHOGParadigm(Feature):
 		"""inner patch HOG"""
 		outer_HOG = self.patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), gaussian_window)
 		inner_HOG = inner_patch.computeSinglePatchHOG(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int), inner_gaussian_window)
-		
+		max_ori = np.argmax(inner_patch.HOG_Uncirculated) # use maximum
+		inner_HOG = np.array(list(inner_patch.HOG_Uncirculated[max_ori:len(inner_patch.HOG_Uncirculated)]) + \
+		list(inner_patch.HOG_Uncirculated[0:max_ori])) # rotate inner HOG
+
 		"""border HOG"""
 		border_HOG = self.patch.HOG_Uncirculated - inner_patch.HOG_Uncirculated
-		max_ori = np.argmax(border_HOG) # use maximum
 		border_HOG =  np.array(list(border_HOG[max_ori:len(border_HOG)]) + \
-		list(border_HOG[0:max_ori])) # rotate circular hist
+		list(border_HOG[0:max_ori])) # rotate circular hist according to max ori of inner patch
 
 		"""border should be quite plain, not high HOG response"""
 		print "np.sum(inner_HOG) / np.sum(outer_HOG):", np.sum(inner_HOG) / np.sum(outer_HOG)
