@@ -1544,7 +1544,7 @@ def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
 	return	
 
 def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_name, test1_img_name, test2_img_name, \
-	folder_suffix, upperPath = "testLabeling", tight_criteria = None):
+	folder_suffix, ground_truth_folder_suffix, upperPath = "testLabeling", tight_criteria = None):
 	"""
 	test1_folder_name: the testset containing incoming test image
 	test2_folder_name: the testset from the constrained database
@@ -1605,7 +1605,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		"{upperPath}/{folderToSave}/{testFolder}/unique_patch_matches_pruned.csv".format(
 		upperPath = "testAlgo3",
 		folderToSave = "GaussianWindowOnAWhole", 
-		testFolder = test2_folder_name + "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+		testFolder = test2_folder_name + ground_truth_folder_suffix
 		))
 	for i in range(0, len(listOfGroundTruth)):
 		groundTruth.append(listOfGroundTruth[i])
@@ -1672,11 +1672,13 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	return num_correct_matches, num_location_matches
 
 def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, \
-	folder_suffix, save = False, show = True):
+	folder_suffix, ground_truth_folder_suffix, save = False, show = True):
 	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
 	ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	testset_flower_ids = [5]
+	# incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	incoming_test_ids = [5]
 
 	for i in range(0, len(incoming_test_ids)):
 		num_location_matches_arr = [] # arr of location matches
@@ -1689,6 +1691,7 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, \
 				"testset_flower{i}".format(i = incoming_test_ids[i]), \
 				"testset_flower{j}".format(j = testset_flower_ids[j]), "test2.jpg", "test3.jpg", \
 				folder_suffix, \
+				ground_truth_folder_suffix, \
 				upperPath = "testLabeling", \
 				tight_criteria = tight_criteria)
 			num_correct_matches_arr.append(num_correct_matches)
@@ -1747,8 +1750,8 @@ def main():
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_testset7_taylored"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response"
-	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response"
-	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
 	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_separateHS_descriptor"
@@ -1773,13 +1776,16 @@ def main():
 	# plot_folder_name = "exact unique feature set"
 	# plot_folder_name = "location match first then unique set <= or >="
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood extended dist thresh"
-	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high response only"
+	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_unnormalizedJS"
 	# plot_folder_name = "pure unique feature based"
 	tight_criteria = "intersection"
 	# tight_criteria = "<= or >="
 	# tight_criteria = "<="
 	# tight_criteria = "=="
-	populateCheckTestLabelingNumMatches(plot_folder_name, "intersection", folder_suffix, save = True, show = True)
+	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
+	ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	populateCheckTestLabelingNumMatches(plot_folder_name, "intersection", folder_suffix, ground_truth_folder_suffix,\
+	 save = False, show = True)
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
 	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatchingFrpthomTwoFolders("images", "testset_flower2", "testset_flower2", \
