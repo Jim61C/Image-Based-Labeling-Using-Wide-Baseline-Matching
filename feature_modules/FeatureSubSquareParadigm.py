@@ -79,6 +79,10 @@ class FeatureSubSquareParadigm(Feature):
 		filtered_saturation_of_interest = self.deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(\
 			self.patch.hs_2d_arr[self.SUBPATCH_OF_INTEREST_INDEX], target_saturation_bins, target_hue_bins)
 		
+		"""DEBUGGING"""
+		# self.hist = np.concatenate((self.patch.HueHistArr[self.SUBPATCH_OF_INTEREST_INDEX] * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window), \
+			# self.patch.SaturationHistArr[self.SUBPATCH_OF_INTEREST_INDEX] * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window)), axis = 1)
+
 		self.hist = np.concatenate((filtered_hue_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window), \
 			filtered_saturation_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window)), axis = 1)
 
