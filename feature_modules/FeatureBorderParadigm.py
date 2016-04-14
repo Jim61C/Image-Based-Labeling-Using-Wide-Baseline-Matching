@@ -142,7 +142,7 @@ class FeatureBorderParadigm(Feature):
 				np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1)], \
 					self.FEATURE_MODEL[self.HISTBINNUM*2 - (self.HUE_END_INDEX - self.HUE_START_INDEX - 1):]), axis = 1)))
 
-		return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
+		# return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
 		# return 1.0 / (1.0 + metric_func(\
 		# 	np.concatenate((self.hist[:self.HISTBINNUM], self.hist[self.HISTBINNUM*2:]), axis = 1), \
 		# 	np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM], self.FEATURE_MODEL[self.HISTBINNUM*2:]), axis = 1)))
