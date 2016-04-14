@@ -1081,8 +1081,8 @@ def generateAllFeatureSets(features):
 
 def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow):
 	# HOG Feature
-	patch.computeHOG(img_gray, True)
-	patch.setHOGScore(HOGResponse(patch.HOG))
+	# patch.computeHOG(img_gray, True)
+	# patch.setHOGScore(HOGResponse(patch.HOG))
 
 	# compute feature and set score for each feature object in feature_arr
 	for feature_obj in patch.feature_arr:
