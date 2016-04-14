@@ -70,8 +70,8 @@ def drawMatches(img1, kp1, img2, kp2, matches, draw_size = False, custom_colors 
         # colour blue
         # thickness = 1
         if (not draw_size):
-            cv2.circle(out, (int(x1),int(y1)), 4, this_color, 1)   
-            cv2.circle(out, (int(x2)+cols1,int(y2)), 4, this_color, 1)
+            cv2.circle(out, (int(x1),int(y1)), 1, this_color, 1)   
+            cv2.circle(out, (int(x2)+cols1,int(y2)), 1, this_color, 1)
         else:
             cv2.circle(out, (int(x1),int(y1)), int(kp1[img1_idx].size), this_color, 1)   
             cv2.circle(out, (int(x2)+cols1,int(y2)), int(kp2[img2_idx].size), this_color, 1)
