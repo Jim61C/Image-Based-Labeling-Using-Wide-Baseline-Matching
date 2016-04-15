@@ -1543,6 +1543,12 @@ def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
 
 	return	
 
+def checkActualMatchDistance(test_patch, match_found, img, img_to_match, metric_func = comparePatches.Jensen_Shannon_Divergence):
+	"""old descriptor checking HSV and HOG hists"""
+	test_patch.computeHSVHistogram(cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
+	match_found.computeHSVHistogram(cv2.cvtColor(img_to_match.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
+	return getHSVSeperateHistAvgl2Distance(test_patch, match_found, metric_func)
+
 def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_name, test1_img_name, test2_img_name, \
 	folder_suffix, ground_truth_folder_suffix, upperPath = "testLabeling", tight_criteria = None):
 	"""
@@ -1560,6 +1566,16 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	matchesFound = []
 	test_folder_name = test1_folder_name + "_" + test2_folder_name
 
+	img = cv2.imread("{image_db}/{test1_folder_name}/{test1_img_name}".format(\
+		image_db = image_db,\
+		test1_folder_name = test1_folder_name,\
+		test1_img_name = test1_img_name), 1)
+
+	img_to_match = cv2.imread("{image_db}/{test2_folder_name}/{test2_img_name}".format(\
+		image_db = image_db, \
+		test2_folder_name = test2_folder_name, \
+		test2_img_name = test2_img_name), 1)
+
 	# read testPatches
 	listOfTestPatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
 		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
@@ -1571,7 +1587,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		i = sigma))
 	for i in range(0, len(listOfTestPatches)):
 		testPatches.append(listOfTestPatches[i])
-		print listOfTestPatches[i].is_low_response
+		# print listOfTestPatches[i].is_low_response
 
 	# read matchesFound
 	testPatchMatches = saveLoadPatch.loadPatchMatches(\
@@ -1620,7 +1636,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		for j in range(0, len(groundTruth)):
 
 			if (utils.isGoodMatch(matchesFound[i], groundTruth[j], patch_neighbour_hood = 5)):
-				print "\nmatchesFound[{i}]".format(i = i), "found good location match with groundTruth[{j}]".format(j = j)
+				# print "\nmatchesFound[{i}]".format(i = i), "found good location match with groundTruth[{j}]".format(j = j)
 				if (not this_match_found_is_location_match_flag and \
 					(not j in location_matched_ground_truth)):
 					num_location_matches += 1
@@ -1628,8 +1644,6 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 					location_matched_ground_truth[j] = True
 				features_match_found = matchesFound[i].feature_to_use
 				features_ground_truth = groundTruth[j].feature_to_use
-				print "features_match_found:", features_match_found, " is_low_response? ", matchesFound[i].is_low_response
-				print "features_ground_truth:", features_ground_truth, "is_low_response? ", groundTruth[j].is_low_response
 				
 				"""if matchFound has unique features in common with database groundTruth, real match found"""
 				good_match = False
@@ -1658,10 +1672,17 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 				if (good_match and \
 					(not this_match_found_is_tight_match_flag) and \
 					(not j in matched_ground_truth)):
+					print "matchesFound[{i}]".format(i = i ), \
+					"features_match_found:", features_match_found, " is_low_response? ", matchesFound[i].is_low_response
+					print "groundTruth[{j}]".format(j = j), \
+					"features_ground_truth:", features_ground_truth, "is_low_response? ", groundTruth[j].is_low_response
 					print "real match found at matchesFound[{i}]".format(i = i), "with unique feature set:", features_ground_truth
-					num_correct_matches += 1
-					this_match_found_is_tight_match_flag = True
-					matched_ground_truth[j] = True
+					actual_match_dist = checkActualMatchDistance(testPatches[i], matchesFound[i], img, img_to_match)
+					print "actual match score using homogeneous descriptor:", actual_match_dist
+					if (actual_match_dist < 0.41):
+						num_correct_matches += 1
+						this_match_found_is_tight_match_flag = True
+						matched_ground_truth[j] = True
 
 	print "number of location matches between testLabeling image:", test1_img_name, " from ", test1_folder_name, \
 	" and ", test2_img_name, " from ", test2_folder_name, " = ", num_location_matches
@@ -1776,7 +1797,9 @@ def main():
 	# plot_folder_name = "exact unique feature set"
 	# plot_folder_name = "location match first then unique set <= or >="
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood extended dist thresh"
+	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match filtered"
 	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_unnormalizedJS"
+	# plot_folder_name = "exact feature set 5 neighbourhood only tight match high_response_only_unnormalizedJS"
 	# plot_folder_name = "pure unique feature based"
 	tight_criteria = "intersection"
 	# tight_criteria = "<= or >="
@@ -1784,8 +1807,10 @@ def main():
 	# tight_criteria = "=="
 	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
 	ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
-	populateCheckTestLabelingNumMatches(plot_folder_name, "intersection", folder_suffix, ground_truth_folder_suffix,\
-	 save = False, show = True)
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
+	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+	populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, folder_suffix, ground_truth_folder_suffix,\
+	 save = True, show = False)
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
 	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
 	# findDistinguishablePatchesAndExecuteMatchingFrpthomTwoFolders("images", "testset_flower2", "testset_flower2", \
