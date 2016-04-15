@@ -108,14 +108,14 @@ class FeatureSubSquareParadigm(Feature):
 		assert (len(self.hist) == len(self.FEATURE_MODEL)), "Error in FeatureSubSquareParadigm: hist length is not correct!" + \
 		"len(self.hist): {self_his_len}, len(self.FEATURE_MODEL): {feature_model_len}".format(\
 			self_his_len = len(self.hist), feature_model_len = len(self.FEATURE_MODEL))
-		return 1.0 / (1.0 + metric_func(\
-			np.concatenate((self.hist[:self.HISTBINNUM], self.hist[self.HISTBINNUM*2:]), axis = 1), \
-			np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM], self.FEATURE_MODEL[self.HISTBINNUM*2:]), axis = 1)))
-		# return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
+		# return 1.0 / (1.0 + metric_func(\
+		# 	np.concatenate((self.hist[:self.HISTBINNUM], self.hist[self.HISTBINNUM*2:]), axis = 1), \
+		# 	np.concatenate((self.FEATURE_MODEL[:self.HISTBINNUM], self.FEATURE_MODEL[self.HISTBINNUM*2:]), axis = 1)))
+		return 1.0 / (1.0 + metric_func(self.hist, self.FEATURE_MODEL))
 
 	def computeScore(self):
 		if(self.score is None):
-			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence_Unnormalized)
+			self.score = self.featureResponse(comparePatches.Jensen_Shannon_Divergence)
 			# self.score = self.featureResponse()
 
 	def fitParadigm(self, img):

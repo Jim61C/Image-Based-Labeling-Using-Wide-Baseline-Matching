@@ -113,7 +113,8 @@ class FeatureCentreBlue(Feature):
 		assert (len(self.hist) == len(self.FEATURE_MODEL)), "Error in FeatureCentreBlue: hist length is not correct!" + \
 		"len(self.hist): {self_his_len}, len(self.FEATURE_MODEL): {feature_model_len}".format(self_his_len = len(self.hist), feature_model_len = len(self.FEATURE_MODEL))
 		# return np.sum(self.hist)
-		return 1.0 / (1.0 + DIST.euclidean(self.hist, self.FEATURE_MODEL))
+		# return 1.0 / (1.0 + DIST.euclidean(self.hist, self.FEATURE_MODEL))
+		return 1.0 / (1.0 + comparePatches.Jensen_Shannon_Divergence(self.hist, self.FEATURE_MODEL))
 
 	def computeScore(self):
 		if(self.score is None):

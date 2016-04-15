@@ -93,8 +93,8 @@ class FeatureTopRightYellow(Feature):
 		# 		# count += 1
 		# 		count += self.hist[i]
 		# return count
-		# dissimilarity = comparePatches.Jensen_Shannon_Divergence(self.hist, self.FEATURE_MODEL) # if use Jensen_Shannon_Divergence, then need to force d to be > 0 in LDA Score
-		dissimilarity = DIST.euclidean(self.hist, self.FEATURE_MODEL)
+		dissimilarity = comparePatches.Jensen_Shannon_Divergence(self.hist, self.FEATURE_MODEL) # if use Jensen_Shannon_Divergence, then need to force d to be > 0 in LDA Score
+		# dissimilarity = DIST.euclidean(self.hist, self.FEATURE_MODEL)
 		return 1.0 / (1.0 + dissimilarity)
 
 	def computeScore(self):
