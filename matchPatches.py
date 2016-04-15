@@ -1675,10 +1675,10 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, \
 	folder_suffix, ground_truth_folder_suffix, save = False, show = True):
 	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
 	ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	# testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	testset_flower_ids = [5]
-	# incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	incoming_test_ids = [5]
+	testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# testset_flower_ids = [12]
+	incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# incoming_test_ids = [12]
 
 	for i in range(0, len(incoming_test_ids)):
 		num_location_matches_arr = [] # arr of location matches
@@ -1717,7 +1717,7 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, \
 		for tick in ax.xaxis.get_majorticklabels():
 		    tick.set_horizontalalignment("right") # make sure the bottom label is precisely at the position
 		plt.plot(range(0, len(num_correct_matches_arr)), num_correct_matches_arr, \
-			marker='o', markersize = 10, linestyle='--', label = "tight matches")
+			marker='o', markersize = 10, linestyle='--', label = "# correct matches")
 		# plt.plot(range(0, len(num_location_matches_arr)), num_location_matches_arr, \
 			# marker='^', markersize = 10, linestyle='--', label = "location matches")
 		ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
