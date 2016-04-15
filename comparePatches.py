@@ -1416,20 +1416,27 @@ def main():
 	# FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
 	# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
 	# FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"] # for testset_flower5_testset_flower2
-	FEATURES = ["subsquare_paradigm_12"] # for testset_flower2
+	# FEATURES = ["subsquare_paradigm_12"] # for testset_flower2
+	FEATURES = ["subsquare_paradigm_12", "subsquare_paradigm_22"] # for testset_flower10
 	# folderNames = ["testset_illuminance1"]
 	# folderNames = ["testset_rotation1"]
 	# folderNames = ["testset7"]
 	# folderNames = ["testset_rotation1"]
-	folderNames = ["testset_flower2"]
+	# folderNames = ["testset_flower2"]
+	folderNames = ["testset_flower10"]
 	# folderNames = ["testset_flower5_testset_flower2"]
 
 	# Test combinatorial feature scores on a set of eyeballed patches
 	for i in range(0, len(folderNames)):
+		# populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
+		# 	upperPath = "testAlgo3", \
+		# 	# folder_suffix = "_eyeballed_unique_patches"\
+		# 	folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+		# 	)
 		populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
 			upperPath = "testAlgo3", \
 			# folder_suffix = "_eyeballed_unique_patches"\
-			folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+			folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
 			)
 		# populateTestCombinatorialFeatureScore(folderNames[i], "test2.jpg",39, \
 		# 	upperPath = "testLabeling", \

@@ -5,6 +5,7 @@ import drawMatches
 import comparePatches
 import saveLoadPatch
 import utils
+from matplotlib import pyplot as plt
 
 def filter_matches(matches, ratio=0.75):
 		"""
@@ -86,6 +87,32 @@ def runSIFT(test_folder_name, test1_img_name, test2_img_name):
 	print "len(features1)",len(features1)
 	print "len(features2)", len(features2)
 
+	"""For testset_flower3 SIFT failure analysis"""
+	failure_ground_truth_keypoint = cv2.KeyPoint(1164 - 1024, 602, 5)
+	test_patch_index = matches[18].queryIdx
+	match_found_index = matches[18].trainIdx
+
+	test_patch_hist = desc1[test_patch_index]
+	match_found_hist = desc2[match_found_index]
+	kp_ground_truth,des = sift.compute(imgToMatch_gray,[failure_ground_truth_keypoint])
+	print "len(des):", (len(des))
+	ground_truth_hist = des[0]
+
+	plt.bar(np.arange(len(test_patch_hist)),test_patch_hist,color = 'r', label = "test_patches[0]")
+	plt.legend()
+	plt.show()
+	
+	plt.bar(np.arange(len(match_found_hist)),match_found_hist, color = 'g', label = "match_found[0]")
+	plt.legend()
+	plt.show()
+	
+	plt.bar(np.arange(len(ground_truth_hist)),ground_truth_hist, color = 'b', label = "ground_truth[0]")
+	plt.legend()
+	plt.show()
+	
+	"""End of testset_flower3 SIFT failure analysis"""
+
+
 	test_patches = []
 	matches_found = []
 	for i in range(0, NUM_GOOD_MATCH):
@@ -111,7 +138,7 @@ def runSIFT(test_folder_name, test1_img_name, test2_img_name):
 	match_img = drawMatches.drawMatches(np.copy(img),features1,np.copy(imgToMatch),features2,matches[:NUM_GOOD_MATCH], draw_size = True)
 	cv2.imshow("match_img", match_img)
 	cv2.waitKey(0)
-	cv2.imwrite("testSIFT/{savefilename}.jpg".format(savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + test2_img_name[0:test2_img_name.find(".")]), match_img)
+	# cv2.imwrite("testSIFT/{savefilename}.jpg".format(savefilename = test_folder_name + test1_img_name[0:test1_img_name.find(".")] + test2_img_name[0:test2_img_name.find(".")]), match_img)
 	return img, imgToMatch, test_patches, matches_found
 
 
@@ -124,9 +151,10 @@ def main():
 	# runSIFT("testset8", "test1.jpg", "test2.jpg")
 	# runSIFT("testset15", "test1.jpg", "test2.jpg")
 	# populateFeatureMatchingStatistics("testset8", "test1.jpg", "test2.jpg")
-	for i in range(1, 14):
-		test_set_name = "testset_flower{i}".format(i = i)
-		runSIFT(test_set_name, "test1.jpg", "test3.jpg")
+	# for i in range(1, 14):
+		# test_set_name = "testset_flower{i}".format(i = i)
+		# runSIFT(test_set_name, "test1.jpg", "test3.jpg")
+	runSIFT("testset_flower3", "test1.jpg", "test3.jpg")
 
 if __name__ == "__main__":
 	main()
