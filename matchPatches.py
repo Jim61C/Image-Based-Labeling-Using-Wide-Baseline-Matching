@@ -1772,7 +1772,8 @@ def main():
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_testset7_taylored"
 	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response"
 	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
 	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# folder_suffix = "_eyeballed_unique_patches_seperateHS_Jensen_Shannon_Divergence_Custom_Dissimilarity_Based"
 	# folder_suffix = "_eyeballed_unique_patches_Jensen_Shannon_Divergence_Response_separateHS_descriptor"
@@ -1798,17 +1799,22 @@ def main():
 	# plot_folder_name = "location match first then unique set <= or >="
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood extended dist thresh"
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match filtered"
-	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_unnormalizedJS"
+	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_unnormalizedJS"
+	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_normalizedJS"
 	# plot_folder_name = "exact feature set 5 neighbourhood only tight match high_response_only_unnormalizedJS"
 	# plot_folder_name = "pure unique feature based"
 	tight_criteria = "intersection"
 	# tight_criteria = "<= or >="
 	# tight_criteria = "<="
 	# tight_criteria = "=="
-	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
-	ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
+	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
 	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
+	ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
+	
 	populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, folder_suffix, ground_truth_folder_suffix,\
 	 save = True, show = False)
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
