@@ -36,7 +36,8 @@ def driver_full_algorithm(args):
 
 def dispatch_full_algorithm_from_two_folder(args):
 	test_folder_name1, test_folder_name2, image1, image2, image_db = args
-	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
+	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
 	matchPatches.findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(\
 		image_db, test_folder_name1, test_folder_name2, \
 		image1, image2, \
@@ -46,7 +47,8 @@ def dispatch_full_algorithm(args):
 	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
 	if (test_folder_name == "testset7"):
 		matchPatches.findDistinguishablePatchesAndExecuteMatching(\
 			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)	
@@ -58,7 +60,8 @@ def dispatch_matching_given_test_patches(args):
 	test_folder_name, image_db = args
 	# folder_suffix = "_DistinguishablePatches_HSAndCorner_Descriptor_seperateHS_Jensen_Shannon_Divergence"
 	# folder_suffix = "_UniqueAlgo2_Force_HSV_Jensen_Shannon_Divergence"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
+	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
 	if (test_folder_name == "testset7"):
 		matchPatches.executeMatchingGivenDinstinguishablePatches(\
 			image_db, test_folder_name, "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3", initialize_features = False)	
@@ -68,7 +71,8 @@ def dispatch_matching_given_test_patches(args):
 
 def dispatch_matching_given_test_patches_test_from_two_folder(args):
 	test_folder_name1, test_folder_name2, image1, image2, image_db = args
-	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
+	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
 	matchPatches.executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test_folder_name1, test_folder_name2, \
 	image1, image2, folder_suffix, upperPath = "testLabeling", initialize_features = False)
 
