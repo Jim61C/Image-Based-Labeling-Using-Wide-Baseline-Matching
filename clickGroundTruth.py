@@ -257,66 +257,51 @@ class clickRecorder(object):
 
 
 def main():
-	"""For clicking on target image for groundTruth"""
-	test_folder_name = raw_input("Please input the testset name: ")
-	base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
-	target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
-	# folder_suffix = "_UniqueAlgo3_Jensen_Shannon_Divergence"
-	folder_suffix = "_full_algo_top20_unique_patches_descriptor_based"
-	upperPath = "testAlgo3"
-	image_db = "images"
-	my_click_recorder = clickRecorder()
-	# set path
-	my_click_recorder.setPath(test_folder_name, folder_suffix ,upperPath)
-	# plot the distinguishable patches on base image
-	my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
-	# plot the target image for user to click
-	my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
-	# save the groundTruth if validated
-	my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
+	print "-----------------Options-------------\n", \
+	"1 click for groundTruth own algorithm\n", \
+	"2 click for automatic feature construction\n"
+	option = raw_input("please selection from above options (1/2):")
 
-	raise ValueError("purpose stop for clicking groundTruth my algorithm only")
+	if (int(option) == 1):
+		"""For clicking on target image for groundTruth"""
+		image_db = "images"
+		test_folder_name = raw_input("Please input the testset name: ")
+		base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
+		target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
+		# folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
+		# upperPath = "testAlgo3"
+		folder_suffix = raw_input("please input the folder_suffix used for previously run results:")
+		upperPath = raw_input("please input the upperPath used for previously run results:")
 
-	"""For clicking on target image for groundTruth (SIFT)"""
-	# test_folder_name = raw_input("Please input the testset name: ")
-	# base_img_name = raw_input("Please input the base_img_name(with .jpg extension):")
-	# target_img_name = raw_input("Please input the target_img_name(with .jpg extension):")
-	# image_db = "images"
+		my_click_recorder = clickRecorder()
+		# set path
+		my_click_recorder.setPath(test_folder_name, folder_suffix ,upperPath)
+		# plot the distinguishable patches on base image
+		my_click_recorder.plotBaseImgWithPatches(test_folder_name, folder_suffix ,upperPath)
+		# plot the target image for user to click
+		my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
+		# save the groundTruth if validated
+		my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
 
-	# my_click_recorder = clickRecorder()
-	# # set path
-	# my_click_recorder.setDirectPath("testSIFT")
-	# # plot the distinguishable patches on base image
-	# my_click_recorder.plotBaseImgWithLabels(path_to_img =  "testSIFT/test_patches_{savefilename}.jpg".format(\
-	# 	savefilename = test_folder_name + base_img_name[0:base_img_name.find(".")] + target_img_name[0:target_img_name.find(".")]))
-	# # add the dummy patches (20 for SIFT)
-	# my_click_recorder.addDummyPatches(20)
-	# # plot the target image for user to click
-	# my_click_recorder.plotTargetImg(test_folder_name, image_db, target_img_name = target_img_name)
-	# # save the groundTruth if validated
-	# my_click_recorder.saveGroundTruth(test_folder_name, base_img_name = base_img_name, target_img_name = target_img_name)
+	elif (int(option) == 2):
+		"""For clicking on base image for unique patches"""
+		sigma = raw_input("Please input sigma used:")
+		test_folder_name = raw_input("Please input the testset name: ")
+		base_img_name = raw_input("Please input the testset image name: ")
+		image_db = "images"
+		upperPath = "testAlgo3"
+		folder_suffix = "_eyeballed_unique_patches_feature_construction"
+		my_click_recorder = clickRecorder()
+		detect_shape = raw_input("detect shape? (y/n)")
+		if (detect_shape == "y"):
+			my_click_recorder.setDetectShape(True)
+		else:
+			my_click_recorder.setDetectShape(False)
 
-	# raise ValueError("purpose stop for clicking groundTruth SIFT only")
-
-
-	"""For clicking on base image for unique patches"""
-	sigma = raw_input("Please input sigma used:")
-	test_folder_name = raw_input("Please input the testset name: ")
-	base_img_name = raw_input("Please input the testset image name: ")
-	image_db = "images"
-	upperPath = "testAlgo3"
-	folder_suffix = "_eyeballed_unique_patches_feature_construction"
-	my_click_recorder = clickRecorder()
-	detect_shape = raw_input("detect shape? (y/n)")
-	if (detect_shape == "y"):
-		my_click_recorder.setDetectShape(True)
-	else:
-		my_click_recorder.setDetectShape(False)
-
-	my_click_recorder.setSigma(int(sigma))
-	my_click_recorder.plotBaseImg(test_folder_name, image_db, base_img_name)
-	my_click_recorder.fitFeatures(test_folder_name, folder_suffix, upperPath)
-	my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
+		my_click_recorder.setSigma(int(sigma))
+		my_click_recorder.plotBaseImg(test_folder_name, image_db, base_img_name)
+		my_click_recorder.fitFeatures(test_folder_name, folder_suffix, upperPath)
+		my_click_recorder.saveBaseImgUniquePatches(test_folder_name, folder_suffix, upperPath)
 
 
 

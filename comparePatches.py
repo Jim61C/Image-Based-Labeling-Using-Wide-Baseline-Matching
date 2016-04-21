@@ -1219,7 +1219,9 @@ def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colo
 	return matched_img
 
 def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images", custom_feature_sets = None, custom_features_name = None):
-	# path = matchPatches.createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, suffix)
+	path = "testUniquePatches/algo3"
+	if(not os.path.isdir(path)):
+		os.makedirs(path)
 	HSVthresh = 0.5
 	HOGthresh = 0.1
 	remove_duplicate_thresh_dict ={
@@ -1405,57 +1407,22 @@ def populateTestCombinatorialFeatureScore( \
 	feature_set_scores = findCombinatorialFeatureScore(img, testPatches, sigma, path)
 	print feature_set_scores
 
-def testFunc(hist1, hist2, metricFunc):
-	return metricFunc(hist1, hist2)
+def compute_sigma(img):
+	sigma = img.shape[0]/20
+	sigma = sigma + 1 if (sigma % 2 == 0) else sigma # size of patch needs to be odd number
+	return sigma
 
 def main():
 	utils.loadGeneratedFeatureParadigm()
 	global FEATURES
-	# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
-	# FEATURES = utils.ALL_FEATURE_IDS
-	# FEATURES = [utils.GENERATED_FEATURE_IDS[14]]
-	# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
-	# FEATURES = ["subsquare_paradigm_27", "centre_paradigm_1"] # for testset_flower5_testset_flower2
-	# FEATURES = ["subsquare_paradigm_12"] # for testset_flower2
-	# FEATURES = ["subsquare_paradigm_12", "subsquare_paradigm_22"] # for testset_flower10
-	FEATURES = ["subsquare_paradigm_36"] # for testset_flower5_tesetset_flower5, patch 2
-	# folderNames = ["testset_illuminance1"]
-	# folderNames = ["testset_rotation1"]
-	# folderNames = ["testset7"]
-	# folderNames = ["testset_rotation1"]
-	# folderNames = ["testset_flower2"]
-	# folderNames = ["testset_flower10"]
-	# folderNames = ["testset_flower5_testset_flower2"]
-	folderNames = ["testset_flower5_testset_flower5"]
-
-	# Test combinatorial feature scores on a set of eyeballed patches
-	for i in range(0, len(folderNames)):
-		# populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
-		# 	upperPath = "testAlgo3", \
-		# 	# folder_suffix = "_eyeballed_unique_patches"\
-		# 	folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
-		# 	)
-		# populateTestCombinatorialFeatureScore(folderNames[i], "test1.jpg",39, \
-		# 	upperPath = "testAlgo3", \
-		# 	# folder_suffix = "_eyeballed_unique_patches"\
-		# 	folder_suffix =  "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
-		# 	)
-		populateTestCombinatorialFeatureScore(folderNames[i], "test2.jpg",39, \
-			upperPath = "testLabeling", \
-			# folder_suffix = "_eyeballed_unique_patches"\
-			folder_suffix =  "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_unnormalizedJS"
-			)
-	raise ValueError("purpose stop for testing populating combinatorial score")
-
-	### Test Algo3 in finding distinguishable patches ###
-	start_time = time.time()
-	for i in range(0, len(folderNames)):
-		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39)
-		# populateTestFindDistinguishablePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
-		populateCheckUniquePatchesAlgo3(folderNames[i], "test3.jpg", 39)
-		# populateCheckUniquePatchesAlgo3(folderNames[i], "test1.jpg", 39, custom_features_name = "ALL_FEATURE_IDS")
-		# populateCheckMostUniqueMatch(folderNames[i], "test1.jpg", "test3.jpg")
-	print "finished feature extraction in ", time.time() - start_time, "seconds"
+	FEATURES = copy.deepcopy(utils.ALL_FEATURE_IDS)
+	image_db = raw_input("please input image_db name(from root folder):")
+	test_folder_name = raw_input("please input the test_folder_name:")
+	test_img_name = raw_input("please input the test_img_name (with extension, eg: test1.jpg):")
+	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test_img_name)))
+	"""Test Algo3 in finding distinguishable patches"""
+	populateTestFindDistinguishablePatchesAlgo3(test_folder_name, test_img_name, sigma, custom_features_name = "ALL_FEATURE_IDS")
 	return
 
 

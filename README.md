@@ -4,12 +4,25 @@ Application in an image labeling system
 
 # Usage:
 Running the algorithm
-- clickGroundTruth.py - Automatic Unique Feature Construction & Ground Truth Click; Constructed unique features will be saved in ./features_generated
-- comparePatches.py - Unique Feature Detection
-- matchPatches.py - Unique Feature Matching & full algorithm starter
-- multiProcessTestDescriptor.py - Driver program for muti-process full algorithms
+
+- clickGroundTruth.py
+..- Automatic Unique Feature Construction & Ground Truth Click
+..- Constructed unique features will be saved in ./features_generated
+..- click on the image for the patch to be processed/recorded
+..- press 'u' for undo
+..- press any other key for finish
+
+- comparePatches.py
+..- Unique Feature Detection
+
+- matchPatches.py
+..- Unique Feature Matching & full algorithm starter
+
+- multiProcessTestDescriptor.py
+..- Driver program for muti-process full algorithms
 
 Image Labeling Database Folder Structure Required:
+
 ./images
 ├── testset_flower1
 │   ├── test1.jpg
