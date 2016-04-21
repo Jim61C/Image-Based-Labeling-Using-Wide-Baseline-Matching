@@ -1826,10 +1826,10 @@ def main():
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood extended dist thresh"
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match filtered"
 	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_unnormalizedJS"
-	plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_normalizedJS"
+	# plot_folder_name = "location match first then intersection capped match 5 neighbourhood only tight match high_response_only_normalizedJS"
 	# plot_folder_name = "exact feature set 5 neighbourhood only tight match high_response_only_unnormalizedJS"
 	# plot_folder_name = "pure unique feature based"
-	tight_criteria = "intersection"
+	# tight_criteria = "intersection"
 	# tight_criteria = "<= or >="
 	# tight_criteria = "<="
 	# tight_criteria = "=="
@@ -1839,17 +1839,17 @@ def main():
 	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
 	
-	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
-	ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
+	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
+	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
 
-	populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, folder_suffix, ground_truth_folder_suffix,\
-	 save = True, show = False)
+	# populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, folder_suffix, ground_truth_folder_suffix,\
+	 # save = True, show = False)
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
 	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
-	# findDistinguishablePatchesAndExecuteMatchingFrpthomTwoFolders("images", "testset_flower2", "testset_flower2", \
+	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
 	# "test2.jpg", "test3.jpg", \
 	# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
-	# findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
+	findDistinguishablePatchesAndExecuteMatching("images", "testset_flower2", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# findAndSaveDistinguishablePatches("testset_rotation1", "test1.jpg", folder_suffix)
 	# populateFeatureMatchingStatistics("images", "testset7", "test1.jpg", "test3.jpg", folder_suffix, upperPath = "testAlgo3")
 	# mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
