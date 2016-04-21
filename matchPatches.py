@@ -1654,6 +1654,8 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	matched_ground_truth = {}
 	location_matched_ground_truth = {}
 
+	MAX_MATCH_DISSIMILARITY_JENSEN_SHANNON_DIVERGENCE = 0.41
+
 	for i in range(0, len(matchesFound)):
 		this_match_found_is_location_match_flag = False # one match patch should correspond to one unique patch in the database
 		this_match_found_is_tight_match_flag = False # one match patch should correspond to one unique patch in the database
@@ -1704,8 +1706,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 					actual_match_dist = checkActualMatchDistance(testPatches[i], matchesFound[i], img, img_to_match)
 					print "actual match score using homogeneous descriptor:", actual_match_dist
 					print "original dissimilarty: ", min_dissimilarities[j]
-					# if (actual_match_dist < 0.36):
-					if (actual_match_dist < 0.41):
+					if (actual_match_dist < MAX_MATCH_DISSIMILARITY_JENSEN_SHANNON_DIVERGENCE):
 					# if (actual_match_dist < 1.1 * min_dissimilarities[j]):
 						num_correct_matches += 1
 						this_match_found_is_tight_match_flag = True
