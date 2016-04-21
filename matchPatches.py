@@ -1576,6 +1576,11 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		test2_folder_name = test2_folder_name, \
 		test2_img_name = test2_img_name), 1)
 
+	img_origin = cv2.imread("{image_db}/{test2_folder_name}/{test2_img_name}".format(\
+		image_db = image_db, \
+		test2_folder_name = test2_folder_name, \
+		test2_img_name = "test1.jpg"), 1) # original base image used to construct the database
+
 	# read testPatches
 	listOfTestPatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
 		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{folder}_{file}_simga{i}_GaussianWindowOnAWhole.csv".format(
@@ -1625,6 +1630,25 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 		))
 	for i in range(0, len(listOfGroundTruth)):
 		groundTruth.append(listOfGroundTruth[i])
+
+	"""get the maximum dissimilarty of groundTruth"""
+	min_dissimilarities = []
+	listOfOriginUniquePatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
+		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{testset}_test1_simga39_GaussianWindowOnAWhole.csv".format(
+		upperPath = "testAlgo3",
+		folderToSave = "GaussianWindowOnAWhole", 
+		testFolder = test2_folder_name + ground_truth_folder_suffix,
+		testset = test2_folder_name
+		))
+	for i in range(0, len(groundTruth)):
+		for j in range(0, len(listOfOriginUniquePatches)):
+			if (groundTruth[i].feature_to_use == listOfOriginUniquePatches[j].feature_to_use):
+				min_dissimilarities.append(\
+					checkActualMatchDistance(listOfOriginUniquePatches[j], groundTruth[i], img_origin, img_to_match))
+
+	assert len(min_dissimilarities) == len(groundTruth), \
+	"length for array of minimum dissimilarty of original match should be the same as the number of pruned groundTruth"
+
 
 	"""cap the maximum number of tight matches to number of feature patches in the database"""
 	matched_ground_truth = {}
@@ -1679,7 +1703,10 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 					print "real match found at matchesFound[{i}]".format(i = i), "with unique feature set:", features_ground_truth
 					actual_match_dist = checkActualMatchDistance(testPatches[i], matchesFound[i], img, img_to_match)
 					print "actual match score using homogeneous descriptor:", actual_match_dist
+					print "original dissimilarty: ", min_dissimilarities[j]
+					# if (actual_match_dist < 0.36):
 					if (actual_match_dist < 0.41):
+					# if (actual_match_dist < 1.1 * min_dissimilarities[j]):
 						num_correct_matches += 1
 						this_match_found_is_tight_match_flag = True
 						matched_ground_truth[j] = True
@@ -1697,9 +1724,7 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, \
 	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
 	ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
 	testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	# testset_flower_ids = [12]
 	incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	# incoming_test_ids = [12]
 
 	for i in range(0, len(incoming_test_ids)):
 		num_location_matches_arr = [] # arr of location matches
@@ -1732,7 +1757,7 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, \
 		plt.subplots_adjust(bottom=0.2) # make sure bottom labels could be seen fully
 		# plt.subplots_adjust(right=0.8)
 		box = ax.get_position()
-		ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+		ax.set_position([box.x0 - 0.05, box.y0, box.width * 0.8, box.height])
 		plt.xticks(range(0, len(testset_names)), testset_names, rotation='45') # rotate bottom labels
 		ax.yaxis.grid(True)
 		for tick in ax.xaxis.get_majorticklabels():
@@ -1812,9 +1837,10 @@ def main():
 	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_unnormalizedJS"
 	# folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder"
 	# ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris"
+	
 	folder_suffix = "_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
 	ground_truth_folder_suffix = "_full_algo_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
-	
+
 	populateCheckTestLabelingNumMatches(plot_folder_name, tight_criteria, folder_suffix, ground_truth_folder_suffix,\
 	 save = True, show = False)
 	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
