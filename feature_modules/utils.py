@@ -101,12 +101,14 @@ def loadArray(filename):
 	return np.array(loader['data'])
 
 def isGoodMatch(match_found, ground_truth, patch_neighbour_hood = 10):
-	dist_thresh = 10
+	dist_thresh = 10 # 10 pixels away maximum
 	dx = match_found.x - ground_truth.x
 	dy = match_found.y - ground_truth.y
 
+	# if pixel location is < dist_thresh
 	if (np.linalg.norm([dx, dy], 2) < dist_thresh):
 		return True
+	# or, if pixel location of ground_truth is contained in the neighbourhood of match_found
 	if (ground_truth.x <= match_found.x + match_found.size /2 + patch_neighbour_hood and \
 		ground_truth.x >= match_found.x - match_found.size/2  - patch_neighbour_hood and \
 		ground_truth.y <= match_found.y + match_found.size/2 + patch_neighbour_hood and \
