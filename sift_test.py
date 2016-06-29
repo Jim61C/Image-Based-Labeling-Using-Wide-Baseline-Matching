@@ -88,27 +88,27 @@ def runSIFT(test_folder_name, test1_img_name, test2_img_name):
 	print "len(features2)", len(features2)
 
 	"""For testset_flower3 SIFT failure analysis"""
-	failure_ground_truth_keypoint = cv2.KeyPoint(1164 - 1024, 602, 5)
-	test_patch_index = matches[18].queryIdx
-	match_found_index = matches[18].trainIdx
+	# failure_ground_truth_keypoint = cv2.KeyPoint(1164 - 1024, 602, 5)
+	# test_patch_index = matches[18].queryIdx
+	# match_found_index = matches[18].trainIdx
 
-	test_patch_hist = desc1[test_patch_index]
-	match_found_hist = desc2[match_found_index]
-	kp_ground_truth,des = sift.compute(imgToMatch_gray,[failure_ground_truth_keypoint])
-	print "len(des):", (len(des))
-	ground_truth_hist = des[0]
+	# test_patch_hist = desc1[test_patch_index]
+	# match_found_hist = desc2[match_found_index]
+	# kp_ground_truth,des = sift.compute(imgToMatch_gray,[failure_ground_truth_keypoint])
+	# print "len(des):", (len(des))
+	# ground_truth_hist = des[0]
 
-	plt.bar(np.arange(len(test_patch_hist)),test_patch_hist,color = 'r', label = "test_patches[0]")
-	plt.legend()
-	plt.show()
+	# plt.bar(np.arange(len(test_patch_hist)),test_patch_hist,color = 'r', label = "test_patches[0]")
+	# plt.legend()
+	# plt.show()
 	
-	plt.bar(np.arange(len(match_found_hist)),match_found_hist, color = 'g', label = "match_found[0]")
-	plt.legend()
-	plt.show()
+	# plt.bar(np.arange(len(match_found_hist)),match_found_hist, color = 'g', label = "match_found[0]")
+	# plt.legend()
+	# plt.show()
 	
-	plt.bar(np.arange(len(ground_truth_hist)),ground_truth_hist, color = 'b', label = "ground_truth[0]")
-	plt.legend()
-	plt.show()
+	# plt.bar(np.arange(len(ground_truth_hist)),ground_truth_hist, color = 'b', label = "ground_truth[0]")
+	# plt.legend()
+	# plt.show()
 	
 	"""End of testset_flower3 SIFT failure analysis"""
 

@@ -465,6 +465,9 @@ class Feature(object):
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		return
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		return
+
 	def featureResponse(self):
 		return
 
