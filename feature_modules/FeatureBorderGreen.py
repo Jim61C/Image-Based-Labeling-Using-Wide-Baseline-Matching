@@ -23,7 +23,6 @@ class FeatureBorderGreen(Feature):
 	"""
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
-		self.HISTBINNUM = 16
 		self.FEATURE_MODEL = np.array([ 0.,          0.,          0.,          0.,          0.04649839,  0.13987842,
 										  0.09450414,  0.,          0.,          0.,          0.,          0.,          0.,
 										  0.,          0.,          0.        ])
