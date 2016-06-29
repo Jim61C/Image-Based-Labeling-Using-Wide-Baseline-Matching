@@ -22,6 +22,7 @@ import os
 import pickle
 import copy
 from scipy.special import (comb, chndtr, gammaln, entr, kl_div, xlogy, ive)
+from integralImageHS import IntegralImageHS
 
 
 HUE_16BIN_C = np.array(
@@ -176,7 +177,7 @@ class Patch:
 		### Feature auxiliary attributes to save time ###
 		self.outer_hs_2d_gaus_4 = None # 16 bins
 
-		self.hs_2d_arr = [] # self.hs_2d_arr[0] is full patch hs with gaussian window of 6 sigma, 16 bins, if use 36 bin hists, need another array
+		self.hs_2d_arr = [] # self.hs_2d_arr[0] is full patch hs with gaussian window of 6 sigma, 16 bins
 
 		self.gaus_scale_to_inner_hs_2d_dict = {} # key is "4_3", meaning 4 sigma gaussian window and inner patch is scale down 3
 
@@ -186,6 +187,10 @@ class Patch:
 		self.gaus_scale_to_inner_HOG_dict = {}
 
 		self.gaus_scale_to_inner_Uncirculated_HOG_dict = {}
+
+		### Feature auxiliary from integral image ###
+		self.outer_hs_2d = None
+		self.scale_to_inner_hs_2d_dict = {}
 
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
@@ -1079,17 +1084,18 @@ def generateAllFeatureSets(features):
 	return all_sets
 
 
-def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow):
+def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, integral_img_obj_HS):
 	# HOG Feature
 	# patch.computeHOG(img_gray, True)
 	# patch.setHOGScore(HOGResponse(patch.HOG))
 
 	# compute feature and set score for each feature object in feature_arr
 	for feature_obj in patch.feature_arr:
-		# start_time = time.time()
-		feature_obj.computeFeature(img)
+		start_time = time.time()
+		# feature_obj.computeFeature(img)
+		feature_obj.computeFeatureIntegralImage(integral_img_obj_HS)
 		feature_obj.computeScore()
-		# print "compute ", feature_obj.id, " spent time:", time.time() - start_time
+		print "compute ", feature_obj.id, " spent time:", time.time() - start_time
 	# print "\n"
 
 	# # HOG Bins Features
@@ -1109,17 +1115,21 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
 	gaussianWindow = gauss_kernels(sigma, sigma/6.0)
 
+	"""construct integral images"""
+	integral_img_obj_HS = IntegralImageHS(img, utils.HS_BIN_LENGTH)
+	integral_img_obj_HS.computeIntegralImageFeature()
+
 	random_patches = extractRandomPatches(img, sigma, 800)
 	print "FEATURES:", FEATURES
 
 	for i in range(0, len(testPatches)):
 		# start_time = time.time()
-		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow)
+		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, integral_img_obj_HS)
 		# print "time spent for set all features for testPatches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} testPatches done".format(count = len(testPatches))
 	for i in range(0, len(random_patches)):
 		# start_time = time.time()
-		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow)
+		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow, integral_img_obj_HS)
 		# print "time gspent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} random_patches done".format(count = len(random_patches))
 
