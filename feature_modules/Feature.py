@@ -15,6 +15,7 @@ import random
 import comparePatches
 import scipy.spatial.distance as DIST
 from sklearn.preprocessing import normalize
+from feature_modules import utils
 
 
 class Feature(object):
@@ -27,7 +28,7 @@ class Feature(object):
 		self.TOP_RIGHT_INDEX = 2
 		self.BOTTOM_LEFT_INDEX = 3
 		self.BOTTOM_RIGHT_INDEX = 4
-		self.HISTBINNUM = 16 # default value, override by sub classes
+		self.HISTBINNUM = utils.HS_BIN_LENGTH # default value, override by sub classes
 		self.GAUSSIAN_SCALE_FACTOR = 1.2
 
 	def computeHueHistSaturationWeighted(self, img_hsv, patch, gaussian_window):
@@ -163,6 +164,60 @@ class Feature(object):
 		sub_gaussian_window = gaussian_window[gaussian_window.shape[0] - newSize:gaussian_window.shape[0], gaussian_window.shape[1] - newSize: gaussian_window.shape[1]]
 		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
+
+	def computeHS2DArrFromIntegralImage(self, integral_img_obj, patch, full_patch_gaussian_window):
+		full_patch_hs = integral_img_obj.getIntegralImageFeature(\
+			row_start = patch.x - patch.size/2, \
+			row_end = patch.x + patch.size/2 + 1, \
+			col_start = patch.y - patch.size/2, \
+			col_end = patch.y + patch.size/2 + 1)
+		full_patch_hs_sum = float(np.sum(full_patch_hs))
+		full_patch_hs = full_patch_hs/full_patch_hs_sum
+		patch.hs_2d_arr.append(full_patch_hs)
+
+		newLen = (patch.size+1)/2
+		if(newLen % 2 == 0):
+			newSize = newLen -1
+		else:
+			newSize = newLen
+
+		# TOP_LEFT_INDEX  patch.hs_2d_arr[1]
+		sub_patch = comparePatches.Patch(patch.x - newLen/2, patch.y - newLen/2, newSize, initialize_features = False)
+		sub_patch_hs = integral_img_obj.getIntegralImageFeature(\
+			row_start = sub_patch.x - sub_patch.size/2, \
+			row_end = sub_patch.x + sub_patch.size/2 + 1, \
+			col_start = sub_patch.y - sub_patch.size/2, \
+			col_end = sub_patch.y + sub_patch.size/2 + 1)
+		patch.hs_2d_arr.append(sub_patch_hs/full_patch_hs_sum)
+		
+		# TOP_RIGHT_INDEX  patch.hs_2d_arr[2]
+		sub_patch = comparePatches.Patch(patch.x - newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
+		sub_patch_hs = integral_img_obj.getIntegralImageFeature(\
+			row_start = sub_patch.x - sub_patch.size/2, \
+			row_end = sub_patch.x + sub_patch.size/2 + 1, \
+			col_start = sub_patch.y - sub_patch.size/2, \
+			col_end = sub_patch.y + sub_patch.size/2 + 1)
+		patch.hs_2d_arr.append(sub_patch_hs/full_patch_hs_sum)
+		
+		# BOTTOM_LEFT_INDEX patch.hs_2d_arr[3]
+		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y - newLen/2, newSize, initialize_features = False)
+		sub_patch_hs = integral_img_obj.getIntegralImageFeature(\
+			row_start = sub_patch.x - sub_patch.size/2, \
+			row_end = sub_patch.x + sub_patch.size/2 + 1, \
+			col_start = sub_patch.y - sub_patch.size/2, \
+			col_end = sub_patch.y + sub_patch.size/2 + 1)
+		patch.hs_2d_arr.append(sub_patch_hs/full_patch_hs_sum)
+		
+		# BOTTOM_RIGHT_INDEX patch.hs_2d_arr[4]
+		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
+		sub_patch_hs = integral_img_obj.getIntegralImageFeature(\
+			row_start = sub_patch.x - sub_patch.size/2, \
+			row_end = sub_patch.x + sub_patch.size/2 + 1, \
+			col_start = sub_patch.y - sub_patch.size/2, \
+			col_end = sub_patch.y + sub_patch.size/2 + 1)
+		patch.hs_2d_arr.append(sub_patch_hs/full_patch_hs_sum)
+
+
 
 	def computeHS2DWithGaussianWindow(self, img_hsv, patch, gaussian_window):
 		"""
