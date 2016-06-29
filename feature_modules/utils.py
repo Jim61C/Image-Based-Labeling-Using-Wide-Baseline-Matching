@@ -4,6 +4,8 @@ import os
 import pickle
 import plotStatistics
 
+HS_BIN_LENGTH = 16
+
 MIN_RAW_EUCLIDEAN_SCORE = 1/(1+ math.sqrt(2.0))
 MAX_RAW_EUCLIDEAN_SCORE = 1.0
 
