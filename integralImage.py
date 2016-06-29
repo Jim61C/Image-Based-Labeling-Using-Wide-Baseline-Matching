@@ -24,6 +24,7 @@ class IntegralImage():
 		self.img = img
 		self.bin_len = None
 		self.integral_img_feature = None
+		self.integral_image_type = "GENERAL"
 
 	def getIntegralImageFeature(self, row_start, row_end, col_start, col_end):
 		"""

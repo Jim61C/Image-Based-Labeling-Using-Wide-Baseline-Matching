@@ -25,6 +25,7 @@ class IntegralImageHS(IntegralImage):
 		IntegralImage.__init__(self, img)
 		self.img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV) # img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-255
 		self.bin_len = 16 # H,S feature 16 bin
+		self.integral_image_type = "HS"
 
 	def getEmptyFeature(self):
 		"""
@@ -48,20 +49,7 @@ class IntegralImageHS(IntegralImage):
 		return
 
 
-
-def main():
-	print "unit testing for integralImageHS"
-	image_db = "images"
-	folder_name = "testset_flower2"
-	img_name = "test1.jpg"
-	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = folder_name, name = img_name), 1)
-	cv2.imshow("test", img)
-	cv2.waitKey(0)
-
-	integral_img_obj = IntegralImageHS(img)
-	integral_img_obj.computeIntegralImageFeature()
-
-	"""test1, subpatch's HS 2d histogram should be exactly the same"""
+def unitTesting(img, integral_img_obj, row_start, col_start, rows, cols):
 	row_start = 200
 	col_start = 200
 	rows = 200
@@ -83,13 +71,38 @@ def main():
 	hs_2d_from_roi_computation = cv2.calcHist([hsv_roi], [0, 1], None, \
 		[integral_img_obj.bin_len, integral_img_obj.bin_len], [0, 360, 0, 1.0])
 
-	print "hs_2d_hist_from_integral:\n", hs_2d_hist_from_integral
-	print "hs_2d_from_roi_computation:\n", hs_2d_from_roi_computation
+	# print "hs_2d_hist_from_integral:\n", hs_2d_hist_from_integral
+	# print "hs_2d_from_roi_computation:\n", hs_2d_from_roi_computation
 
-	print "\n\n, difference:\n", hs_2d_from_roi_computation - hs_2d_hist_from_integral
+	difference = hs_2d_from_roi_computation - hs_2d_hist_from_integral
+	for i in range(0, difference.shape[0]):
+		for j in range(0, difference.shape[1]):
+			assert difference[i][j] == 0, "difference[{i}][{j}]".format(i = i, j = j) + "is supposed to be zero"
+
+	return
+
+def main():
+	print "unit testing for integralImageHS"
+	image_db = "images"
+	folder_name = "testset_flower2"
+	img_name = "test1.jpg"
+	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = folder_name, name = img_name), 1)
+	cv2.imshow("test", img)
+	cv2.waitKey(0)
+
+	integral_img_obj = IntegralImageHS(img)
+	integral_img_obj.computeIntegralImageFeature()
 
 	print "integral_img_obj.integral_img_feature[row_start][col_start].shape: ", \
-	integral_img_obj.integral_img_feature[row_start][col_start].shape
+	integral_img_obj.integral_img_feature[200][200].shape
+
+	"""test1, subpatch's HS 2d histogram should be exactly the same"""
+	unitTesting(img, integral_img_obj, row_start = 200, col_start = 200, rows = 200, cols = 200)
+	"""test2, subpatch's HS 2d histogram should be exactly the same"""
+	unitTesting(img, integral_img_obj, row_start = 0, col_start = 0, rows = 200, cols = 200)
+	"""test3, subpatch's HS 2d histogram should be exactly the same"""
+	unitTesting(img, integral_img_obj, row_start = 143, col_start = 255, rows = 39, cols = 39)
+	
 
 	return
 
