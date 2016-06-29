@@ -21,10 +21,10 @@ class IntegralImageHS(IntegralImage):
 	For roi: img[i:i+len, j:j+len], corresponding feature is found by 
 	integral_img_feature[i+len-1][j+len-1] - integral_img_feature[i-1][j+len-1] - integral_img_feature[i+len-1][j-1] + integral_img_feature[i-1][j-1]
 	"""
-	def __init__(self, img):
+	def __init__(self, img, bin_len):
 		IntegralImage.__init__(self, img)
 		self.img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV) # img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-255
-		self.bin_len = 16 # H,S feature 16 bin
+		self.bin_len =  bin_len # H,S feature 16 bin
 		self.integral_image_type = "HS"
 
 	def getEmptyFeature(self):
@@ -90,7 +90,7 @@ def main():
 	cv2.imshow("test", img)
 	cv2.waitKey(0)
 
-	integral_img_obj = IntegralImageHS(img)
+	integral_img_obj = IntegralImageHS(img, 16)
 	integral_img_obj.computeIntegralImageFeature()
 
 	print "integral_img_obj.integral_img_feature[row_start][col_start].shape: ", \
