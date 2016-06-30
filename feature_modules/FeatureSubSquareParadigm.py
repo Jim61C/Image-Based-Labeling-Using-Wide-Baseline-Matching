@@ -53,7 +53,54 @@ class FeatureSubSquareParadigm(Feature):
 		# 	len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
 		# self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		assert integral_img_obj.integral_image_type == "HS", "in FeatureSubSquareParadigm, integral_img_obj used should be HS"
+		_, sub_gaussian_window , full_patch_gaussian_window = \
+		self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(self.SUBPATCH_OF_INTEREST_INDEX)
+		target_hue_bins, target_saturation_bins = self.getTargetHueAndSaturationBins()
+
+		if (not len(self.patch.hs_2d_arr) == 5):
+			self.computeHS2DArrFromIntegralImage(integral_img_obj, self.patch, full_patch_gaussian_window)
+
+		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
+			self.patch.HueHistArr = []
+			self.patch.SaturationHistArr = []
+			self.patch.ValueHistArr = []
+			"""derive from 2D instead of recompute"""
+			for i in range(0, 5):
+				self.patch.HueHistArr.append(self.derive1DHueFrom2D(self.patch.hs_2d_arr[i]))
+				self.patch.SaturationHistArr.append(self.derive1DSaturationFrom2D(self.patch.hs_2d_arr[i]))
+
+		"""broder hue range used for filtering hue than filtering saturation"""
+		filtered_hue_of_interest = self.deriveHueHistFilterOffHueWithWrongSaturationFrom2D(\
+			self.patch.hs_2d_arr[self.SUBPATCH_OF_INTEREST_INDEX], \
+			range(self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX), target_hue_bins)
+
+		filtered_saturation_of_interest = self.deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(\
+			self.patch.hs_2d_arr[self.SUBPATCH_OF_INTEREST_INDEX], target_saturation_bins, target_hue_bins)
+
+		self.hist = np.concatenate((filtered_hue_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window), \
+			filtered_saturation_of_interest * np.sum(full_patch_gaussian_window) / np.sum(sub_gaussian_window)), axis = 1)
+
+		for i in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
+			if(i != self.SUBPATCH_OF_INTEREST_INDEX):
+				other_patch_hue = np.array([ self.patch.HueHistArr[i][j % self.HISTBINNUM] \
+					for j in range(self.HUE_START_INDEX, self.HUE_END_INDEX)])
+				other_patch_saturation = self.patch.SaturationHistArr[i][self.SATURATION_FILTER_START_INDEX:self.SATURATION_FILTER_END_INDEX]
+				"""
+				other patch hue / saturation, 
+				if one of them is not within the targeted range for the sub patch of interest, 
+				then mark as good (all zeros, same as FEATURE_MODEL)
+				"""
+				if(np.sum(other_patch_hue) == 0 or np.sum(other_patch_saturation) == 0):
+					other_patch_hist = np.zeros(len(other_patch_hue) + len(other_patch_saturation))
+				else:
+					other_patch_hist = np.concatenate((other_patch_hue, other_patch_saturation), axis = 1)
+
+				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
+
 	def computeFeature(self, img, useGaussianSmoothing = True):
+		"""TODO: aggregate for Hue hist to coorperate circular hue hist"""
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		sub_patch, sub_gaussian_window , full_patch_gaussian_window = \
 		self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(self.SUBPATCH_OF_INTEREST_INDEX)

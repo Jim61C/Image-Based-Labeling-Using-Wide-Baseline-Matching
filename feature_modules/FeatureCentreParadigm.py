@@ -23,7 +23,7 @@ class FeatureCentreParadigm(Feature):
 	"""
 	def __init__(self, patch, id):
 		Feature.__init__(self, patch, id)
-		self.HISTBINNUM = 16 # adjustable number of bins
+		self.HISTBINNUM = utils.HS_BIN_LENGTH # adjustable number of bins
 		self.GAUSSIAN_SCALE = 3
 		self.GAUSSIAN_WINDOW_LENGTH_SIGMA = 4.0 # used for border feature case, window length = 4 sigma
 		
@@ -74,7 +74,84 @@ class FeatureCentreParadigm(Feature):
 	def computeFeatureIntegralImage(self, integral_img_obj):
 		assert integral_img_obj.integral_image_type == "HS", "in FeatureCentreParadigm, integral_img_obj used should be HS"
 		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -self.GAUSSIAN_SCALE)
+		if (self.patch.outer_hs_2d is None):
+			self.patch.outer_hs_2d = integral_img_obj.getIntegralImageFeature(\
+				row_start = self.patch.x - self.patch.size/2, \
+				row_end = self.patch.x + self.patch.size/2 + 1, \
+				col_start = self.patch.y - self.patch.size/2, \
+				col_end = self.patch.y + self.patch.size/2 + 1) # +1 since end indexes are exclusive
 		
+		key = "{scale}".format(scale = int(self.GAUSSIAN_SCALE))
+		if (not key in self.patch.scale_to_inner_hs_2d_dict):
+			self.patch.scale_to_inner_hs_2d_dict[key] = integral_img_obj.getIntegralImageFeature(\
+			 	row_start = self.patch.x - inner_patch_size/2, \
+			 	row_end = self.patch.x + inner_patch_size/2 + 1, \
+			 	col_start = self.patch.y - inner_patch_size/2, \
+			 	col_end = self.patch.y + inner_patch_size/2 + 1)
+
+		inner_hs_2d_normalized = self.patch.scale_to_inner_hs_2d_dict[key]/float(np.sum(self.patch.outer_hs_2d))
+		outer_hs_2d_normalized = self.patch.outer_hs_2d/float(np.sum(self.patch.outer_hs_2d))
+
+		inner_hist_hue = self.derive1DHueFrom2D(inner_hs_2d_normalized)
+		inner_hist_saturation = self.derive1DSaturationFrom2D(inner_hs_2d_normalized)
+
+		outer_hist_hue = self.derive1DHueFrom2D(outer_hs_2d_normalized)
+		outer_hist_saturation = self.derive1DSaturationFrom2D(outer_hs_2d_normalized)
+
+		border_hist_hue = outer_hist_hue - inner_hist_hue
+		border_hist_saturation = outer_hist_saturation - inner_hist_saturation
+
+		"""compute border_hist"""
+		border_hist_hue_targetted = np.array([border_hist_hue[i % self.HISTBINNUM] \
+			for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX)])
+		if(np.sum(border_hist_hue_targetted) == 0 or \
+			np.sum(border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]) == 0):
+			border_hist = np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+				len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))
+		else:
+			border_hist = np.concatenate((border_hist_hue_targetted, \
+				border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]), axis = 1)
+
+		"""compute target_hue_bins/target_saturation_bins"""
+		target_hue_bins = []
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			target_hue_bins.append(i % self.HISTBINNUM)
+		target_saturation_bins = range(self.SATURATION_START_INDEX, self.SATURATION_END_INDEX)
+
+		"""
+		filter the inner hist hue based the target bins for saturation as well, this version using tight saturation filter range
+		"""
+		filtered_inner_hist_hue = self.deriveHueHistFilterOffHueWithWrongSaturationFrom2D(\
+		inner_hs_2d_normalized, target_saturation_bins, target_hue_bins)
+
+		"""aggregate the target_hue_bins"""
+		target_hue_sum = 0.0
+		for i in range(self.HUE_START_INDEX, self.HUE_END_INDEX):
+			target_hue_sum += filtered_inner_hist_hue[i % self.HISTBINNUM]
+
+		if (self.HUE_END_INDEX > self.HISTBINNUM):
+			aggregated_filtered_inner_hist_hue = np.concatenate((\
+				filtered_inner_hist_hue[self.HUE_END_INDEX % self.HISTBINNUM:self.HUE_START_INDEX], \
+				np.array([target_hue_sum]),\
+				filtered_inner_hist_hue[self.HUE_END_INDEX:]), axis = 1)
+		else:
+			aggregated_filtered_inner_hist_hue = np.concatenate((\
+				filtered_inner_hist_hue[:self.HUE_START_INDEX], \
+				np.array([target_hue_sum]),\
+				filtered_inner_hist_hue[self.HUE_END_INDEX:]), axis = 1)
+
+		"""Hue filtered inner_hist_saturation"""
+		hue_filtered_inner_hist_saturation = self.deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(\
+			inner_hs_2d_normalized, target_saturation_bins, target_hue_bins)
+
+		"""
+		normalizing border hist so that the weightage of border effect is comparable to that of the inner patch
+		"""
+		self.hist = np.concatenate((\
+			aggregated_filtered_inner_hist_hue * np.sum(outer_hist_hue)/ np.sum(inner_hist_hue), \
+			hue_filtered_inner_hist_saturation * np.sum(outer_hist_saturation)/ np.sum(inner_hist_saturation), \
+			border_hist * np.sum(outer_hist_saturation)/np.sum(border_hist_saturation)), axis = 1)
+
 		return
 
 	def computeFeature(self, img, useGaussianSmoothing = True):
