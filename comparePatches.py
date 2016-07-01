@@ -147,7 +147,7 @@ class Patch:
 			# bottom right yellow feature
 			self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
 			# sharp HOG feature
-			self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
+			# self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
 			# border green feature
 			self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
 			# centre yellow feature
@@ -211,7 +211,7 @@ class Patch:
 		# bottom right yellow feature
 		self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
 		# sharp HOG feature
-		self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
+		# self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
 		# border green feature
 		self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
 		# centre yellow feature
