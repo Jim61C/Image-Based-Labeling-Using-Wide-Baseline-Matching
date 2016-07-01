@@ -175,7 +175,7 @@ class Patch:
 		### Feature auxiliary attributes to save time ###
 		self.outer_hs_2d_gaus_4 = None # 16 bins
 
-		self.hs_2d_arr = [] # self.hs_2d_arr[0] is full patch hs with gaussian window of 6 sigma, 16 bins
+		self.hs_2d_arr = [] # self.hs_2d_arr[0] is full patch hs with gaussian window of 6 sigma, 16 bins, normalized
 
 		self.gaus_scale_to_inner_hs_2d_dict = {} # key is "4_3", meaning 4 sigma gaussian window and inner patch is scale down 3
 
@@ -188,8 +188,8 @@ class Patch:
 
 		### Feature auxiliary from integral image ###
 		"""TODO: get rid of outer_hs_2d: since outer_hs_2d is the same as hs_2d_arr[0]"""
-		self.outer_hs_2d = None 
-		self.scale_to_inner_hs_2d_dict = {}
+		self.outer_hs_2d = None # not normalized
+		self.scale_to_inner_hs_2d_dict = {} # not normalized
 
 		###For Algo3, a set of features to use for matching###
 		self.feature_to_use = []
