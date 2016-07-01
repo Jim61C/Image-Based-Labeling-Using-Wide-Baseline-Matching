@@ -60,7 +60,7 @@ class FeatureSubSquareParadigm(Feature):
 		target_hue_bins, target_saturation_bins = self.getTargetHueAndSaturationBins()
 
 		if (not len(self.patch.hs_2d_arr) == 5):
-			self.computeHS2DArrFromIntegralImage(integral_img_obj, self.patch, full_patch_gaussian_window)
+			self.computeHS2DArrFromIntegralImage(integral_img_obj, self.patch)
 
 		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
 			self.patch.HueHistArr = []

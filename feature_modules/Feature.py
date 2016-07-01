@@ -165,7 +165,7 @@ class Feature(object):
 		sub_patch = comparePatches.Patch(patch.x + newLen/2, patch.y + newLen/2, newSize, initialize_features = False)
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
 
-	def computeHS2DArrFromIntegralImage(self, integral_img_obj, patch, full_patch_gaussian_window):
+	def computeHS2DArrFromIntegralImage(self, integral_img_obj, patch):
 		full_patch_hs = integral_img_obj.getIntegralImageFeature(\
 			row_start = patch.x - patch.size/2, \
 			row_end = patch.x + patch.size/2 + 1, \
