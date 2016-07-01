@@ -33,6 +33,38 @@ class FeatureBottomRightYellow(Feature):
 		self.FEATURE_MODEL = np.concatenate((self.FEATURE_MODEL, np.zeros(3*len(range(1,2)))), axis = 1)
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		assert integral_img_obj.integral_image_type == "HS", "in FeatureBottomRightYellow, integral_img_obj used should be HS"
+
+		if (not len(self.patch.hs_2d_arr) == 5):
+			self.computeHS2DArrFromIntegralImage(integral_img_obj, self.patch)
+
+		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
+			self.patch.HueHistArr = []
+			self.patch.SaturationHistArr = []
+			self.patch.ValueHistArr = []
+			"""derive from 2D instead of recompute"""
+			for i in range(0, 5):
+				self.patch.HueHistArr.append(self.derive1DHueFrom2D(self.patch.hs_2d_arr[i]))
+				self.patch.SaturationHistArr.append(self.derive1DSaturationFrom2D(self.patch.hs_2d_arr[i]))
+
+		self.hist = np.concatenate((self.patch.HueHistArr[self.BOTTOM_RIGHT_INDEX], \
+			self.patch.SaturationHistArr[self.BOTTOM_RIGHT_INDEX]), axis = 1)
+	
+		self.HISTBINNUM = len(self.patch.HueHistArr[0])
+		for i in range(self.TOP_LEFT_INDEX,self.BOTTOM_RIGHT_INDEX + 1):
+			if( i != self.BOTTOM_RIGHT_INDEX):
+				other_patch_hist = self.deriveSubPatchTargetHueFilteredBySaturationFrom2DArr(\
+					sub_patch_index = i, \
+					hs_2d_arr = self.patch.hs_2d_arr, \
+					target_hue_bins = range(1,2), \
+					target_saturation_bins = range(10,13))
+				assert (len(other_patch_hist) == len(range(1,2))), \
+				"In FeatureBottomRightYellow: other sub patch {i}'s hue response array needs to be of the same length as that of the patch of interest".format( i = i)
+				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
+
+		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 
@@ -82,7 +114,6 @@ class FeatureBottomRightYellow(Feature):
 				# else:
 				# 	other_patch_hist = np.concatenate((other_patch_hue, other_patch_saturation), axis = 1)
 				other_patch_hist = self.deriveSubPatchTargetHueFilteredBySaturationFrom2DArr(\
-					img_hsv, \
 					sub_patch_index = i, \
 					hs_2d_arr = self.patch.hs_2d_arr, \
 					target_hue_bins = range(1,2), \

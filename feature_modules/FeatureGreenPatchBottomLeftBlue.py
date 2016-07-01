@@ -65,6 +65,33 @@ class FeatureGreenPatchBottomLeftBlue(Feature):
 			axis = 1)
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the FEATURE_MODEL using l1
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		assert integral_img_obj.integral_image_type == "HS", "in FeatureGreenPatchBottomLeftBlue, integral_img_obj used should be HS"
+
+		if (not len(self.patch.hs_2d_arr) == 5):
+			self.computeHS2DArrFromIntegralImage(integral_img_obj, self.patch)
+
+		if(not (len(self.patch.HueHistArr) == 5 and len(self.patch.SaturationHistArr) == 5)):
+			self.patch.HueHistArr = []
+			self.patch.SaturationHistArr = []
+			self.patch.ValueHistArr = []
+			"""derive from 2D instead of recompute"""
+			for i in range(0, 5):
+				self.patch.HueHistArr.append(self.derive1DHueFrom2D(self.patch.hs_2d_arr[i]))
+				self.patch.SaturationHistArr.append(self.derive1DSaturationFrom2D(self.patch.hs_2d_arr[i]))
+
+		self.hist = np.concatenate((self.patch.HueHistArr[self.BOTTOM_LEFT_INDEX], \
+			self.patch.SaturationHistArr[self.BOTTOM_LEFT_INDEX]), axis = 1)
+
+		for i in range(self.TOP_LEFT_INDEX, self.BOTTOM_RIGHT_INDEX + 1):
+			if (i != self.BOTTOM_LEFT_INDEX):
+				other_patch_hue = self.patch.HueHistArr[i]
+				other_patch_saturation = self.patch.SaturationHistArr[i]
+				other_patch_hist = np.concatenate((other_patch_hue, other_patch_saturation), axis = 1)
+				self.hist = np.concatenate((self.hist, other_patch_hist), axis = 1)
+			
+		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+
 	### override super class ###
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)

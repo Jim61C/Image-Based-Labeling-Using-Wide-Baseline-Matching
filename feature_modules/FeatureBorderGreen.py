@@ -42,6 +42,36 @@ class FeatureBorderGreen(Feature):
 				# hist[this_bin] += 1
 		return hist
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		assert integral_img_obj.integral_image_type == "HS", "in FeatureBorderGreen, integral_img_obj used should be HS"
+		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -3)
+		if (self.patch.outer_hs_2d is None):
+			self.patch.outer_hs_2d = integral_img_obj.getIntegralImageFeature(\
+				row_start = self.patch.x - self.patch.size/2, \
+				row_end = self.patch.x + self.patch.size/2 + 1, \
+				col_start = self.patch.y - self.patch.size/2, \
+				col_end = self.patch.y + self.patch.size/2 + 1) # +1 since end indexes are exclusive
+		
+		key = "{scale}".format(scale = 3)
+		if (not key in self.patch.scale_to_inner_hs_2d_dict):
+			self.patch.scale_to_inner_hs_2d_dict[key] = integral_img_obj.getIntegralImageFeature(\
+			 	row_start = self.patch.x - inner_patch_size/2, \
+			 	row_end = self.patch.x + inner_patch_size/2 + 1, \
+			 	col_start = self.patch.y - inner_patch_size/2, \
+			 	col_end = self.patch.y + inner_patch_size/2 + 1)
+
+		inner_hs_2d_normalized = self.patch.scale_to_inner_hs_2d_dict[key]/float(np.sum(self.patch.outer_hs_2d))
+		outer_hs_2d_normalized = self.patch.outer_hs_2d/float(np.sum(self.patch.outer_hs_2d))
+
+		inner_hist_hue = self.derive1DHueFrom2D(inner_hs_2d_normalized)
+
+		outer_hist_hue = self.derive1DHueFrom2D(outer_hs_2d_normalized)
+
+		border_hist_hue = outer_hist_hue - inner_hist_hue
+
+		self.hist = np.concatenate((border_hist_hue, inner_hist_hue[4:7]), axis = 1)
+		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		# print "hue channel:", img_hsv[:,:,0]

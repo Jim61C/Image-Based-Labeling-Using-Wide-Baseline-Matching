@@ -35,6 +35,19 @@ class FeatureBottomRightNeighbourBlue(Feature):
 		else:
 			return False
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		assert integral_img_obj.integral_image_type == "HS", "in FeatureBottomRightNeighbourBlue, integral_img_obj used should be HS"
+		neighbour = comparePatches.Patch(self.patch.x + self.patch.size/2, self.patch.y + self.patch.size/2, \
+			comparePatches.getGaussianScale(self.patch.size, 1.2, -3))
+		if(self.withInImage(neighbour, integral_img_obj.img)):
+			neighbour_hs_2d = integral_img_obj.getIntegralImageFeature(\
+				row_start = neighbour.x - neighbour.size/2, \
+				row_end = neighbour.x + neighbour.size/2 + 1, \
+				col_start = neighbour.y - neighbour.size/2, \
+				col_end = neighbour.y + neighbour.size/2 + 1) # +1 since end indexes are exclusive
+			self.hist = self.derive1DHueFrom2D(neighbour_hs_2d)
+			self.hist = normalize(self.hist, norm='l1')[0]
+
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		neighbour = comparePatches.Patch(self.patch.x + self.patch.size/2, self.patch.y + self.patch.size/2, \
 			comparePatches.getGaussianScale(self.patch.size, 1.2, -3))
@@ -47,7 +60,7 @@ class FeatureBottomRightNeighbourBlue(Feature):
 
 	def computeScore(self):
 		if(self.score is None):
-			if(self.hist is None): # if the neighhour hist does not exist, should not consider this patch under this feature
+			if(self.hist is None): # if the neighbour hist does not exist, should not consider this patch under this feature
 				self.score = -sys.maxint
 			else:
 				# self.score = 1.0/(1.0 + DIST.euclidean(self.hist, self.HUE_MODEL))

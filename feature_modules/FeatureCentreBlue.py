@@ -45,6 +45,46 @@ class FeatureCentreBlue(Feature):
 			len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))), axis = 1) # append the expected border response
 		self.FEATURE_MODEL = normalize(self.FEATURE_MODEL, norm='l1')[0] # normalize the histogram using l1
 
+	def computeFeatureIntegralImage(self, integral_img_obj):
+		assert integral_img_obj.integral_image_type == "HS", "in FeatureCentreBlue, integral_img_obj used should be HS"
+		inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -3)
+		if (self.patch.outer_hs_2d is None):
+			self.patch.outer_hs_2d = integral_img_obj.getIntegralImageFeature(\
+				row_start = self.patch.x - self.patch.size/2, \
+				row_end = self.patch.x + self.patch.size/2 + 1, \
+				col_start = self.patch.y - self.patch.size/2, \
+				col_end = self.patch.y + self.patch.size/2 + 1) # +1 since end indexes are exclusive
+		
+		key = "{scale}".format(scale = 3)
+		if (not key in self.patch.scale_to_inner_hs_2d_dict):
+			self.patch.scale_to_inner_hs_2d_dict[key] = integral_img_obj.getIntegralImageFeature(\
+			 	row_start = self.patch.x - inner_patch_size/2, \
+			 	row_end = self.patch.x + inner_patch_size/2 + 1, \
+			 	col_start = self.patch.y - inner_patch_size/2, \
+			 	col_end = self.patch.y + inner_patch_size/2 + 1)
+
+		inner_hs_2d_normalized = self.patch.scale_to_inner_hs_2d_dict[key]/float(np.sum(self.patch.outer_hs_2d))
+		outer_hs_2d_normalized = self.patch.outer_hs_2d/float(np.sum(self.patch.outer_hs_2d))
+
+		inner_hist_hue = self.derive1DHueFrom2D(inner_hs_2d_normalized)
+		inner_hist_saturation = self.derive1DSaturationFrom2D(inner_hs_2d_normalized)
+
+		outer_hist_hue = self.derive1DHueFrom2D(outer_hs_2d_normalized)
+		outer_hist_saturation = self.derive1DSaturationFrom2D(outer_hs_2d_normalized)
+
+		border_hist_hue = outer_hist_hue - inner_hist_hue
+		border_hist_saturation = outer_hist_saturation - inner_hist_saturation
+
+		if(np.sum(border_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX]) == 0 or \
+			np.sum(border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]) == 0):
+			border_hist = np.zeros(len(range(self.HUE_START_INDEX,self.HUE_END_INDEX)) + \
+				len(range(self.SATURATION_START_INDEX,self.SATURATION_END_INDEX)))
+		else:
+			border_hist = np.concatenate((border_hist_hue[self.HUE_START_INDEX:self.HUE_END_INDEX], \
+				border_hist_saturation[self.SATURATION_START_INDEX:self.SATURATION_END_INDEX]), axis = 1)
+		self.hist = np.concatenate((inner_hist_hue, inner_hist_saturation, border_hist), axis = 1)
+		self.hist = normalize(self.hist, norm='l1')[0] # normalize the histogram using l1
+
 	def computeFeature(self, img, useGaussianSmoothing = True):
 		img_hsv = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV)
 		# print "hue channel:", img_hsv[:,:,0]
