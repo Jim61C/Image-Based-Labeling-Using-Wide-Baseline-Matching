@@ -134,32 +134,30 @@ class Patch:
 		### Array of Feature objects###
 		self.feature_arr = []
 		if (initialize_features):
-			# top right yellow
-			self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
-			# BOTTOM_RIGHT_GREEN: Feature length: 6 bins
-			self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
-			# top left purple
-			self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
-			# Donut shape feature
-			# self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
-			# neighbour bottom right blue feature
-			self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
-			# bottom right yellow feature
-			self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
-			# cornerness feature
-			# self.feature_arr.append(feature_modules.FeatureCornerness(self, utils.CORNERNESS_FEATURE_ID))
-			# sharp HOG feature
-			self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
-			# border green feature
-			self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
-			# centre yellow feature
-			self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
-			# centre blue feature
-			self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
-			# green patch bottom left blue
-			self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
-			# heart shape
-			# self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
+			# # top right yellow
+			# self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
+			# # BOTTOM_RIGHT_GREEN: Feature length: 6 bins
+			# self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
+			# # top left purple
+			# self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
+			# # Donut shape feature
+			# # self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
+			# # neighbour bottom right blue feature
+			# self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
+			# # bottom right yellow feature
+			# self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
+			# # sharp HOG feature
+			# self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
+			# # border green feature
+			# self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
+			# # centre yellow feature
+			# self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
+			# # centre blue feature
+			# self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
+			# # green patch bottom left blue
+			# self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
+			# # heart shape
+			# # self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
 
 			# load the auto generated feature objects
 			for feature in utils.GENERATED_FEATURE_PARADIGMS:
@@ -199,32 +197,30 @@ class Patch:
 		self.is_low_response = False # flag for if it is unique due to high response or low response, by default is due to high response
 
 	def initializeFeatureObjects(self):
-		# top right yellow
-		self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
-		# BOTTOM_RIGHT_GREEN: Feature length: 6 bins
-		self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
-		# top left purple
-		self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
-		# Donut shape feature
-		# self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
-		# neighbour bottom right blue feature
-		self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
-		# bottom right yellow feature
-		self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
-		# cornerness feature
-		# self.feature_arr.append(feature_modules.FeatureCornerness(self, utils.CORNERNESS_FEATURE_ID))
-		# sharp HOG feature
-		self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
-		# border green feature
-		self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
-		# centre yellow feature
-		self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
-		# centre blue feature
-		self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
-		# green patch bottom left blue
-		self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
-		# heart shape
-		# self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
+		# # top right yellow
+		# self.feature_arr.append(feature_modules.FeatureTopRightYellow(self, utils.TOP_RIGHT_YELLOW_FEATURE_ID))
+		# # BOTTOM_RIGHT_GREEN: Feature length: 6 bins
+		# self.feature_arr.append(feature_modules.FeatureBottomRightGreen(self, utils.BOTTOM_RIGHT_GREEN_FEATURE_ID))
+		# # top left purple
+		# self.feature_arr.append(feature_modules.FeatureTopLeftPurple(self, utils.TOP_LEFT_PURPLE_FEATURE_ID))
+		# # Donut shape feature
+		# # self.feature_arr.append(feature_modules.FeatureDonutShape(self, utils.DONUT_SHAPE_FEATURE_ID))
+		# # neighbour bottom right blue feature
+		# self.feature_arr.append(feature_modules.FeatureBottomRightNeighbourBlue(self, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID))
+		# # bottom right yellow feature
+		# self.feature_arr.append(feature_modules.FeatureBottomRightYellow(self, utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID))
+		# # sharp HOG feature
+		# self.feature_arr.append(feature_modules.FeatureSharpHOG(self,utils.SHARP_HOG_FEATURE_ID))
+		# # border green feature
+		# self.feature_arr.append(feature_modules.FeatureBorderGreen(self, utils.BORDER_GREEN_FEATURE_ID))
+		# # centre yellow feature
+		# self.feature_arr.append(feature_modules.FeatureCentreYellow(self, utils.CENTRE_YELLOW_FEATURE_ID))
+		# # centre blue feature
+		# self.feature_arr.append(feature_modules.FeatureCentreBlue(self, utils.CENTRE_BLUE_FEATURE_ID))
+		# # green patch bottom left blue
+		# self.feature_arr.append(feature_modules.FeatureGreenPatchBottomLeftBlue(self, utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID))
+		# # heart shape
+		# # self.feature_arr.append(feature_modules.FeatureHeartShape(self, utils.HEART_SHAPE_FEATURE_ID))
 
 		# load the auto generated feature objects
 		for feature in utils.GENERATED_FEATURE_PARADIGMS:
@@ -1091,11 +1087,11 @@ def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, integra
 
 	# compute feature and set score for each feature object in feature_arr
 	for feature_obj in patch.feature_arr:
-		start_time = time.time()
+		# start_time = time.time()
 		# feature_obj.computeFeature(img)
 		feature_obj.computeFeatureIntegralImage(integral_img_obj_HS)
 		feature_obj.computeScore()
-		print "compute ", feature_obj.id, " spent time:", time.time() - start_time
+		# print "compute ", feature_obj.id, " spent time:", time.time() - start_time
 	# print "\n"
 
 	# # HOG Bins Features
@@ -1118,6 +1114,7 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	"""construct integral images"""
 	integral_img_obj_HS = IntegralImageHS(img, utils.HS_BIN_LENGTH)
 	integral_img_obj_HS.computeIntegralImageFeature()
+	print "Finished constructing integral image"
 
 	random_patches = extractRandomPatches(img, sigma, 800)
 	print "FEATURES:", FEATURES
