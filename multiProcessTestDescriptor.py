@@ -127,7 +127,7 @@ def main():
 	# ("testset_flower23", "testset_flower23", "test2.jpg", "test3.jpg" ,image_db), \
 	]
 
-	num_orchid_tests = 91
+	num_orchid_tests = 20
 	for i in range (1, num_orchid_tests + 1):
 		test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
 
