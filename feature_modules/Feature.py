@@ -372,7 +372,7 @@ class Feature(object):
 
 		return sub_patch, sub_gaussian_window, gaussian_window
 
-	def deriveSubPatchTargetHueFilteredBySaturationFrom2DArr(self, img_hsv, sub_patch_index, hs_2d_arr, \
+	def deriveSubPatchTargetHueFilteredBySaturationFrom2DArr(self, sub_patch_index, hs_2d_arr, \
 		target_hue_bins, target_saturation_bins):
 		"""
 		hs_2d_arr: of length 5, hs_2d_arr[0] is full patch hs 2d
@@ -383,11 +383,6 @@ class Feature(object):
 		for this_hue_bin in target_hue_bins:
 			hist[target_hue_bins.index(this_hue_bin)] = np.sum(hs_2d_target[this_hue_bin, target_saturation_bins])
 		return hist
-
-	def getSubPatchTargetHueFilteredBySaturation(self, img_hsv, sub_patch_index, target_hue_bins, target_saturation_bins):
-		sub_patch, sub_gaussian_window, _ = self.getSubPatchAndSubPatchGaussianFromSubPatchIndex(sub_patch_index)
-		return self.targetHueFilteredBySaturation(img_hsv, sub_patch, sub_gaussian_window, target_hue_bins, target_saturation_bins)
-
 
 	def findValueHistForTargetHueBin(self, img_hsv, patch, gaussian_window, target_hue_bins):
 		hist = np.zeros(self.HISTBINNUM)
