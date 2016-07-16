@@ -502,7 +502,9 @@ class Feature(object):
 		min_acquired_bin = np.min(acquired_saturation_bins)
 		max_acquired_bin = np.max(acquired_saturation_bins) + 1
 		filter_saturation_bins = []
-		bin_to_go_up_down = (2 * SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD - (max_acquired_bin - min_acquired_bin))/2
+		bin_to_go_up_down = (2 * SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD - (max_acquired_bin - min_acquired_bin))/2 \
+		if ((2 * SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD - (max_acquired_bin - min_acquired_bin)) > 0) else 0
+		
 		for bin in range(min_acquired_bin - bin_to_go_up_down, max_acquired_bin + bin_to_go_up_down):
 			if (bin >=0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_FILTER_FRACTION * hist[max_saturation_bin]):
 				filter_saturation_bins.append(bin)
