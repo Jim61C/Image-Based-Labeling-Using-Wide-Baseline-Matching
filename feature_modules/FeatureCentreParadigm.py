@@ -370,7 +370,9 @@ class FeatureCentreParadigm(Feature):
 
 		success_flag = False
 
-		for scale in xrange(3,0,-1):
+		levels = 10 # scale level for the inner patch
+
+		for scale in xrange(levels,0,-1):
 			self.GAUSSIAN_SCALE = scale
 			print "current gaussian scale in centre_paradigm detection:", self.GAUSSIAN_SCALE
 			inner_patch_size = comparePatches.getGaussianScale(self.patch.size, self.GAUSSIAN_SCALE_FACTOR, -self.GAUSSIAN_SCALE)
@@ -379,16 +381,17 @@ class FeatureCentreParadigm(Feature):
 			gaussian_window.shape[0]/2 - inner_patch.size/2: gaussian_window.shape[0]/2 + inner_patch.size/2 + 1 ,\
 			gaussian_window.shape[1]/2 - inner_patch.size/2: gaussian_window.shape[1]/2 + inner_patch.size/2 + 1]
 
-			outer_hue = self.computeHueHistSaturationWeighted(img_hsv, self.patch, gaussian_window)
+			outer_hue = self.computeHueHist(img_hsv, self.patch, gaussian_window)
 			outer_saturation = self.computeSaturationHist(img_hsv, self.patch, gaussian_window)
 
-			inner_hue = self.computeHueHistSaturationWeighted(img_hsv, inner_patch, inner_gaussian_window)
+			inner_hue = self.computeHueHist(img_hsv, inner_patch, inner_gaussian_window)
 			inner_saturation = self.computeSaturationHist(img_hsv, inner_patch, inner_gaussian_window)
 
 			inner_hue_density = np.zeros(self.HISTBINNUM)
 			for i in range(0, self.HISTBINNUM):
 				inner_hue_density[i] = inner_hue[i] + inner_hue[((i+1)%self.HISTBINNUM)]
 			max_hue_bin = np.argmax(inner_hue_density)
+
 			if(inner_hue_density[max_hue_bin] < self.HUEFRACTION * np.sum(inner_hue)):
 				continue
 
@@ -442,6 +445,8 @@ class FeatureCentreParadigm(Feature):
 
 			# plotStatistics.plotOneGivenHist("", "filtered_border_hue", filtered_border_hue, save = False, show = True)
 			# plotStatistics.plotOneGivenHist("", "border_hue", border_hue, save = False, show = True)
+
+			print "border targetted hue fraction out of entire border hue:", np.sum(filtered_border_hue)/ np.sum(border_hue)
 
 			if (np.sum(filtered_border_hue)/ np.sum(border_hue) > self.SATURATIONFRACTION_INVERSE):
 				continue
