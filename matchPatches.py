@@ -1293,9 +1293,15 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 def populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_truth_folder_suffix, \
 	tight_criteria = "intersection", save = False, show = True):
 	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
-	ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
+	# testset_prefix= "testset_flower"
+
+	ALL_SCENE_SETS = range(1,21)
+	testset_flower_ids = range(1,21)
+	incoming_test_ids = range(1,21)
+	testset_prefix= "testset_orchid"
 
 	for i in range(0, len(incoming_test_ids)):
 		num_location_matches_arr = [] # arr of location matches
@@ -1305,18 +1311,20 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_
 		for j in range(0, len(testset_flower_ids)):
 			num_correct_matches, num_location_matches = checkTestLabelingNumberMatches(\
 				"images", \
-				"testset_flower{i}".format(i = incoming_test_ids[i]), \
-				"testset_flower{j}".format(j = testset_flower_ids[j]), "test2.jpg", "test3.jpg", \
+				"{testset_prefix}{i}".format(testset_prefix = testset_prefix, i = incoming_test_ids[i]), \
+				"{testset_prefix}{j}".format(testset_prefix = testset_prefix, j = testset_flower_ids[j]), "test2.jpg", "test3.jpg", \
 				folder_suffix, \
 				ground_truth_folder_suffix, \
 				upperPath = "testLabeling", \
 				tight_criteria = tight_criteria)
 			num_correct_matches_arr.append(num_correct_matches)
 			num_location_matches_arr.append(num_location_matches)
-			testset_names.append("testset_flower{testset_count}".format(\
+			testset_names.append("{testset_prefix}{testset_count}".format(\
+				testset_prefix = testset_prefix,
 				testset_count = ALL_SCENE_SETS.index(testset_flower_ids[j]) + 1))
 
-		test_image_name = "testset_flower{test_image_index}".format(\
+		test_image_name = "{testset_prefix}{test_image_index}".format(\
+			testset_prefix = testset_prefix,
 			test_image_index = ALL_SCENE_SETS.index(incoming_test_ids[i]) + 1)
 		title = "Test incoming image from scene {scene}".format(\
 			scene = test_image_name)
@@ -1350,29 +1358,36 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_
 
 
 def main():
-	upperPath = raw_input("please input upperPath for saving the results:")
-	folder_suffix = raw_input("please input folder_suffix:")
-	test_folder_name = raw_input("please input test_folder_name which contains the images:")
+	choice = raw_input("Please select from the following: \n1. run one time full algorithm \n2. aftermatching pruning\n")
+	if (int(choice) == 1):
+		upperPath = raw_input("please input upperPath for saving the results:")
+		folder_suffix = raw_input("please input folder_suffix:")
+		test_folder_name = raw_input("please input test_folder_name which contains the images:")
 
-	"""Necessary step to initialise the features constructed"""
-	utils.loadGeneratedFeatureParadigm()
-	
-	"""Test full automatic algorithm"""
-	findDistinguishablePatchesAndExecuteMatching("images", test_folder_name , "test1.jpg", "test3.jpg", \
-		folder_suffix, upperPath = upperPath, initialize_features = False)
-	# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
-		# "test2.jpg", "test3.jpg", \
-		# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
-	# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
-	# "test2.jpg", "test3.jpg", folder_suffix, upperPath = "testLabeling", initialize_features = False)
-	
-	"""After Matching Statistics/Pruning"""
-	# folder_suffix = raw_input("please input folder_suffix used by previously matching from two testfolders:")
-	# ground_truth_folder_suffix = raw_input("please input folder_suffix used by previously image labelling database construction:")
-	# populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_truth_folder_suffix,\
-	 # tight_criteria = "intersection", save = True, show = False)
-
-	# mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
+		"""Necessary step to initialise the features constructed"""
+		utils.loadGeneratedFeatureParadigm()
+		
+		"""Test full automatic algorithm"""
+		findDistinguishablePatchesAndExecuteMatching("images", test_folder_name , "test1.jpg", "test3.jpg", \
+			folder_suffix, upperPath = upperPath, initialize_features = False)
+		# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
+			# "test2.jpg", "test3.jpg", \
+			# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
+		# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
+			# "test2.jpg", "test3.jpg", fpolder_suffix, upperPath = "testLabeling", initialize_features = False)
+	else:
+		"""After Matching Statistics/Pruning"""
+		# folder_suffix = raw_input("please input folder_suffix used by previously matching from two testfolders:")
+		# ground_truth_folder_suffix = raw_input("please input folder_suffix used by previously image labelling database construction:")
+		plot_folder_name = "orchid"
+		folder_suffix = "_integralImageHS_descriptor_based_point_01_Harris_from_two_folder_high_response_only_normalizedJS"
+		ground_truth_folder_suffix = "_integralImageHS_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
+		populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_truth_folder_suffix,\
+		 tight_criteria = "intersection", save = True, show = False)
+		
+		# ###MANNUAL PRUNING INTEGRAL IMAGE ORCHIDS###
+		# folder_suffix = "_integralImageHS_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
+		# mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
 
 	return
 
