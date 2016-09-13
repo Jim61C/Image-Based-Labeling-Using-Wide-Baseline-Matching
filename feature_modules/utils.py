@@ -119,21 +119,5 @@ def isGoodMatch(match_found, ground_truth, patch_neighbour_hood = 10):
 
 	return False
 
-# def isGoodMatch(match_found, ground_truth, patch_neighbour_hood = 10):
-# 	# dist_thresh = 10
-# 	dist_thresh = math.sqrt(2) * (match_found.size + ground_truth.size)/2
-# 	dx = match_found.x - ground_truth.x
-# 	dy = match_found.y - ground_truth.y
-
-# 	if (np.linalg.norm([dx, dy], 2) < dist_thresh):
-# 		return True
-# 	if (ground_truth.x <= match_found.x + match_found.size /2 + patch_neighbour_hood and \
-# 		ground_truth.x >= match_found.x - match_found.size/2  - patch_neighbour_hood and \
-# 		ground_truth.y <= match_found.y + match_found.size/2 + patch_neighbour_hood and \
-# 		ground_truth.y >= match_found.y - match_found.size/2 - patch_neighbour_hood):
-# 		return True
-
-# 	return False
-
 
 
