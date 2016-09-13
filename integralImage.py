@@ -16,7 +16,7 @@ import scipy.spatial.distance as DIST
 
 class IntegralImage():
 	"""
-	Class for integral images, including HS integral image and HOG integral image
+	Class for integral images, including HS integral image and HOG integral image (HOG integral image yet to be implemented)
 	For roi: img[i:i+len, j:j+len], corresponding feature is found by 
 	integral_img_feature[i+len-1][j+len-1] - integral_img_feature[i-1][j+len-1] - integral_img_feature[i+len-1][j-1] + integral_img_feature[i-1][j-1]
 	"""
