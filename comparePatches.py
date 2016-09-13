@@ -55,12 +55,6 @@ HOG_8BIN_C = np.array(
  [ 3,  4,  5,  4,  3,  2,  1,  2,],
  [ 2,  3,  4,  5,  4,  3,  2,  1,]]).astype(np.float)
 
-WEIGHTS_DICT = {
-'RGB': 0.0,
-'HSV': 0.7,
-'CORNER':0.3,
-'HOG':0.0
-}
 
 # FEATURES = [utils.CENTRE_YELLOW_FEATURE_ID]
 # FEATURES = [utils.BORDER_GREEN_FEATURE_ID]
@@ -676,22 +670,6 @@ class Patch:
 		else:			
 			normalizer = maxResponse
 			self.cornerResponseScore = float(cornerResponse[self.x][self.y])/normalizer
-	
-	def setOverallScore(self):
-		# if(self.cornerResponseScore > 0.01):
-		# 	print "at (", self.x, ",", self.y,")"
-		# 	print "self.RGBScore:", self.RGBScore
-		# 	print "self.cornerResponseScore:", self.cornerResponseScore, "\n"
-		overall_score = 0.0
-		if(WEIGHTS_DICT['RGB'] != 0 and self.RGBScore != None):
-			overall_score += self.RGBScore * WEIGHTS_DICT['RGB']
-		if(WEIGHTS_DICT['HSV'] != 0 and self.HSVScore != None):
-			overall_score += self.HSVScore * WEIGHTS_DICT['HSV']
-		if(WEIGHTS_DICT['CORNER'] != 0 and self.cornerResponseScore != None):
-			overall_score += self.cornerResponseScore * WEIGHTS_DICT['CORNER']
-		if(WEIGHTS_DICT['HOG'] != 0 and self.HOGScore != None):
-			overall_score += self.HOGScore * WEIGHTS_DICT['HOG']
-		self.overallScore = overall_score
 
 # get a new gaussian scale based on level and scale factor
 def getGaussianScale(originalScale, factor, level):
