@@ -103,9 +103,10 @@ def main():
 	utils.loadGeneratedFeatureParadigm()
 	image_db = "images"
 
+	num_orchid_tests = 20
+
 	"""driver_full_algorithm"""
 	test_folder_args = []
-	num_orchid_tests = 20
 	for i in range (1, num_orchid_tests + 1):
 		"""For full algo from single folder"""
 		test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
@@ -121,7 +122,6 @@ def main():
 	testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of same scene)
 	"""
 	test_folder_args = []
-	num_orchid_tests = 20
 	for i in range (1, num_orchid_tests + 1):
 		"""For full algo from single folder"""
 		# test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
@@ -140,7 +140,6 @@ def main():
 	testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of different scene)
 	"""
 	test_folder_args = []
-	num_orchid_tests = 20
 	for i in range (1, num_orchid_tests + 1):
 		for j in range(1, num_orchid_tests + 1):
 			if (i != j):
