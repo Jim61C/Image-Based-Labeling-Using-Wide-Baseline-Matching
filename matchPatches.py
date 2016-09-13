@@ -1292,15 +1292,16 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 
 def populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_truth_folder_suffix, \
 	tight_criteria = "intersection", save = False, show = True):
-	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
-	# ALL_SCENE_SETS = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	# testset_flower_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	# incoming_test_ids = [2, 3, 5, 7, 9, 10, 12, 13, 19, 23]
-	# testset_prefix= "testset_flower"
+	"""
+	folder_suffix: folder_suffix used by previously matching from two testfolders (testing image phase)
+	ground_truth_folder_suffix: folder_suffix used by previously image database construction (database contruction phase)
+	"""
 
-	ALL_SCENE_SETS = range(1,21)
-	testset_flower_ids = range(1,21)
-	incoming_test_ids = range(1,21)
+	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
+	num_orchid_tests = 3
+	ALL_SCENE_SETS = range(1, num_orchid_tests + 1)
+	testset_flower_ids = range(1, num_orchid_tests + 1)
+	incoming_test_ids = range(1, num_orchid_tests + 1)
 	testset_prefix= "testset_orchid"
 
 	for i in range(0, len(incoming_test_ids)):
@@ -1358,7 +1359,7 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_
 
 
 def main():
-	choice = raw_input("Please select from the following: \n1. run one time full algorithm \n2. aftermatching pruning\n")
+	choice = raw_input("Please select from the following: \n1. run one time full algorithm \n2. aftermatching pruning\n3. check test images labeling number of matches\n")
 	if (int(choice) == 1):
 		upperPath = raw_input("please input upperPath for saving the results:")
 		folder_suffix = raw_input("please input folder_suffix:")
@@ -1370,13 +1371,14 @@ def main():
 		"""Test full automatic algorithm"""
 		findDistinguishablePatchesAndExecuteMatching("images", test_folder_name , "test1.jpg", "test3.jpg", \
 			folder_suffix, upperPath = upperPath, initialize_features = False)
-		# findDistinguishablePatchesAndExecuteMatchingFromTwoFolders("images", "testset_flower2", "testset_flower2", \
-			# "test2.jpg", "test3.jpg", \
-			# "_descriptor_based", upperPath = "testLabeling", initialize_features = False)
-		# executeMatchingGivenDinstinguishablePatchesFromTwoFolders("images", "testset_flower2", "testset_flower3", \
-			# "test2.jpg", "test3.jpg", fpolder_suffix, upperPath = "testLabeling", initialize_features = False)
+
+	elif (int(choice) == 2):
+		"""MANNUAL PRUNING INTEGRAL IMAGE ORCHIDS"""
+		folder_suffix = "_integralImageHS_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
+		mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
+
 	else:
-		"""After Matching Statistics/Pruning"""
+		"""After Test Image Matching Statistics"""
 		# folder_suffix = raw_input("please input folder_suffix used by previously matching from two testfolders:")
 		# ground_truth_folder_suffix = raw_input("please input folder_suffix used by previously image labelling database construction:")
 		plot_folder_name = "orchid"
@@ -1384,10 +1386,6 @@ def main():
 		ground_truth_folder_suffix = "_integralImageHS_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
 		populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_truth_folder_suffix,\
 		 tight_criteria = "intersection", save = True, show = False)
-		
-		# ###MANNUAL PRUNING INTEGRAL IMAGE ORCHIDS###
-		# folder_suffix = "_integralImageHS_top20_unique_patches_descriptor_based_point_01_Harris_high_response_only_normalizedJS"
-		# mannalPruning("images", folder_suffix, upperPath = "testAlgo3")
 
 	return
 
