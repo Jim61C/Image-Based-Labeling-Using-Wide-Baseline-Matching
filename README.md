@@ -6,7 +6,10 @@ Application in an image labeling system
 Running the algorithm
 
 - clickGroundTruth.py
-  - Automatic Unique Feature Construction & Ground Truth Click
+
+  - Follow on screen insruction for Automatic Unique Feature Construction / Ground Truth Click
+  - 1. click for mannual groundTruth labelling
+  - 2. click for automatic feature construction
   - Constructed unique features will be saved in ./features_generated
   - click on the image for the patch to be processed/recorded
   - press 'u' for undo
@@ -16,24 +19,30 @@ Running the algorithm
   - Unique Feature Detection
 
 - matchPatches.py
-  - Unique Feature Matching & full algorithm starter
+  - Follow on screen menu for different option
+  - 1. Unique Feature Matching & full algorithm starter
+  - 2. Manual Pruning procedure for good image matches database contruction
+  - 3. Check testing image number of matches against different images in the database for labeling purpose
 
 - multiProcessTestDescriptor.py
   - Driver program for muti-process full algorithms
 
 Image Labeling Database Folder Structure Required:
 
-./images
-├── testset_flower1
+./{image_db}
+├── {testFolderName}
 │   ├── test1.jpg
 │   ├── test2.jpg
 │   └── test3.jpg
 ...
 
+- {image_db} is the folder located at the root level of the repository containing image folders of many scenes, for example, "./images" used in the current folder hierarchy
+- {testFolderName} is the folder containing the three images of three different view points, for example, "testset_orchid1"
 - test1.jpg and test3.jpg are the super wide baseline image sets used for construct the unique feature patches database for the scene
-- test2.jpg is the testing image of the scene
+- test2.jpg is the testing image of the scene (with a relatively shorter baseline)
 - Results will be placed in ./{upperPath}/GaussianWindowOnAWhole/{testFolderName}_{folderSuffix}/
-  - {upperPath} is the folder contained in the root folder,
-  - {testFolderName} is the testset name, for example, "testset_flower1"
+  - {upperPath} is a user specified folder located at the root level of the repository, default is "testAlgo3" for database construction and "testLabeling" for testing image matching against database images
+  - {testFolderName} is the testset name, for example, "testset_flower1", "testset_orchid1", etc
   - {folderSuffix} is the user specified suffix for marking purpose appended at the end of the folder storing the results.
   - These three string parameters will be asked for input in the starter in matchPatches.py
+  - These three string parameters are predefined in multiProcessTestDescriptor.py in a predefined routine for orchids testsets
