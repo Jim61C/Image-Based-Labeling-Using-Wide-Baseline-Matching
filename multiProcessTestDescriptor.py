@@ -103,19 +103,19 @@ def main():
 	utils.loadGeneratedFeatureParadigm()
 	image_db = "images"
 
-	num_orchid_tests = 20
+	num_orchid_tests = 3
 
 	"""driver_full_algorithm"""
-	test_folder_args = []
-	for i in range (1, num_orchid_tests + 1):
-		"""For full algo from single folder"""
-		test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
+	# test_folder_args = []
+	# for i in range (1, num_orchid_tests + 1):
+	# 	"""For full algo from single folder"""
+	# 	test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
 
 
-	pool = Pool(cpu_count())
-	pool.map(driver_full_algorithm, test_folder_args)
-	pool.close()
-	pool.join()
+	# pool = Pool(cpu_count())
+	# pool.map(driver_full_algorithm, test_folder_args)
+	# pool.close()
+	# pool.join()
 
 	"""
 	driver_full_algorithm from two folder: 

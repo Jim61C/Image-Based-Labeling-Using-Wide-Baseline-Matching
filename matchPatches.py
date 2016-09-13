@@ -17,41 +17,15 @@ FEATURE_WEIGHTING = {
 	# more features later
 }
 
-### For testset_illuminance1 ###
-# MANUAL_FEATURE_TO_USE = [
-# [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID], \
-# [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID], \
-# [utils.TOP_RIGHT_YELLOW_FEATURE_ID], \
-# [utils.TOP_LEFT_PURPLE_FEATURE_ID], \
-# [utils.SHARP_HOG_FEATURE_ID], \
-# [utils.DONUT_SHAPE_FEATURE_ID], \
-# [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
-# ]
-
-### For testset_rotation1 ###
-# MANUAL_FEATURE_TO_USE = [\
-# [utils.BORDER_GREEN_FEATURE_ID], \
-# [utils.CENTRE_YELLOW_FEATURE_ID]
-# ]
-
-### For testset7 ###
-# MANUAL_FEATURE_TO_USE = [ \
-# [utils.GENERATED_FEATURE_IDS[0]], \
-# [utils.GENERATED_FEATURE_IDS[1]], \
-# [utils.GENERATED_FEATURE_IDS[2]] \
-# ]
 MANUAL_FEATURE_TO_USE = []
 
 ALL_FEATURE_TO_COMPUTE = list(set([item for features in MANUAL_FEATURE_TO_USE for item in features]))
 
 
-# the lower the score (distance), the better;
 def getHSVHistOverAllDistance(patchToMatch, potentialPatch, metricFunc = comparePatches.earthMoverHatDistance):
-	# individualScores = np.zeros(len(patchToMatch.HSVHistArr))
-	# for j in range(0, len(patchToMatch.HSVHistArr)):
-	# 	oneHistScore = comparePatches.Jensen_Shannon_Divergence(patchToMatch.HSVHistArr[j], potentialPatch.HSVHistArr[j])
-	# 	individualScores[j] = oneHistScore
-	# return np.linalg.norm(individualScores, 2)
+	"""
+	the lower the score (distance), the better;
+	"""
 	return getHistArrl2Distance(patchToMatch.HSVHistArr, potentialPatch.HSVHistArr, metricFunc)
 
 def getHistArrl2Distance(histArr1, histArr2, metricFunc):
@@ -81,18 +55,16 @@ def getHSVSeperateHistAvgl2Distance(patchToMatch, potentialPatch, metricFunc):
 	# return np.linalg.norm([HueHistDist, SaturationHistDist, ValueHistDist], 2)
 	return np.linalg.norm([HueHistDist,SaturationHistDist], 2)
 
-# use the overall + 2*2 sub patch Jessen Divergence descriptor
-# patchToMatch: the original patch to match; 
-# matchPactches: list of patches (maybe of different size) as potential matcher; 
-# n: number of matches returned; 
-# histToUse: the histogram metric to use for comparison, HSV or RGB or ...
-# return: A list of size n, the best n matches out of the matchPatches given
-# default distance metric is Jensen_Shannon_Divergence since so far the best for seperate HS
 def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metricFunc = comparePatches.Jensen_Shannon_Divergence, useSeperateHSVHists = True):
 	"""
-	patchToMatch: the test patch
-	matchPatches: the array of potential good matches
+	use the overall + 2*2 sub patch Jessen Divergence descriptor
+	patchToMatch: the original patch to match; 
+	matchPactches: list of patches (maybe of different size) as potential good matches 
 	n: number of top matches to return, default is just return 1 best match
+	histToUse: the histogram metric to use for comparison, HSV or RGB or ...
+	return: A list of size n, the best n matches out of the matchPatches given
+	default distance metric is Jensen_Shannon_Divergence since so far the best for seperate HS	
+	useSeperateHSVHists: flag for indiacting whether use separate H, S, V histogram in computing distance
 	"""
 
 	"""HSV, HOG descriptor based"""
@@ -103,18 +75,6 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 		if(useSeperateHSVHists):
 			color_distances = getHSVSeperateOverAllDistances(patchToMatch, matchPatches, metricFunc)
 		else:
-			# color_distances = np.zeros(len(matchPatches))
-			# # Compute C for earthMoverHatDistance: size of matchPatches[i] might be different but the length of HSVhist is the same: 4096 for HSV or 256 for HS
-			# if(metric == "earthMoverHatDistance"):
-			# 	histLen = len(patchToMatch.HSVHist) # poll the length of the flattened HSVHist
-			# 	C = np.ones(shape = (histLen, histLen))
-			# 	rows = np.arange(0,histLen).reshape((histLen, 1))
-			# 	rows = np.repeat(rows, histLen, axis = 1)
-			# 	cols = np.arange(0, histLen).reshape((1,histLen))
-			# 	cols = np.repeat(cols, histLen, axis = 0)
-			# 	C = C + abs(rows - cols)
-
-			# Compute color_distances[i]
 			for i in range(0, len(color_distances)):
 				if(histToUse == "RGB"):
 					individualScores = np.zeros(len(patchToMatch.RGBHistArr))
