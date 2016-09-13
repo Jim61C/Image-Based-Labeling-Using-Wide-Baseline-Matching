@@ -123,8 +123,6 @@ def main():
 	"""
 	test_folder_args = []
 	for i in range (1, num_orchid_tests + 1):
-		"""For full algo from single folder"""
-		# test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
 		"""For full algo from two folder"""
 		test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{i}".format(i = i), \
 			"test2.jpg", "test3.jpg", image_db))
