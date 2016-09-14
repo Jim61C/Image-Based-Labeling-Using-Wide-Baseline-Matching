@@ -29,6 +29,11 @@ def getHSVHistOverAllDistance(patchToMatch, potentialPatch, metricFunc = compare
 	return getHistArrl2Distance(patchToMatch.HSVHistArr, potentialPatch.HSVHistArr, metricFunc)
 
 def getHistArrl2Distance(histArr1, histArr2, metricFunc):
+	"""
+	histArr1: array of histograms
+	histArr2: array of histograms
+	return the overall dissimilarty of these two arrays of histograms based on metricFunc and a Euclidean average on the array
+	"""
 	if(len(histArr1) != len(histArr2)): # if hist array not same size, do not consider for a patch match.
 		raise ValueError ("In getHistArrl2Distance, the passed in shape of two histograms should be the same, but passed in length of histArr1 is {i}, length of histArr2 is {j}".format(i = len(histArr1), j =  len(histArr2)))
 	individualScores = np.zeros(len(histArr1))
@@ -38,12 +43,21 @@ def getHistArrl2Distance(histArr1, histArr2, metricFunc):
 	return np.linalg.norm(individualScores, 2)
 
 def getHSVSeperateOverAllDistances(patchToMatch, matchPatches, metricFunc):
+	"""
+	patchToMatch: patch of interest
+	matchPactches: array of potential matches
+	return: an array of dissimilarty scores of patchToMatch against matchPactches
+	"""
 	scores = np.zeros(len(matchPatches))
 	for i in range(0, len(matchPatches)):
 		scores[i] = getHSVSeperateHistAvgl2Distance(patchToMatch, matchPatches[i], metricFunc)
 	return scores
 
 def getHSVSeperateHistAvgl2Distance(patchToMatch, potentialPatch, metricFunc):
+	"""
+	return: dissimilarty of patchToMatch and potentialPatch by comparing their H, S, V histograms
+	here, only, H, S histogram used as V is vulnerable to lighting/illumination changes
+	"""
 	if(metricFunc.__name__ == "earthMoverHatDistance"):
 		HueHistDist = getHistArrl2Distance(patchToMatch.HueHistArr, potentialPatch.HueHistArr, comparePatches.earthMoverHatDistanceForHue) # special distance function for HUE
 		SaturationHistDist = getHistArrl2Distance(patchToMatch.SaturationHistArr, potentialPatch.SaturationHistArr, metricFunc)
@@ -65,6 +79,7 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 	return: A list of size n, the best n matches out of the matchPatches given
 	default distance metric is Jensen_Shannon_Divergence since so far the best for seperate HS	
 	useSeperateHSVHists: flag for indiacting whether use separate H, S, V histogram in computing distance
+	Here, patches are compared using dissimilarty of specially designed HSV, HOG descriptor
 	"""
 
 	"""HSV, HOG descriptor based"""
@@ -141,6 +156,9 @@ def findBestMatches(patchToMatch, matchPatches, n = 1, histToUse = "HSV", metric
 
 
 def copyPatchesWithScale(matchPatches, scale, level, img):
+	"""
+	copy array of patches with specified scale change: scale * level (up or down)
+	"""
 	results = copy.deepcopy(matchPatches)
 	scaleChange = scale * level
 	# print scaleChange
@@ -152,6 +170,10 @@ def copyPatchesWithScale(matchPatches, scale, level, img):
 	return results
 
 def getGaussianScale(originalScale, factor, level):
+	"""
+	return: new gaussian scale (patch window size) by the specified factor and level (negative means scale down, positive means scale up)
+	here newScale is guaranteed to be odd number for simplicity
+	"""
 	if(level < 0):
 		newScale = int(originalScale / (factor ** abs(level)))
 		newScale = newScale - 1 if (newScale % 2 == 0)  else newScale
@@ -176,15 +198,19 @@ def adjustNewPatchSizeNewDimension(new_patch_x, new_patch_y, new_patch_size, new
 		new_patch_size = (new_dimension[1] - new_patch_y) * 2 - 1
 	return new_patch_size
 
-def testFindOnePatchMatch(patchToMatch, patchesArr, k = 1, metricFunc = comparePatches.Jensen_Shannon_Divergence): # k : number of best patches to extract for a sigma level (for one patch array)
+def findKPatchMatch(patchToMatch, patchesArr, k = 1, metricFunc = comparePatches.Jensen_Shannon_Divergence): # k : number of best patches to extract for a sigma level (for one patch array)
+	"""
+	patchToMatch: patch of interest
+	patchesArr: array of arry of patches, size is equal to gaussian level, each gaussian level correspond to one array of patches 
+	return: k best match on each gaussian level, in total top (k * number of gaussian level) best matches
+	"""
 	goodMatchesArr = []
 	for i in range(0, len(patchesArr)):		
-		goodMatches = findBestMatches(patchToMatch, patchesArr[i],k, "HSV", metricFunc)
+		goodMatches = findBestMatches(patchToMatch, patchesArr[i], k, "HSV", metricFunc)
 		goodMatchesArr.append(goodMatches)
 	overAllGoodMatches = [item for sublist in goodMatchesArr for item in sublist] # flatten the list of list -> list
-	print "In testFindOnePatchMatch: overAllGoodMatches len should be {i}:".format(i = k*len(patchesArr)), len(overAllGoodMatches)
+	print "In findKPatchMatch: overAllGoodMatches len should be {i}:".format(i = k*len(patchesArr)), len(overAllGoodMatches)
 	return findBestMatches(patchToMatch, overAllGoodMatches, k*len(patchesArr), "HSV", metricFunc)
-	# return findBestMatches(patchToMatch, overAllGoodMatches, k, "HSV", metricFunc = comparePatches.Jensen_Shannon_Divergence)
 
 def createFolder(upperPath, folderToSave, folderName, suffix):
 	"""
@@ -207,14 +233,29 @@ def createFolder(upperPath, folderToSave, folderName, suffix):
 		testFolder = folderName + suffix)
 
 def drawCombinedMatchView(thisImg, thisImgToMatch, thisTestPatches, thisListOfMatches, show = False):
-	# draw the combined match view at this level
+	"""
+	draw the combined match view at the given level of image pyramid
+	"""
 	thisMatchesFound = []
 	for j in range(0, len(thisListOfMatches)):
 		thisMatchesFound.append(thisListOfMatches[j][0]) # just append the best match
 	return comparePatches.drawMatchesOnImg(thisImg, thisImgToMatch, thisTestPatches, thisMatchesFound, show)
 
-def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch, imgToMatch_gray, sigma, \
+def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray, imgToMatch, imgToMatch_gray, sigma, \
 	testFolderName,  patchStep = 0.5, useGaussianWindow = True, initialize_features = True):
+	"""
+	testPatches: given array of patches of interest (unique patches)
+	img, img_gray: base image
+	imgToMatch, imgToMatch_gray: target image
+	sigma: base patch size
+	testFolderName: name of the testset, for logging purpose
+	patchStep: step used in patch extraction
+	useGaussianWindow: whether to apply a gaussian window for the desciprtor used
+	initialize_features: for found good match patches, whether initialise the feature objects for these patches 
+	(false for performance purpose using 3rd alternative of correspondence matching using specially designed HSV, HOG descriptor)
+	return: a list of [list of good matches] for each test patch
+	"""
+
 	"""Build image pyramid using opencv"""
 	level = 2
 	imgPyd = []
@@ -229,14 +270,6 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 		imgToMatch_down_sample = cv2.pyrDown(imgToMatch_down_sample)
 		imgPyd.append(np.copy(img_down_sample))
 		imgToMatchPyd.append(np.copy(imgToMatch_down_sample))
-
-	# for i in range(0, len(imgPyd)):
-	# 	print imgPyd[i].shape
-	# 	cv2.imshow("img pyd [{i}]".format(i = i), imgPyd[i])
-	# 	cv2.waitKey(0)
-	# 	print imgToMatchPyd[i].shape
-	# 	cv2.imshow("imgToMatch pyd [{i}]".format(i = i), imgToMatchPyd[i])
-	# 	cv2.waitKey(0)
 
 	"""propogateUp/propogateDown testPatches"""
 	testPatchesPyd = []
@@ -255,8 +288,6 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			thisLevelPatches.append(newPatch)
 		testPatchesPyd.append(thisLevelPatches)
 
-	# for i in range(0, len(testPatchesPyd)):
-	# 	comparePatches.drawPatchesOnImg(np.copy(imgPyd[i]), testPatchesPyd[i])
 	"""do the matching at top level and then repeat matching at lower pyramid level"""
 	matchesFound = None # a list of [list of matches] for each test patch
 	NUM_PATCH_SIZE_GAUSSIAN = 5 # number of different patch sizes used on top level of pyramid
@@ -278,7 +309,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 				sigma/(2**i), testFolderName, NUM_PATCH_SIZE_GAUSSIAN**(i+1), \
 				initialize_features = initialize_features) # each gaussian 125 best matches
 			matchesFound = thisListOfMatches
-			"""draw the combined match view to check at this level"""
+			# """draw the combined match view to check at this level"""
 			# drawCombinedMatchView(np.copy(thisImg), thisImgToMatch, thisTestPatches, matchesFound, True)
 			# for j in range(0, len(matchesFound)):
 				# comparePatches.drawPatchesOnImg(np.copy(thisImgToMatch), matchesFound[j], mark_sequence = True)
@@ -295,7 +326,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 							matchesFound[j][k].y*2,\
 							matchesFound[j][k].size*2 + 1, \
 							thisImg.shape), initialize_features = initialize_features)
-					# compute Histogram for new potential match patch
+					# compute Histogram for new potential match patch (used for the 1st alternative of correspondence matching using unique feature response based approach)
 					# for this_feature in ALL_FEATURE_TO_COMPUTE:
 					# 	newPatch.getFeatureObject(this_feature).computeFeature(thisImgToMatch)
 					# 	newPatch.getFeatureObject(this_feature).computeScore()
@@ -326,7 +357,7 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 			del matchesFound[:]
 			matchesFound = []
 			matchesFound = rematches
-			# draw the combined match view to check at this level
+			# """draw the combined match view to check at this level"""
 			# drawCombinedMatchView(thisImg, thisImgToMatch, thisTestPatches, matchesFound, True)
 
 	"""------For verification at the end of the matching algorithm------"""
@@ -346,6 +377,13 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMat
 	Top level of the pyramid, patch to patch comparison
 	5 level of gaussian scales
 	gaussianScaleFactor = 1.2
+	sigma: base patch size
+	testFolderName: name of the testset, for logging purpose
+	patchStep: step used in patch extraction
+	useGaussianWindow: whether to apply a gaussian window for the desciprtor used
+	metricFunc: metric function used for computing dissimilarty between patches
+	initialize_features: for found good match patches, whether initialise the feature objects for these patches 
+	(false for performance purpose using 3rd alternative of correspondence matching using specially designed HSV, HOG descriptor)
 	"""
 	#Extract match patches
 	matchPatches_origin = comparePatches.extractPatches(imgToMatch, sigma, patchStep, initialize_features = initialize_features)
@@ -396,7 +434,7 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMat
 			this_test_patch.computeHSVHistogram(imgHSV, useGaussianWindow)
 		if(FEATURE_WEIGHTING['HOG'] != 0):
 			this_test_patch.computeHOG(img_gray, useGaussianWindow)
-		bestMatches = testFindOnePatchMatch(this_test_patch, patchesArr, k, metricFunc) # will return the best matches (in an array) of the testPatch1
+		bestMatches = findKPatchMatch(this_test_patch, patchesArr, k, metricFunc) # will return the best matches (in an array) of the testPatch1
 		testPatchMatches.append(bestMatches)
 
 	return testPatchMatches # return a list of [list of good matches for one test patch]
@@ -404,13 +442,23 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMat
 
 
 def testDescriptorPerformance(image_db, folderName, img, imgToMatch, testPatches, imgName,imgToMatchName,folderToSave, \
-	useGaussianWindow, suffix = "", sigma = 39, upperPath = "testPatchHSV", initialize_features = True):
+	useGaussianWindow, suffix = "", sigma = 39, upperPath = "testMatches", initialize_features = True):
 	"""
+	image_db: image database name ('./images' by default)
+	folderName: name of the testset
 	testDescriptorPerformance: given testPatches, run the descriptor matching process;
+	folderToSave: 'GaussianWindowOnAWhole' by default
+	useGaussianWindow: whether use gaussian window for the descriptor
+	suffix: string appended at the end of folderName to distinguish different run cases
+	sigma: 39
+	upperPath: foldername at the root level for storing results
+	initialize_features: for found good match patches, whether initialise the feature objects for these patches 
+	(false for performance purpose using 3rd alternative of correspondence matching using specially designed HSV, HOG descriptor)
+
+	other predefined parameters:
 	number of gaussian: 5 (2 level down, 2 level up)
 	gaussianScaleFactor: 1.2
 	gaussian window weighting on the whole patch: gaussian sigma = window length / 6
-	sigma: 39
 	patch search step: 0.5 (shift by 1/4 patch length)
 	"""
 	print "ALL_FEATURE_TO_COMPUTE:", ALL_FEATURE_TO_COMPUTE
@@ -477,6 +525,10 @@ def testDescriptorPerformance(image_db, folderName, img, imgToMatch, testPatches
 	return testPatchMatches
 
 def checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, path, saveHist = False, displayHist = True):
+	"""
+	toggle the actual histogram for the matches found and ground truth
+	used to debug and examine the performance of the descriptors designed
+	"""
 	print "path:", path
 	if(not os.path.isdir(path)):
 		os.makedirs(path)
@@ -569,12 +621,6 @@ def loadPatchesMatchesGroundtruth(upperPath, test_folder_name, folder_suffix, fi
 	return testPatches, matchesFound, groundTruth
 
 
-def generateStatistics(image_db, upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
-	"""
-	TODO: generateStatistics will return the recall, precision and # matches for one pair of image
-	"""
-	return
-
 def generateHists(image_db, upperPath, test_folder_name, folder_suffix, file1 = "test1", file2 = "test2", sigma = 39):
 	"""
 	Generates the histogram comparison of different features and store in 'hists/' folder under 'test_folder_name+folder_suffix'
@@ -592,13 +638,22 @@ def generateHists(image_db, upperPath, test_folder_name, folder_suffix, file1 = 
 	return
 
 def compute_sigma(img):
+	"""
+	automatic determination of an appropriate patch size from the dimension of the image
+	"""
 	sigma = img.shape[0]/20
 	sigma = sigma + 1 if (sigma % 2 == 0) else sigma # size of patch needs to be odd number
 	return sigma
 
-def findAndSaveDistinguishablePatches(image_db, test_folder_name, img, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
+def findAndSaveDistinguishablePatches(image_db, test_folder_name, img, test_img_name, folder_suffix, sigma = 39, upperPath = "testMatches"):
 	"""
+	image_db: folder for the image database
+	test_folder_name: name for the testset
+	img: input image in a (m,n,3) dimension nparray
 	test_img_name: 'test1.jpg' (Default)
+	folder_suffix: string appended at the end of folderName to distinguish different run cases
+	sigma: patch size, default is 39 for image with dimension 1024*768
+	upperPath: foldername at the root level for storing results
 	"""
 	HSVthresh = 0.5
 	HOGthresh = 0.1
@@ -699,6 +754,7 @@ def findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(image_db, test_fo
 	test1_img_name, test2_img_name, \
 	folder_suffix, upperPath = "testMatches", initialize_features = True):
 	"""
+	similar to findDistinguishablePatchesAndExecuteMatching, but now the two images are from different image testsets
 	test1_img_name(including file extension) is from test_folder_name1
 	test2_img_name(including file extension) is from test_folder_name2
 	"""
@@ -753,6 +809,7 @@ def findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(image_db, test_fo
 def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test1_img_name, test2_img_name, \
 	folder_suffix, upperPath = "testMatches", initialize_features = True):
 	"""
+	similar to findDistinguishablePatchesAndExecuteMatching, but skipped unique feature patch detection phase since they are already detected and stored
 	image_db: image database folder to read source images from;
 	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
 	test_folder_name: name of the test folder containing images of different view points;
@@ -807,8 +864,9 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 			show = False))
 
 def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_folder_name, test2_folder_name, \
-	test1_img_name, test2_img_name, folder_suffix, upperPath = "testLabeling", initialize_features = True):
+	test1_img_name, test2_img_name, folder_suffix, upperPath = "testMatches", initialize_features = True):
 	"""
+	similar to findDistinguishablePatchesAndExecuteMatchingFromTwoFolders, but skipped unique feature patch detection phase since they are already detected and stored
 	image_db: image database folder to read source images from;
 	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
 	test1_folder_name: the folder containing test1_img_name, and there are already distinguishablePatches 
@@ -897,11 +955,18 @@ def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_fo
 			matchesFound, \
 			show = False))
 
-"""
-TODO: complete populateFeatureMatchingStatistics after the Image DB is found
-"""
 def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name, test2_img_name, \
-	folder_suffix, upperPath = "testPatchHSV"):
+	folder_suffix, upperPath = "testMatches"):
+	"""
+	after matching statistics checking and combined view plotting, correct match will be marked in red, wrong match will be marked as blue
+
+	image_db: image database folder to read source images from;
+	upperPath: root folder for saving the detection/matching results (Default: 'testMatches/'); sub-root folder default: 'GaussianWindowOnAWhole/'
+	test_folder_name: name of the test folder containing images of different view points;
+	folder_suffix: suffix to the folder to save specifying what kind of feature algorithm used;
+	test1_img_name: 'test1.jpg'(Default)
+	test2_img_name: 'test2.jpg'(Default)
+	"""
 	sigma = 39
 	level = 5
 	testPatches = []
@@ -979,7 +1044,7 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 	cv2.imwrite(createFolder(upperPath, "GaussianWindowOnAWhole", test_folder_name, folder_suffix)+"/_combined_scene_match_distinguished.jpg",\
 		distinguished_combined_scene_match)
 	
-	raise ValueError ("purpose stop for drawing using different color")
+	raise ValueError ("purpose stop for drawing using different color") # comment off to continue to populate histogram plotting
 
 	# plot the statistics
 	checkHistogramOfTruthAndMatchesFound(testPatches, groundTruth, matchesFound, img, imgToMatch, \
@@ -989,7 +1054,10 @@ def populateFeatureMatchingStatistics(image_db, test_folder_name, test1_img_name
 			testFolder = test_folder_name +folder_suffix), True, True)
 
 
-def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
+def mannalPruning(image_db, folder_suffix, upperPath = "testMatches"):
+	"""
+	mannual prune procedure after the matching is completed for database image pairs (with super wide baseline)
+	"""
 	sigma = 39
 	level = 5
 	test_patches = []
@@ -1068,13 +1136,13 @@ def mannalPruning(image_db, folder_suffix, upperPath = "testPatchHSV"):
 	return	
 
 def checkActualMatchDistance(test_patch, match_found, img, img_to_match, metric_func = comparePatches.Jensen_Shannon_Divergence):
-	"""old descriptor checking HSV and HOG hists"""
+	"""checking HSV desciptor dissimilarty of given two patches (along with the images that they come from)"""
 	test_patch.computeHSVHistogram(cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
 	match_found.computeHSVHistogram(cv2.cvtColor(img_to_match.astype(np.float32), cv2.COLOR_BGR2HSV), True, True)
 	return getHSVSeperateHistAvgl2Distance(test_patch, match_found, metric_func)
 
 def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_name, test1_img_name, test2_img_name, \
-	folder_suffix, ground_truth_folder_suffix, upperPath = "testLabeling", tight_criteria = "intersection"):
+	folder_suffix, ground_truth_folder_suffix, upperPath = "testLabeling", tight_criteria = "intersection", ground_truth_upper_patch = "testAlgo3"):
 	"""
 	test1_folder_name: the testset containing incoming test image
 	test2_folder_name: the testset from the constrained database
@@ -1082,6 +1150,15 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	test2_img_name: image name of the imaged matched in the constrained database
 	folder_suffix: _descriptor_based_point_01_Harris_from_two_folder
 	tight_criteria: default is exactly the same set of unique features
+
+	parameters tuned:
+	MAX_MATCH_DISSIMILARITY_JENSEN_SHANNON_DIVERGENCE = 0.41
+	Correct match criteria:
+	1. Correct location match
+	2. Have unique features in common
+	3. Within imposed max-allowed descriptor dissimilarity
+
+	return: the number of matches between incoming test image and the image in the constrained database
 	"""
 	sigma = 39
 	level = 5
@@ -1148,7 +1225,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	# read groundTruth
 	listOfGroundTruth = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
 		"{upperPath}/{folderToSave}/{testFolder}/unique_patch_matches_pruned.csv".format(
-		upperPath = "testAlgo3",
+		upperPath = ground_truth_upper_patch,
 		folderToSave = "GaussianWindowOnAWhole", 
 		testFolder = test2_folder_name + ground_truth_folder_suffix
 		))
@@ -1159,7 +1236,7 @@ def checkTestLabelingNumberMatches(image_db, test1_folder_name, test2_folder_nam
 	min_dissimilarities = []
 	listOfOriginUniquePatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
 		"{upperPath}/{folderToSave}/{testFolder}/DistinguishablePatch_{testset}_test1_simga39_GaussianWindowOnAWhole.csv".format(
-		upperPath = "testAlgo3",
+		upperPath = ground_truth_upper_patch,
 		folderToSave = "GaussianWindowOnAWhole", 
 		testFolder = test2_folder_name + ground_truth_folder_suffix,
 		testset = test2_folder_name

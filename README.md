@@ -1,9 +1,37 @@
 # Unique Features For Image Labeling:
-A wide base line algorithm based on the concept of detecting unique features of the scene
-Application in an image labeling system
+- Author: Xing Yifan <xingyifan@u.nus.edu>
+- A wide base line algorithm based on the concept of detecting unique features of the scene 
+- Application in an image labeling system
 
 # Usage:
-Running the algorithm
+
+- Setup Module Requirements:
+  - Python
+  - Numpy
+  
+    ```
+    pip install numpy
+    ```
+  - Scipy
+  
+    ```
+    pip install scipy
+    ```
+  - [Scikit Learn](http://scikit-learn.org/stable/install.html)
+  
+    ```
+    pip install -U scikit-learn    
+    ```
+  - matplotlib
+  
+    ```
+    pip install matplotlib
+    ```
+  - earth mover distance package
+  
+    ```
+    pip install pyemd
+    ```
 
 - clickGroundTruth.py
 

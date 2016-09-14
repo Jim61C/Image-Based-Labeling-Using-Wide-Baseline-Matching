@@ -55,21 +55,6 @@ HOG_8BIN_C = np.array(
  [ 3,  4,  5,  4,  3,  2,  1,  2,],
  [ 2,  3,  4,  5,  4,  3,  2,  1,]]).astype(np.float)
 
-
-# FEATURES = [utils.CENTRE_YELLOW_FEATURE_ID]
-# FEATURES = [utils.BORDER_GREEN_FEATURE_ID]
-# FEATURES = [utils.SHARP_HOG_FEATURE_ID]
-# FEATURES = [utils.CORNERNESS_FEATURE_ID]
-# FEATURES = [utils.TOP_RIGHT_YELLOW_FEATURE_ID]
-# FEATURES = [utils.BOTTOM_RIGHT_GREEN_FEATURE_ID]
-# FEATURES = [utils.TOP_LEFT_PURPLE_FEATURE_ID]
-# FEATURES = [utils.BOTTOM_RIGHT_YELLOW_FEATURE_ID]
-# FEATURES = [utils.DONUT_SHAPE_FEATURE_ID, utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
-# FEATURES = [utils.BOTTOM_RIGHT_NEIGHBOUR_BLUE_FEATURE_ID]
-# FEATURES = [utils.DONUT_SHAPE_FEATURE_ID]
-# FEATURES = [utils.CENTRE_BLUE_FEATURE_ID]
-# FEATURES = [utils.GREEN_PATCH_BOTTOM_LEFT_BLUE_FEATURE_ID]
-# FEATURES = [utils.GENERATED_FEATURE_IDS[0]]
 FEATURES = []
 
 """
@@ -114,17 +99,6 @@ class Patch:
 
 		self.overallScore = None
 
-		# ### HOG Different Bin Features ###
-		# self.HOG_BIN1 = None
-		# self.HOG_BIN1Score = None
-		# self.HOG_BIN2 = None
-		# self.HOG_BIN2Score = None
-		# self.HOG_BIN3 = None
-		# self.HOG_BIN3Score = None
-		# self.HOG_BIN4 = None
-		# self.HOG_BIN4Score = None
-
-
 		### Array of Feature objects###
 		self.feature_arr = []
 		if (initialize_features):
@@ -155,14 +129,8 @@ class Patch:
 
 			# load the auto generated feature objects
 			for feature in utils.GENERATED_FEATURE_PARADIGMS:
-				"""TODO: try not to do deepcopy rather, do initialization"""
-				# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL_{name}".format(name = feature_obj_pkl), \
-				# this_generated_feature.FEATURE_MODEL, save = False, show = True)
 				this_generated_feature = copy.deepcopy(feature)
-				# print this_generated_feature.id
 				this_generated_feature.setPatch(self)
-				# print this_generated_feature.HISTBINNUM
-				# print this_generated_feature.patch.x,  this_generated_feature.patch.y, this_generated_feature.patch.size
 				self.feature_arr.append(this_generated_feature)
 
 
@@ -181,8 +149,7 @@ class Patch:
 		self.gaus_scale_to_inner_Uncirculated_HOG_dict = {}
 
 		### Feature auxiliary from integral image ###
-		"""TODO: get rid of outer_hs_2d: since outer_hs_2d is the same as hs_2d_arr[0]"""
-		self.outer_hs_2d = None # not normalized
+		self.outer_hs_2d = None # full patch hs 2d array, not normalized
 		self.scale_to_inner_hs_2d_dict = {} # not normalized
 
 		###For Algo3, a set of features to use for matching###
@@ -219,14 +186,8 @@ class Patch:
 
 		# load the auto generated feature objects
 		for feature in utils.GENERATED_FEATURE_PARADIGMS:
-			"""TODO: try not to do deepcopy rather, do initialization"""
-			# plotStatistics.plotOneGivenHist("", "FEATURE_MODEL_{name}".format(name = feature_obj_pkl), \
-			# this_generated_feature.FEATURE_MODEL, save = False, show = True)
 			this_generated_feature = copy.deepcopy(feature)
-			# print this_generated_feature.id
 			this_generated_feature.setPatch(self)
-			# print this_generated_feature.HISTBINNUM
-			# print this_generated_feature.patch.x,  this_generated_feature.patch.y, this_generated_feature.patch.size
 			self.feature_arr.append(this_generated_feature)
 
 	def setIsLowResponse(self, is_low_response):
@@ -243,9 +204,6 @@ class Patch:
 			if (obj.id == id):
 				return obj
 		return None # if not found
-
-	# def setHOG_BINScores(self, i, score):
-	# 	setattr(self, "HOG_BIN{i}Score".format(i = i), score)
 
 	def setFeatureWeights(self, weights_np_array):
 		self.feature_weights = weights_np_array
@@ -290,12 +248,6 @@ class Patch:
 	def setHOGScore(self, score):
 		self.HOGScore = score
 
-	# ### HOG_BINs feaures ###
-	# def computeHOG_BINs(self, img, i, useGaussianSmoothing = True):
-	# 	if(self.HOG_Uncirculated is None):
-	# 		self.computeHOG(img, useGaussianSmoothing)
-	# 	setattr(self, "HOG_BIN{i}".format(i = i), self.HOG_Uncirculated[(i-1)*9:i*9])
-
 	def computeHOG(self, img, useGaussianSmoothing = True, given_gaussian_window = None):
 		"""
 		HOG with orietation assignment and circular histogram
@@ -321,21 +273,17 @@ class Patch:
 		fullPatchHOG = self.computeSinglePatchHOG(img,gaussianWindow)
 		self.HOG = fullPatchHOG
 
-		# self.computeSubPatchHOG(img, gaussianWindow)
-		# self.HOGArr.append(fullPatchHOG)
 		self.computeSubCirclePatchHOG(img, gaussianWindow) # computes the 4 sub circle's HOG, from small to big
 		self.HOGArr.append(fullPatchHOG) # append the full patch HOG
 		return
 	def computeSubCirclePatchHOG(self, img, gaussianWindow):
 		"""
-		From testing result, sub circle HOG is having a similar performance to SubAndSuperHOG with a slightly poorer performance
+		From testing result, sub circle HOG is having a similar performance to SubAndSuperHOG but relatively faster computation
 		"""
-		# numberOfSubCircles = 2
 		numberOfSubCircles = 4
 		scale = 1.2
-		# subCirclePatchs = []
-		# for i in xrange(-numberOfSubCircles, numberOfSubCircles + 1, 1):
-		# Do just sub patches, no super patches
+		
+		"""Do just sub patches, no super patches"""
 		for i in xrange(-numberOfSubCircles, 0, 1):
 			newSize = getGaussianScale(self.size, scale, i)
 			if(self.x - newSize/2 >= 0 and \
@@ -343,7 +291,6 @@ class Patch:
 				self.y - newSize/2 >=0 and \
 				self.y + newSize/2 < img.shape[1]):
 				newSubCirclePatch = Patch(self.x, self.y, newSize)
-				# print "new size{i}:".format(i = i), newSubCirclePatch.size
 				newSubGaussianWindow = gauss_kernels(newSubCirclePatch.size, newSubCirclePatch.size/6.0)
 				self.HOGArr.append(newSubCirclePatch.computeSinglePatchHOG(img, newSubGaussianWindow))
 			else:
@@ -414,19 +361,16 @@ class Patch:
 		for i in range(0, len(hist)):
 			hist[i] = np.sum(hist_360_bin[i*scale : i*scale + scale])
 		return np.array(hist)
-		# return normalize(np.array(hist), norm='l1')[0] 
 
-	# TODO: refactor, make a computeColorHistogram as interface to outside, so that we can change the implementation inside willfully
+	# TODO: refactor, make a 'computeColorHistogram' as interface to outside, so that we can change the implementation inside willfully
 	def computeHSVHistogram(self, img_hsv, useGaussianSmoothing = True, computeSeperateHists = False):
-		# self.computeFlattenedHSVHistogram(img, useGaussianSmoothing, computeSeperateHists)
 		self.computeSeperateHSVHistogram(img_hsv, useGaussianSmoothing)
-
-	# compute the seperat H, S, V histograms overall and on the sub patches
-	# self.HueHistArr, self.SaturationHistArr, self.ValueHistArr will be of size 5 each
-	# TODO: decouple computeSeperateHSVHistogram from computeFlattenedHSVHistogram
+	
 	def computeSeperateHSVHistogram(self, img_hsv, useGaussianSmoothing = True):
 		"""
-		Here compute H,S,V channel, but V channel is left out during matching for illuminance invariance
+		compute the seperat H, S, V histograms overall and on the sub patches
+		self.HueHistArr, self.SaturationHistArr, self.ValueHistArr will be of size 5 each
+		Here compute H,S,V channel, but V channel is left out during correspondence matching later for illuminance invariance
 		"""
 		# if already computed during feature detection phase
 		if(len(self.HueHistArr) == 5 and len(self.SaturationHistArr) == 5):
@@ -470,7 +414,6 @@ class Patch:
 		self.HSVHist = fullPatchHSVHist
 		self.HSVHistArr.append(fullPatchHSVHist)
 		top_left_sub_patch, top_right_sub_patch, bottom_left_sub_patch, bottom_right_sub_patch, subHistArr = self.computeSubPatchColorHistogram(img, "HSV", gaussianWindow)
-		# print "HSV subHistArr.len:", len(subHistArr)
 		self.HSVHistArr = self.HSVHistArr + subHistArr
 		return
 
@@ -501,26 +444,17 @@ class Patch:
 		return H, S, V 
 
 	# note that img[-2] will wrap around to be img[len-2]
-	def computeSinglePatchHSVHistogram(self, img_hsv, gaussianWindow = None, computeSeperateHists = False, parentPatch = None):
-		# If compute Gaussian Window on the sub patches as well:
-		# gaussianSigma = self.size/6.0 # six sigma rule of thumb
-		# gaussianWindow = gauss_kernels(self.size, gaussianSigma)
+	def computeSinglePatchHSVHistogram(self, img_hsv, gaussianWindow = None, computeSeperateHists = True, parentPatch = None):
+		"""
+		compute the single H, S, V separate histogram for this patch with regard to img_hsv
+		if there is a parent patch, set its attributes as well
+		"""
 
 		ref_x = self.x - self.size/2
 		ref_y = self.y - self.size/2
-		# print "gaussianWindow:", gaussianWindow.shape
-
 
 		bin_number = 16
-		# hist = np.zeros(bin_number**3)
-		"""
-		16*16 = 256 flattened HS histogram
-		"""
-		# hist = np.zeros(bin_number**2) # try 256 HS only and see how
-		"""
-		Check if need to computeSeperateHists of H, S, V channel
-		"""
-		# if(computeSeperateHists):
+		
 		HueHist = np.zeros(bin_number)
 		SaturationHist = np.zeros(bin_number)
 		ValueHist = np.zeros(bin_number)
@@ -531,47 +465,25 @@ class Patch:
 
 		for i in range(self.x - self.size/2, self.x + self.size/2 + 1):
 			for j in range(self.y - self.size/2, self.y + self.size/2 + 1):
-				# B = img[i][j][0]
-				# G = img[i][j][1]
-				# R = img[i][j][2]
-				
-				# H, S, V = self.RGBToHSV(R, G, B)
-				# print "H,S,V:", H, S, V
+			
 				h_bin = bin_number -1 if (img_hsv[i][j][0] == 360.0) else int(math.floor(img_hsv[i][j][0]/H_bin_size))
 				s_bin = bin_number -1 if (img_hsv[i][j][1] == 1.0) else int(math.floor(img_hsv[i][j][1]/S_bin_size))
 				v_bin = bin_number -1 if (img_hsv[i][j][2] == 255.0) else int(math.floor(img_hsv[i][j][2]/V_bin_size))
-				# print "h_bin, s_bin,v_bin:", h_bin,s_bin,v_bin, "\n"
-				# if(gaussianWindow is None):
-				# 	# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += 1
-				# 	hist[h_bin * bin_number + s_bin ] += 1
-				# else:
-				# 	# hist[h_bin * bin_number**2 + s_bin * bin_number + v_bin] += gaussianWindow[i - ref_x][j - ref_y]
-				# 	hist[h_bin * bin_number + s_bin ] += gaussianWindow[i - ref_x][j - ref_y]
-
-				# if(computeSeperateHists):
-				# 	if(gaussianWindow is None):
-				# 		HueHist[h_bin] += 1
-				# 		SaturationHist[s_bin] += 1
-				# 		ValueHist[v_bin] += 1
-				# 	else:
+				
 				HueHist[h_bin] += gaussianWindow[i - ref_x][j - ref_y]
 				SaturationHist[s_bin] += gaussianWindow[i - ref_x][j - ref_y]
 				ValueHist[v_bin] += gaussianWindow[i - ref_x][j - ref_y]
 
-				# print "smoothed weight added for pixel {i}_{j}".format(i = i, j = j), gaussianWindow[i - ref_x][j - ref_y]
-
-		# print "sum of hist should be 1 (if individual gaussianWindow is applied for each subwidow as well):", np.sum(hist)
-		# if(computeSeperateHists and parentPatch != None):
+	
 		if(parentPatch != None):
 			parentPatch.HueHistArr.append(HueHist)
 			parentPatch.SaturationHistArr.append(SaturationHist)
 			parentPatch.ValueHistArr.append(ValueHist)
-		# elif(computeSeperateHists):
+
 		self.HueHistArr.append(HueHist)
 		self.SaturationHistArr.append(SaturationHist)
 		self.ValueHistArr.append(ValueHist)
 
-		# return hist
 		return
 	
 
@@ -646,30 +558,7 @@ class Patch:
 			subHistArr.append(bottom_right_sub_patch.computeSinglePatchHSVHistogram(img_hsv,bottom_right_gaussianWindow, computeSeperateHists, self))
 
 		return top_left_sub_patch, top_right_sub_patch, bottom_left_sub_patch, bottom_right_sub_patch, subHistArr
-		
-	def computeAggregateRGBScore(self, response):
-		thresh = 200
-		score = 0;
-		for i in range(self.x - self.size/2, self.x + self.size/2 + 1):
-			for j in range(self.y - self.size/2, self.y + self.size/2 + 1):
-				if(response[i][j] >= thresh):
-					score += response[i][j]
 
-		self.aggregateRGBScore = score
-
-	# assume cornerResponse is of the image original's shape and has the patches' score at patch centre position
-	# response < 0 then it is categorized as edge, response around 0, then flat, response >> 0, good corner
-	def setCornerResponseScore(self, cornerResponse, maxResponse, minResponse):
-		# print "corner Response at (", self.x, ",", self.y,") is (!= 0): ", cornerResponse[self.x][self.y]
-		if(cornerResponse[self.x][self.y] < 0):
-			# normalizer = 1.0/abs(minResponse) * 0.09 # since 0.1 is considered usually as a corner, cap the edge value to be < 0.1
-			# self.cornerResponseScore = float(abs(cornerResponse[self.x][self.y])) * normalizer
-
-			# Edge is not a good feature
-			self.cornerResponseScore = 0.0
-		else:			
-			normalizer = maxResponse
-			self.cornerResponseScore = float(cornerResponse[self.x][self.y])/normalizer
 
 # get a new gaussian scale based on level and scale factor
 def getGaussianScale(originalScale, factor, level):
@@ -696,11 +585,7 @@ def gauss_kernels(size,sigma=1.0):
 		size = 3
 	m = size/2
 	x, y = np.mgrid[-m:m+1, -m:m+1]
-	# print x*x + y*y
-	# print (x*x + y*y)/(2*sigma*sigma)
-	# print -(x*x + y*y)/(2*sigma*sigma)
 	kernel = np.exp(-(x*x + y*y)/(2*sigma*sigma))
-	# print kernel
 	kernel_sum = kernel.sum()
 	if not sum==0:
 		kernel = kernel/kernel_sum 
@@ -746,8 +631,17 @@ def extractRandomPatches(img, sigma, num):
 			patches.append(rand_patch)
 	return patches
 
-# step 1 means shift by half of the window size, step 2 means shift by one window size, and so on, (circular_expand_level = 2 for SubAndSuperHOG)
+
 def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expand_level = 0, initialize_features = True):
+	"""
+	img: given image data
+	sigma: window size
+	step 1 means shift by half of the window size, step 2 means shift by one window size, and so on, (circular_expand_level = 2 for SubAndSuperHOG)
+	circular_expand_scale: expand the window size by this scale
+	circular_expand_level: expand/shrink window size, 0 is remain the same
+	initialize_features: for found good match patches, whether initialise the feature objects for these patches 
+	(false for performance purpose using 3rd alternative of correspondence matching using specially designed HSV, HOG descriptor)
+	"""
 	print "Step for extract patch:", int(sigma/2*step)
 	print "initialize_features?:", initialize_features
 	print "img.shape[0]:", img.shape[0]
@@ -755,17 +649,16 @@ def extractPatches(img, sigma, step, circular_expand_scale = 1.2, circular_expan
 	largest_patch_size = getGaussianScale(sigma, circular_expand_scale, circular_expand_level)
 	print "largest_patch_size:", largest_patch_size
 	patches = []
-	# for patch_centre_row_index in np.arange(sigma/2, img.shape[0]- sigma/2,int(sigma/2*step)):
-	# 	for patch_centre_col_index in np.arange(sigma/2, img.shape[1]- sigma/2, int(sigma/2*step)):
+	
 	for patch_centre_row_index in np.arange(largest_patch_size/2, img.shape[0]- largest_patch_size/2,int(sigma/2*step)):
 		for patch_centre_col_index in np.arange(largest_patch_size/2, img.shape[1]- largest_patch_size/2, int(sigma/2*step)):
-			# print "patch centre row index:", patch_centre_row_index, ";col index:", patch_centre_col_index 
 			thisPatch = Patch(patch_centre_row_index, patch_centre_col_index, sigma, initialize_features = initialize_features)
 			patches.append(thisPatch)
 	return patches
 
 def klDivergence(hist1, hist2):
 	"""
+	klDivergence by scipy implementation
 	Note: There will be a runtime waring if sum(hist1) == 0 or sum(hist2) == 0, but does not affect result since it will return 'inf'
 	"""
 	return entropy(hist1,hist2)
@@ -793,6 +686,9 @@ def klDivergence_mannual (pk, qk, base = None, normalize = True):
 	return S
 
 def Jensen_Shannon_Divergence(hist1,hist2):
+	"""
+	standard Jensen Shannon Divergence, own implementation, no divide by zero issues
+	"""
 	mean = (hist1 + hist2) / 2
 	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
 	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = True) + \
@@ -813,6 +709,9 @@ def Jensen_Shannon_Divergence_Hat(hist1,hist2):
 
 
 def Jensen_Shannon_Divergence_Unnormalized(hist1,hist2):
+	"""
+	Jensen Shannon Divergence on unnormalized histograms
+	"""
 	mean = (hist1 + hist2) / 2
 	# dist = 0.5 * (klDivergence(hist1,mean) + klDivergence(hist2,mean))
 	dist = 0.5 * (klDivergence_mannual(hist1,mean, normalize = False) + \
@@ -821,6 +720,9 @@ def Jensen_Shannon_Divergence_Unnormalized(hist1,hist2):
 	return dist
 
 def CforHue(histLen):
+	"""
+	the C matrix used in earth mover distance for Hue channel given the histogram length for HUE
+	"""
 	C = np.ones(shape = (histLen, histLen))
 	for i in range(0, histLen):
 		for j in range(i+1, histLen):
@@ -845,7 +747,7 @@ def earthMoverHatDistanceForHOG(hist1, hist2):
 	return pyemd.emd(hist1, hist2, HOG_8BIN_C)
 
 def earthMoverHatDistance(hist1,hist2, C = None):
-	# 1. pyemd EMD
+	"""pyemd EMD"""
 	if(C is None):
 		C = np.ones(shape = (len(hist1), len(hist2)))
 		# for i in range(0, len(hist1)):
@@ -858,7 +760,6 @@ def earthMoverHatDistance(hist1,hist2, C = None):
 		cols = np.repeat(cols, len(hist1), axis = 0)
 
 		C = C + abs(rows - cols)
-	# print C
 	return pyemd.emd(hist1, hist2, C) # distance matrix needs C needs to be symmetric and float type; extra_mass_penalty used  = np.amax(C)
 
 def Jensen_Shannon_Divergence_Score(row):
@@ -960,12 +861,14 @@ def removeDuplicatesSameFeatureSet(sorted_patches):
 		i += 1
 	return final_sorted_patches
 
-### Start of Algo3 for feature detection:
-### 1. Low pass filter of Harris Corner score.
-### 2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations
-### harris_thresh_pass normally = 0.0005, for flower sets is higher = 0.0005
+
 def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , harris_thresh_pass = 0.01, LDA_thresh = 1.0, step = 0.5):
 	"""
+	Start of Algo3 for feature detection:
+	1. High pass filter of Harris Corner score.
+	2. For each patch, find a combination of feature that makes it's LDA score high, remove from list if LDA score low for all combinations
+	harris_thresh_pass tuned for orchids = 0.01
+
 	sigma, step: used for patch extraction
 	harris_thresh_pass: threshhold for filtering the initial set of good patches
 	"""
@@ -1000,8 +903,6 @@ def findDistinguishablePatchesAlgo3(img, sigma, remove_duplicate_thresh_dict , h
 	"""
 	sorted_patches = sorted(filtered_patches, key = lambda patch: patch.LDAFeatureScore, reverse = True)
 
-	# return removeDuplicates(sorted_patches,remove_duplicate_thresh_dict)
-	# return sorted_patches[0:20]
 	return removeDuplicatesSameFeatureSet(sorted_patches)[0:20]
 
 
@@ -1026,20 +927,17 @@ def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_pa
 	testPatch: patch of interest, with feature set scores computed
 	random_patches_response: the list of random_patches' distribution under this_feature_set
 	return: weighed LDA statistics of this testPatch and random_patches wrt the feature sets
+	(note there is this randomness here, which might leads to slightly different unique patches to be extracted on the same image over different runs)
 	"""
 	test_patch_response = getOnePatchFeatureSetScore(this_feature_set, this_feature_weights, testPatch)
 
-	# make the distribution to be np array
+	"""make the distribution to be np array"""
 	random_patches_response = np.asarray(random_patches_response)
 
-	# print "random_patches_response mean:", np.mean(random_patches_response), ", random_patches_response var:", np.var(random_patches_response)
-	# print "test_patch_response:", test_patch_response
-
-	# plot the distribution and the testPatch response
+	"""plot the distribution and the testPatch response"""
 	if(plotHist):
 		plotStatistics.plotResponseDistribution(path+"/hists", this_feature_set, testPatchIndex, test_patch_response, random_patches_response)
 
-	# return (np.mean(random_patches_response) - test_patch_response)**2 / np.var(random_patches_response)
 	if(test_patch_response < 0): # response is negative, indicating that this patch should not be considered under this combination
 		return 0
 	else:
@@ -1047,11 +945,10 @@ def LDAFeatureScore(this_feature_set, this_feature_weights, testPatch, random_pa
 
 def generateAllFeatureSets(features):
 	"""
-	# return: all subsets of a list of string
-	return: (n,1) and (n,2) subsets of a list of string
+	return: (n,1) and (n,2) subsets of a list of string, change to commented off portion to change to return all subsets
 	"""
 	all_sets = []
-	# for i in range(1, len(features)+1):
+	# for i in range(1, len(features)+1): # for all sets
 	for i in range(1, 3):
 		sets_same_size = list(itertools.combinations(features, i))
 		for j in range(0,len(sets_same_size)):
@@ -1060,23 +957,14 @@ def generateAllFeatureSets(features):
 
 
 def setOnePatchScoreForAllFeatures(patch, img, img_gray, gaussianWindow, integral_img_obj_HS):
-	# HOG Feature
+	# """HOG Feature"""
 	# patch.computeHOG(img_gray, True)
 	# patch.setHOGScore(HOGResponse(patch.HOG))
 
-	# compute feature and set score for each feature object in feature_arr
+	"""compute feature and set score for each feature object in feature_arr"""
 	for feature_obj in patch.feature_arr:
-		# start_time = time.time()
-		# feature_obj.computeFeature(img)
 		feature_obj.computeFeatureIntegralImage(integral_img_obj_HS)
 		feature_obj.computeScore()
-		# print "compute ", feature_obj.id, " spent time:", time.time() - start_time
-	# print "\n"
-
-	# # HOG Bins Features
-	# for i in range(1, 5):
-	# 	patch.computeHOG_BINs(img_gray, i, True)
-	# 	patch.setHOG_BINScores(i,HOGResponse(getattr(patch, "HOG_BIN{i}".format(i = i))))
 
 def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5):
 	"""
@@ -1099,14 +987,10 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 	print "FEATURES:", FEATURES
 
 	for i in range(0, len(testPatches)):
-		# start_time = time.time()
 		setOnePatchScoreForAllFeatures(testPatches[i], img, img_gray, gaussianWindow, integral_img_obj_HS)
-		# print "time spent for set all features for testPatches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} testPatches done".format(count = len(testPatches))
 	for i in range(0, len(random_patches)):
-		# start_time = time.time()
 		setOnePatchScoreForAllFeatures(random_patches[i], img, img_gray, gaussianWindow, integral_img_obj_HS)
-		# print "time gspent for set all features for random_patches[{i}]:".format(i = i), time.time() - start_time
 	print "set score for all features for {count} random_patches done".format(count = len(random_patches))
 
 
@@ -1120,7 +1004,6 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 		"""TODO: may need to adjust the weight based what features there are in the set"""
 		this_feature_weights = np.ones(len(this_feature_set))
 		all_feature_set_weights.append(this_feature_weights)
-		# print "checking score for set: ", this_feature_set, "with weights: ", this_feature_weights
 		
 		# get the distribution of random patch response under this_feature_set
 		random_patches_response = []
@@ -1149,12 +1032,12 @@ def findCombinatorialFeatureScore(img, testPatches, sigma, path = "", step = 0.5
 		else:
 			testPatches[i].setIsDueToHighResponse()
 
-	# Log out the feature_sets_score for each testPatch
+	# """Log out the feature_sets_score of each testPatch"""
 	# print "------------ Logging feature_sets_score for each testPatch ------------"
 	# for i in range(0, len(testPatches)):
-		# for j in range(0, len(all_feature_sets)):
-			# print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
-		# print ""
+	# 	for j in range(0, len(all_feature_sets)):
+	# 		print "testPatch[{i}] ".format(i = i), all_feature_sets[j], " LDA Feature Score: ", feature_sets_score[j][i]
+	# 	print ""
 	return feature_sets_score
 
 
@@ -1205,6 +1088,15 @@ def drawMatchesOnImg(img, imgToMatch, patches, matches, show = True, custom_colo
 	return matched_img
 
 def populateTestFindDistinguishablePatchesAlgo3(test_folder_name, img_name, sigma = 39, image_db = "images", custom_feature_sets = None, custom_features_name = None):
+	"""
+	Feature Detection starter
+	test_folder_name: name of image testset
+	img_name: 'test1.jpg' by default
+	sigma: window size, default 39
+	image_db: name of folder containing image testsets at the root level, "./images" by defualt
+	custom_feature_sets: flag to set the FEATURES global array
+	custom_features_name: string for feature combination logging
+	"""
 	path = "testUniquePatches/algo3"
 	if(not os.path.isdir(path)):
 		os.makedirs(path)
@@ -1292,6 +1184,7 @@ def populateCheckUniquePatchesAlgo3(test_folder_name, img_name, sigma = 39, imag
 				unique_patches[i].getFeatureObject(this_feature).FEATURE_MODEL, \
 				save = False, \
 				show = True)
+
 def populateCheckMostUniqueMatch(test_folder_name, img_name1, img_name2, sigma = 39, image_db = "images"):
 	img1 = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name1), 1)
 	img2 = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name,  name = img_name2), 1)
