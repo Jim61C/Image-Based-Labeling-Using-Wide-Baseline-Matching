@@ -33,9 +33,13 @@ class Feature(object):
 
 
 	"""
-	API used by all sub classes extending Feature class:
+	methods used by sub classes extending Feature class:
 	"""
 	def computeHueHistSaturationWeighted(self, img_hsv, patch, gaussian_window):
+		"""
+		img_hsv: Hue: 0-360.0, Saturation: 0-1.0, Value: 0-255.0, Hue is at channel 0, Saturation is at channel 2, Value is at channel 3
+		return: patch's histogram of H * S, weighted by gaussian_window
+		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -52,6 +56,10 @@ class Feature(object):
 		return hist
 
 	def computeHueHist(self,img_hsv, patch,gaussian_window):
+		"""
+		img_hsv: Hue: 0-360.0, Saturation: 0-1.0, Value: 0-255.0, Hue is at channel 0, Saturation is at channel 2, Value is at channel 3
+		return: patch's histogram of Hue Channel, weighted by gaussian_window
+		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -70,6 +78,7 @@ class Feature(object):
 	def computeSaturationHist(self, img_hsv, patch, gaussian_window):
 		"""
 		img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-255
+		return: patch's histogram of Saturation Channel, weighted by gaussian_window
 		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
@@ -104,7 +113,8 @@ class Feature(object):
 		"""
 		img_hsv: Hue: 0-360.0, Saturation: 0-1.0, Value: 0-255.0
 		inner_patch: square inner patch with a smaller window size than patch
-		return: hist of length equal to self.HISTBINNUM for the targetHueFilteredBySaturation
+		compute hue histogram of border patch (in patch but not in inner_patch) filtered by target_hue_bins
+		return: hist of length equal to self.HISTBINNUM
 		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
@@ -124,6 +134,12 @@ class Feature(object):
 		return hist
 
 	def targetHueFilteredBySaturation(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
+		"""
+		img_hsv: Hue: 0-360.0, Saturation: 0-1.0, Value: 0-255.0
+		patch: patch of interest
+		compute the hue histogram with only values that lie in the target_hue_bins and filtered by target_saturation_bins
+		return: hist of length equal to target_hue_bins; 
+		"""
 		hist = np.zeros(len(target_hue_bins))
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -142,6 +158,8 @@ class Feature(object):
 	def computeHS2DArr(self, img_hsv, patch, gaussian_window):
 		"""
 		patch: instance of patch to set its hs_2d_arr
+		compute and set attribute of patch for its 2D Hue and Saturation histogram (Hue on dimension 0 and Saturation on dimension 1)
+		including both full patch 2D histogram and the 4 sub patches 2D histograms
 		"""
 		full_patch_hs = self.computeHS2DWithGaussianWindow(img_hsv, patch, gaussian_window)
 		patch.hs_2d_arr.append(full_patch_hs) # full_patch_hs is supposed to be using 6 sigma gaussian window
@@ -170,6 +188,12 @@ class Feature(object):
 		patch.hs_2d_arr.append(self.computeHS2DWithGaussianWindow(img_hsv, sub_patch, sub_gaussian_window))
 
 	def computeHS2DArrFromIntegralImage(self, integral_img_obj, patch):
+		"""
+		patch: instance of patch to set its hs_2d_arr
+		compute and set attribute of patch for its 2D Hue and Saturation histogram (Hue on dimension 0 and Saturation on dimension 1) using integral image
+		including both full patch 2D histogram and the 4 sub patches 2D histograms
+		integral_img_obj: object of class IntegralImageHS
+		"""
 		full_patch_hs = integral_img_obj.getIntegralImageFeature(\
 			row_start = patch.x - patch.size/2, \
 			row_end = patch.x + patch.size/2 + 1, \
@@ -225,7 +249,8 @@ class Feature(object):
 
 	def computeHS2DWithGaussianWindow(self, img_hsv, patch, gaussian_window):
 		"""
-		default is 16 * 16, unless self.HISTBINNUM is being extended by subclasses
+		compute the 2D H,S histogram of the given patch
+		default dimension is 16 * 16, unless self.HISTBINNUM is being extended by subclasses
 		"""
 		assert (patch.size == len(gaussian_window)), \
 		"In computeHS2DWithGaussianWindow, passed in patch size mush match gaussian_window, however, patch.size =={a}, len(gaussian_window) == {b}".format(\
@@ -248,6 +273,7 @@ class Feature(object):
 	def derive1DSaturationFrom2D(self, hist_2d):
 		"""
 		hist_2d is of shape (Hue bin length, Saturation bin length)
+		derive 1D saturation histogram from 2D Hue Saturation Histogram (essentially compress the 2D histogram onto saturation axis)
 		"""
 		assert (self.HISTBINNUM == len(hist_2d)), \
 		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
@@ -261,6 +287,7 @@ class Feature(object):
 	def derive1DHueFrom2D(self, hist_2d):
 		"""
 		hist_2d is of shape (Hue bin length, Saturation bin length)
+		derive 1D hue histogram from 2D Hue Saturation Histogram (essentially compress the 2D histogram onto hue axis)
 		"""
 		assert (self.HISTBINNUM == len(hist_2d)), \
 		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
@@ -274,6 +301,8 @@ class Feature(object):
 	def deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D(self, hist_2d, target_saturation_bins, target_hue_bins):
 		"""
 		hist_2d is of shape (Hue bin length, Saturation bin length)
+		derive 1D saturation histogram from 2D Hue Saturation Histogram (essentially compress the 2D histogram onto saturation axis)
+		filter off values that is not in target_hue_bins, however, for bins not in target_saturation_bins, do not filter, just compress
 		"""
 		assert (self.HISTBINNUM == len(hist_2d)), \
 		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
@@ -290,6 +319,9 @@ class Feature(object):
 	def deriveHueHistFilterOffHueWithWrongSaturationFrom2D(self, hist_2d, target_saturation_bins, target_hue_bins):
 		"""
 		hist_2d is of shape (Hue bin length, Saturation bin length)
+		derive 1D hue histogram from 2D Hue Saturation Histogram (essentially compress the 2D histogram onto hue axis)
+		filter off values that is not in target_saturation_bins, however, for bins not in target_hue_bins, do not filter, just compress
+		similar to deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D, just the other axis of the 2D histogram
 		"""
 		assert (self.HISTBINNUM == len(hist_2d)), \
 		"hist_2d must have side length of HISTBINNUM but len(hist_2d) is {a} while HISTBINNUM is {b}".format(\
@@ -304,7 +336,10 @@ class Feature(object):
 		return hist
 
 	def computeSaturationHistFilterOffSaturationWithWrongHue(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
-		"""Do not add to Hue Hist if the hue is in target_saturation_bins but not in the target_saturation_bins"""
+		"""
+		Do not add to Saturation Hist if the value is in target_saturation_bins but not in the target_hue_bins
+		same result as deriveSaturationHistFilterOffSaturationWithWrongHueFrom2D
+		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -323,7 +358,10 @@ class Feature(object):
 		return hist
 
 	def computeHueHistFilterOffHueWithWrongSaturation(self, img_hsv, patch, gaussian_window, target_hue_bins, target_saturation_bins):
-		"""Do not add to Hue Hist if the hue is in target_saturation_bins but not in the target_saturation_bins"""
+		"""
+		Do not add to Hue Hist if the value is in target_hue_bins but not in the target_saturation_bins
+		same result as deriveHueHistFilterOffHueWithWrongSaturationFrom2D
+		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -342,6 +380,10 @@ class Feature(object):
 		return hist
 
 	def getTargetHueAndSaturationBins(self):
+		"""
+		From HUE_START_INDEX, HUE_END_INDEX get target_hue_bins
+		From SATURATION_START_INDEX, SATURATION_END_INDEX get target_saturation_bins
+		"""
 		assert (not self.HUE_START_INDEX is None), "In getTargetHueAndSaturationBins: HUE_START_INDEX must not be None"
 		assert (not self.HUE_END_INDEX is None), "In getTargetHueAndSaturationBins: HUE_END_INDEX must not be None"
 		assert (not self.SATURATION_START_INDEX is None), "In getTargetHueAndSaturationBins: SATURATION_START_INDEX must not be None"
@@ -354,6 +396,15 @@ class Feature(object):
 		return target_hue_bins, target_saturation_bins
 
 	def getSubPatchAndSubPatchGaussianFromSubPatchIndex(self, sub_patch_index):
+		"""
+		sub_patch_index: index of the sub patch
+		note:
+		self.TOP_LEFT_INDEX = 1
+		self.TOP_RIGHT_INDEX = 2
+		self.BOTTOM_LEFT_INDEX = 3
+		self.BOTTOM_RIGHT_INDEX = 4
+		return: specified sub patch, that sub_patch's gaussian window and overall gaussian window for this patch
+		"""
 		newLen = (self.patch.size+1)/2
 		if(newLen % 2 == 0):
 			newSize = newLen -1
@@ -381,6 +432,7 @@ class Feature(object):
 		"""
 		hs_2d_arr: of length 5, hs_2d_arr[0] is full patch hs 2d
 		sub_patch_index: one of TOP_LEFT_INDEX(1), TOP_RIGHT_INDEX(2), BOTTOM_LEFT_INDEX(3), BOTTOM_RIGHT_INDEX(4)
+		return: hist of length target_hue_bins; only add to hist if the pixel value is also in target_saturation_bins
 		"""
 		hs_2d_target = hs_2d_arr[sub_patch_index]
 		hist = np.zeros(len(target_hue_bins))
@@ -389,6 +441,10 @@ class Feature(object):
 		return hist
 
 	def findValueHistForTargetHueBin(self, img_hsv, patch, gaussian_window, target_hue_bins):
+		"""
+		given target_hue_bins, find the histogram of Value channel that corresponds to these target_hue_bins
+		return histogram of length self.HISTBINNUM
+		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -408,6 +464,10 @@ class Feature(object):
 		return hist
 
 	def findSaturationHistForTargetHueBin(self, img_hsv, patch, gaussian_window, target_hue_bins):
+		"""
+		given target_hue_bins, find the histogram of Saturation channel that corresponds to these target_hue_bins
+		return histogram of length self.HISTBINNUM
+		"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -426,7 +486,7 @@ class Feature(object):
 		return hist
 
 	def findBorderValueHistForTargetHueBin(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins):
-		"""For border: find the value hist when hue lies in the target hue bins"""
+		"""For border part of the patch: find the value hist when hue lies in the target hue bins"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -445,7 +505,7 @@ class Feature(object):
 		return hist
 
 	def findBorderSaturationHistForTargetHueBin(self, img_hsv, patch, inner_patch, gaussian_window, target_hue_bins):
-		"""For border: find the saturation hist when hue lies in the target hue bins"""
+		"""For border part of the patch: find the saturation hist when hue lies in the target hue bins"""
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
 		ref_y = patch.y - patch.size/2
@@ -475,16 +535,21 @@ class Feature(object):
 		"""
 		img_hsv: Hue: 0-360, Saturation: 0-1, Value: 0-255
 		inner_patch: square inner patch with a smaller window size than patch
-		return: hist of length equal to self.HISTBINNUM for the targetHueFilteredBySaturation
+		return: the saturation range for the border part of the patch that lies within target_hue_bins
 		"""
 		hist = self.findBorderSaturationHistForTargetHueBin(img_hsv, patch, inner_patch, gaussian_window, target_hue_bins)
 
 		return self.acquireSaturationWorker(hist)
 	
 	def acquireSaturationWorker(self, hist):
-		SATURATION_ACQUIRE_FRACTION = 0.5 # reduced to tackle cases where saturation changes a lot across images of the same patch
-		SATURATION_FILTER_FRACTION = 0.1 # used to settle SATURATION FILTER BINS
-		SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD = int(10/36.0 * self.HISTBINNUM)
+		"""
+		hist: given saturation histogram
+		compute the appropriate range (cut) of the saturation histogram that has the most emphasized values
+		"""
+		SATURATION_ACQUIRE_FRACTION = 0.5 # reduced to tackle cases where saturation changes a lot across images of the same patch, 
+		# so that we have a broder saturation filter range to avoid filter off the true values with a too narrow stauration filter range
+		SATURATION_FILTER_FRACTION = 0.1 # used to settle SATURATION FILTER BINS, value must be >= SATURATION_FILTER_FRACTION to have that bin included
+		SATURATION_ACQUIRE_BIN_NEIGHBOURHOOD = int(10/36.0 * self.HISTBINNUM) # the neighbourhood of bins to extend
 		
 		non_zeros_saturation_bins = np.where(hist != 0)[0]
 		max_saturation_bin = np.argmax(hist)
@@ -503,6 +568,9 @@ class Feature(object):
 			if (bin >= 0 and bin < self.HISTBINNUM and hist[bin] > SATURATION_ACQUIRE_FRACTION * hist[max_saturation_bin]):
 				acquired_saturation_bins.append(bin)
 
+		"""
+		determine filter_saturation_bins: the min and max index used for self.SATURATION_FILTER_START_INDEX, self.SATURATION_FILTER_END_INDEX
+		"""
 		min_acquired_bin = np.min(acquired_saturation_bins)
 		max_acquired_bin = np.max(acquired_saturation_bins) + 1
 		filter_saturation_bins = []
@@ -519,15 +587,27 @@ class Feature(object):
 		self.patch = patch
 	
 	def computeFeature(self, img, useGaussianSmoothing = True):
+		"""
+		To be implemented by subclasses
+		"""
 		return
 
 	def computeFeatureIntegralImage(self, integral_img_obj):
+		"""
+		To be implemented by subclasses
+		"""
 		return
 
 	def featureResponse(self):
+		"""
+		To be implemented by subclasses
+		"""
 		return
 
 	def computeScore(self):
+		"""
+		To be implemented by subclasses
+		"""
 		return
 		
 	def setScore(self, score):
@@ -536,7 +616,7 @@ class Feature(object):
 
 	def dissimilarityWith(self, feature_obj):
 		"""
-		Default is l2 distance: overwritten by sub classes for different behaviour
+		Default is Jensen_Shannon_Divergence_Unnormalized: overwritten by sub classes for different behaviour
 		"""
 		hist = feature_obj.hist
 		self.assertHist(hist)
