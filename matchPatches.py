@@ -342,6 +342,11 @@ def testDescriptorPerformancePyramidWorker(testPatches, img, img_gray,imgToMatch
 def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMatch, imgToMatch_gray, imgToMatchHSV, \
 	sigma, testFolderName, k = 1, \
 	patchStep = 0.5, useGaussianWindow = True, metricFunc = comparePatches.Jensen_Shannon_Divergence, initialize_features = True):
+	"""
+	Top level of the pyramid, patch to patch comparison
+	5 level of gaussian scales
+	gaussianScaleFactor = 1.2
+	"""
 	#Extract match patches
 	matchPatches_origin = comparePatches.extractPatches(imgToMatch, sigma, patchStep, initialize_features = initialize_features)
 	print "length of matchPatches:", len(matchPatches_origin)
@@ -398,15 +403,15 @@ def testDescriptorPerformanceWorker(testPatches, img, img_gray, imgHSV, imgToMat
 
 
 
-def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMatchName,folderToSave, \
+def testDescriptorPerformance(image_db, folderName, img, imgToMatch, testPatches, imgName,imgToMatchName,folderToSave, \
 	useGaussianWindow, suffix = "", sigma = 39, upperPath = "testPatchHSV", initialize_features = True):
 	"""
 	testDescriptorPerformance: given testPatches, run the descriptor matching process;
-	:number of gaussian: 5 (2 level down, 2 level up)
-	:gaussianScaleFactor: 1.2
-	:gaussian window weighting on the whole patch: gaussian sigma = window length / 6
-	:sigma: 39
-	:patch search step: 0.5 (shift by 1/4 patch length)
+	number of gaussian: 5 (2 level down, 2 level up)
+	gaussianScaleFactor: 1.2
+	gaussian window weighting on the whole patch: gaussian sigma = window length / 6
+	sigma: 39
+	patch search step: 0.5 (shift by 1/4 patch length)
 	"""
 	print "ALL_FEATURE_TO_COMPUTE:", ALL_FEATURE_TO_COMPUTE
 	#Create folder for the testset
@@ -419,9 +424,7 @@ def testDescriptorPerformance(image_db, folderName,testPatches, imgName,imgToMat
 			folderToSave = folderToSave, 
 			testFolder = folderName + suffix))
 
-	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = folderName, name = imgName), 1)
 	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.int)
-	imgToMatch = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = folderName, name = imgToMatchName), 1)
 	imgToMatch_gray = cv2.cvtColor(imgToMatch, cv2.COLOR_BGR2GRAY).astype(np.int)
 
  	# Move the window by 1/4 
@@ -593,7 +596,7 @@ def compute_sigma(img):
 	sigma = sigma + 1 if (sigma % 2 == 0) else sigma # size of patch needs to be odd number
 	return sigma
 
-def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
+def findAndSaveDistinguishablePatches(image_db, test_folder_name, img, test_img_name, folder_suffix, sigma = 39, upperPath = "testPatchHSV"):
 	"""
 	test_img_name: 'test1.jpg' (Default)
 	"""
@@ -603,8 +606,6 @@ def findAndSaveDistinguishablePatches(image_db, test_folder_name, test_img_name,
 		'HSV': HSVthresh,
 		'HOG': HOGthresh
 	}
-	# read the img with proper name and folder
-	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test_img_name), 1)
 	
 	detect_start_time = time.time()
 	print "start detecting: ", detect_start_time
@@ -664,10 +665,15 @@ def findDistinguishablePatchesAndExecuteMatching(image_db, test_folder_name, tes
 		return
 
 	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = test1_img_name)))
-	testPatches = findAndSaveDistinguishablePatches(image_db, test_folder_name, test1_img_name, folder_suffix, sigma, upperPath)
+	img = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name, name = test1_img_name), 1)
+	imgToMatch = cv2.imread("{image_db}/{folder}/{name}".format(image_db = image_db, folder = test_folder_name, name = test2_img_name), 1)
+	testPatches = findAndSaveDistinguishablePatches(image_db, test_folder_name, img, test1_img_name, folder_suffix, sigma, upperPath)
+
 	listOfMatches = testDescriptorPerformance(
 		image_db,
 		test_folder_name, 
+		img,
+		imgToMatch,
 		testPatches, 
 		test1_img_name,
 		test2_img_name,
@@ -709,25 +715,18 @@ def findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(image_db, test_fo
 	img2 = cv2.imread("{image_db}/{folder}/{image}".format(\
 				image_db = image_db, folder = test_folder_name2, image = test2_img_name), 1)
 	
-	"""create combined_test_folder_name and copy image over"""
+	"""create combined_test_folder_name"""
 	combined_test_folder_name = "{test_folder_name1}_{test_folder_name2}".format(\
 		test_folder_name1 = test_folder_name1, test_folder_name2 = test_folder_name2)
-	createFolder(".", image_db, combined_test_folder_name, "")
-	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
-		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))):
-		cv2.imwrite("{image_db}/{folder}/{image}".format(\
-			image_db = image_db, folder = combined_test_folder_name, image = test1_img_name), img1)
-	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
-		image_db = image_db, folder = combined_test_folder_name, image = test2_img_name)))):
-		cv2.imwrite("{image_db}/{folder}/{image}".format(\
-			image_db = image_db, folder = combined_test_folder_name, image = test2_img_name), img2)
 
 	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(\
 		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))
-	testPatches = findAndSaveDistinguishablePatches(image_db, combined_test_folder_name, test1_img_name, folder_suffix, sigma, upperPath)
+	testPatches = findAndSaveDistinguishablePatches(image_db, combined_test_folder_name, img1, test1_img_name, folder_suffix, sigma, upperPath)
 	listOfMatches = testDescriptorPerformance(
 		image_db,
-		combined_test_folder_name, 
+		combined_test_folder_name,
+		img1,
+		img2,
 		testPatches, 
 		test1_img_name,
 		test2_img_name,
@@ -765,6 +764,8 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 		image_db = image_db, folder = test_folder_name, image = test1_img_name)))
 	img = cv2.imread("{image_db}/{folder}/{image}".format(\
 		image_db = image_db, folder = test_folder_name, image = test1_img_name), 1)
+	imgToMatch = cv2.imread("{image_db}/{folder}/{image}".format(\
+		image_db = image_db, folder = test_folder_name, image = test2_img_name), 1)
 	
 	testPatches = []
 	listOfTestPatches = saveLoadPatch.loadPatchMatches(\
@@ -781,6 +782,8 @@ def executeMatchingGivenDinstinguishablePatches(image_db, test_folder_name, test
 	listOfMatches = testDescriptorPerformance(
 		image_db,
 		test_folder_name, 
+		img,
+		imgToMatch,
 		testPatches, 
 		test1_img_name,
 		test2_img_name,
@@ -822,18 +825,9 @@ def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_fo
 	img2 = cv2.imread("{image_db}/{folder}/{image}".format(\
 		image_db = image_db, folder = test2_folder_name, image = test2_img_name), 1)
 	
-	"""create combined_test_folder_name and copy image over"""
+	"""create combined_test_folder_name"""
 	combined_test_folder_name = "{test1_folder_name}_{test2_folder_name}".format(\
 		test1_folder_name = test1_folder_name, test2_folder_name = test2_folder_name)
-	createFolder(".", image_db, combined_test_folder_name, "")
-	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
-		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))):
-		cv2.imwrite("{image_db}/{folder}/{image}".format(\
-			image_db = image_db, folder = combined_test_folder_name, image = test1_img_name), img1)
-	if (not (os.path.exists("{image_db}/{folder}/{image}".format(\
-		image_db = image_db, folder = combined_test_folder_name, image = test2_img_name)))):
-		cv2.imwrite("{image_db}/{folder}/{image}".format(\
-			image_db = image_db, folder = combined_test_folder_name, image = test2_img_name), img2)
 
 	testPatches = []
 	listOfTestPatches = saveLoadPatch.loadUniquePatchesWithFeatureSet(\
@@ -846,8 +840,6 @@ def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_fo
 		i = sigma))
 	for i in range(0, len(listOfTestPatches)):
 		testPatches.append(listOfTestPatches[i])
-
-	# comparePatches.drawPatchesOnImg(np.copy(img1), testPatches, mark_sequence = True)
 
 	"""copy over the distinguishablePatches"""
 	createFolder(upperPath, "GaussianWindowOnAWhole", combined_test_folder_name, folder_suffix)
@@ -881,6 +873,8 @@ def executeMatchingGivenDinstinguishablePatchesFromTwoFolders(image_db, test1_fo
 	listOfMatches = testDescriptorPerformance(
 		image_db,
 		combined_test_folder_name, 
+		img1,
+		img2,
 		testPatches, 
 		test1_img_name,
 		test2_img_name,

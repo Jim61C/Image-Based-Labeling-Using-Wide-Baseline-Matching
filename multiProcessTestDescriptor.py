@@ -72,7 +72,8 @@ def dispatch_matching_given_test_patches_test_from_two_folder(args):
 def dispatch_feature_detection(args):
 	test_folder_name, image_db = args
 	folder_suffix = "__DistinguishablePatches_HSFlattened_0.7_Corner_0.3_Descriptor_seperateHS_Jensen_Shannon_Divergence"
-	matchPatches.findAndSaveDistinguishablePatches(image_db, test_folder_name, "test1.jpg", folder_suffix, sigma = 39, upperPath = "testMatches")
+	img = cv2.imread("{image_db}/{folder}/{image}".format(image_db = image_db, folder = test_folder_name, image = "test1.jpg"), 1)
+	matchPatches.findAndSaveDistinguishablePatches(image_db, test_folder_name, img, "test1.jpg", folder_suffix, sigma = 39, upperPath = "testMatches")
 
 def dispatch_feature_matching(args):
 	test_folder_name, image_db = args
@@ -103,29 +104,13 @@ def main():
 	utils.loadGeneratedFeatureParadigm()
 	image_db = "images"
 
-	num_orchid_tests = 3
+	num_orchid_tests = 1
 
 	"""driver_full_algorithm"""
-	# test_folder_args = []
-	# for i in range (1, num_orchid_tests + 1):
-	# 	"""For full algo from single folder"""
-	# 	test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
-
-
-	# pool = Pool(cpu_count())
-	# pool.map(driver_full_algorithm, test_folder_args)
-	# pool.close()
-	# pool.join()
-
-	"""
-	driver_full_algorithm from two folder: 
-	testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of same scene)
-	"""
 	test_folder_args = []
 	for i in range (1, num_orchid_tests + 1):
-		"""For full algo from two folder"""
-		test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{i}".format(i = i), \
-			"test2.jpg", "test3.jpg", image_db))
+		"""For full algo from single folder"""
+		test_folder_args.append(("testset_orchid{i}".format(i = i), image_db))
 
 
 	pool = Pool(cpu_count())
@@ -133,21 +118,37 @@ def main():
 	pool.close()
 	pool.join()
 
-	"""
-	dispatch_matching_given_test_patches_test_from_two_folder:
-	testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of different scene)
-	"""
-	test_folder_args = []
-	for i in range (1, num_orchid_tests + 1):
-		for j in range(1, num_orchid_tests + 1):
-			if (i != j):
-				test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{j}".format(j = j), \
-					"test2.jpg", "test3.jpg", image_db))
+	# """
+	# driver_full_algorithm from two folder: 
+	# testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of same scene)
+	# """
+	# test_folder_args = []
+	# for i in range (1, num_orchid_tests + 1):
+	# 	"""For full algo from two folder"""
+	# 	test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{i}".format(i = i), \
+	# 		"test2.jpg", "test3.jpg", image_db))
 
-	pool = Pool(cpu_count())
-	pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
-	pool.close()
-	pool.join()
+
+	# pool = Pool(cpu_count())
+	# pool.map(driver_full_algorithm, test_folder_args)
+	# pool.close()
+	# pool.join()
+
+	# """
+	# dispatch_matching_given_test_patches_test_from_two_folder:
+	# testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of different scene)
+	# """
+	# test_folder_args = []
+	# for i in range (1, num_orchid_tests + 1):
+	# 	for j in range(1, num_orchid_tests + 1):
+	# 		if (i != j):
+	# 			test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{j}".format(j = j), \
+	# 				"test2.jpg", "test3.jpg", image_db))
+
+	# pool = Pool(cpu_count())
+	# pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
+	# pool.close()
+	# pool.join()
 
 	return
 
