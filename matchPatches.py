@@ -776,7 +776,7 @@ def findDistinguishablePatchesAndExecuteMatchingFromTwoFolders(image_db, test_fo
 		test_folder_name1 = test_folder_name1, test_folder_name2 = test_folder_name2)
 
 	sigma = compute_sigma(cv2.imread("{image_db}/{folder}/{image}".format(\
-		image_db = image_db, folder = combined_test_folder_name, image = test1_img_name)))
+		image_db = image_db, folder = test_folder_name1, image = test1_img_name)))
 	testPatches = findAndSaveDistinguishablePatches(image_db, combined_test_folder_name, img1, test1_img_name, folder_suffix, sigma, upperPath)
 	listOfMatches = testDescriptorPerformance(
 		image_db,
