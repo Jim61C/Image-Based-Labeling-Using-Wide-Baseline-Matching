@@ -1329,7 +1329,7 @@ def populateCheckTestLabelingNumMatches(plot_folder_name, folder_suffix, ground_
 	"""
 
 	path = createFolder(".", "testLabelingPlots", plot_folder_name, "")
-	num_orchid_tests = 3
+	num_orchid_tests = 20
 	ALL_SCENE_SETS = range(1, num_orchid_tests + 1)
 	testset_flower_ids = range(1, num_orchid_tests + 1)
 	incoming_test_ids = range(1, num_orchid_tests + 1)
