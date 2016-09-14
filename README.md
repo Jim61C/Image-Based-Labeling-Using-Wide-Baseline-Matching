@@ -58,10 +58,14 @@
 Image Labeling Database Folder Structure Required:
 
 ./{image_db}
-├── {testFolderName}
-│   ├── test1.jpg
-│   ├── test2.jpg
-│   └── test3.jpg
+
+└── {testFolderName}
+
+          └── test1.jpg
+
+          └── test2.jpg
+
+          └── test3.jpg
 ...
 
 - {image_db} is the folder located at the root level of the repository containing image folders of many scenes, for example, "./images" used in the current folder hierarchy
