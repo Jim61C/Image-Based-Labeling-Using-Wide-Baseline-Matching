@@ -31,6 +31,10 @@ class Feature(object):
 		self.HISTBINNUM = utils.HS_BIN_LENGTH # default value, override by sub classes
 		self.GAUSSIAN_SCALE_FACTOR = 1.2
 
+
+	"""
+	API used by all sub classes extending Feature class:
+	"""
 	def computeHueHistSaturationWeighted(self, img_hsv, patch, gaussian_window):
 		hist = np.zeros(self.HISTBINNUM)
 		ref_x = patch.x - patch.size/2
