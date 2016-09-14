@@ -104,7 +104,7 @@ def main():
 	utils.loadGeneratedFeatureParadigm()
 	image_db = "images"
 
-	num_orchid_tests = 1
+	num_orchid_tests = 20
 
 	"""driver_full_algorithm"""
 	test_folder_args = []
@@ -118,37 +118,37 @@ def main():
 	pool.close()
 	pool.join()
 
-	# """
-	# driver_full_algorithm from two folder: 
-	# testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of same scene)
-	# """
-	# test_folder_args = []
-	# for i in range (1, num_orchid_tests + 1):
-	# 	"""For full algo from two folder"""
-	# 	test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{i}".format(i = i), \
-	# 		"test2.jpg", "test3.jpg", image_db))
+	"""
+	driver_full_algorithm from two folder: 
+	testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of same scene)
+	"""
+	test_folder_args = []
+	for i in range (1, num_orchid_tests + 1):
+		"""For full algo from two folder"""
+		test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{i}".format(i = i), \
+			"test2.jpg", "test3.jpg", image_db))
 
 
-	# pool = Pool(cpu_count())
-	# pool.map(driver_full_algorithm, test_folder_args)
-	# pool.close()
-	# pool.join()
+	pool = Pool(cpu_count())
+	pool.map(driver_full_algorithm, test_folder_args)
+	pool.close()
+	pool.join()
 
-	# """
-	# dispatch_matching_given_test_patches_test_from_two_folder:
-	# testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of different scene)
-	# """
-	# test_folder_args = []
-	# for i in range (1, num_orchid_tests + 1):
-	# 	for j in range(1, num_orchid_tests + 1):
-	# 		if (i != j):
-	# 			test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{j}".format(j = j), \
-	# 				"test2.jpg", "test3.jpg", image_db))
+	"""
+	dispatch_matching_given_test_patches_test_from_two_folder:
+	testing image with viewpoint test2.jpg to compare with test3.jpg in the database(of different scene)
+	"""
+	test_folder_args = []
+	for i in range (1, num_orchid_tests + 1):
+		for j in range(1, num_orchid_tests + 1):
+			if (i != j):
+				test_folder_args.append(("testset_orchid{i}".format(i = i), "testset_orchid{j}".format(j = j), \
+					"test2.jpg", "test3.jpg", image_db))
 
-	# pool = Pool(cpu_count())
-	# pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
-	# pool.close()
-	# pool.join()
+	pool = Pool(cpu_count())
+	pool.map(dispatch_matching_given_test_patches_test_from_two_folder, test_folder_args)
+	pool.close()
+	pool.join()
 
 	return
 
